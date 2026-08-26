@@ -7,6 +7,8 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>Let's Link — Austin, TX</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
   --bg:#0d0f14; --card:#171b23; --card2:#1f2430; --line:#2a3140;
@@ -272,7 +274,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v17</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v18</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -429,6 +431,20 @@ const DIST={
   kayak:1.4,gallery:2.3,green:1.1,security:2.0,snap:2.8,inn:1.2,hostwell:1.6,suya:3.0,thread:2.6
 };
 function miles(id){const d=DIST[id];return d?`${d} mi`:"nearby";}
+// real Austin coordinates per business/event (approx, by neighborhood) for the live map
+const GEO={
+  // downtown ~30.2672,-97.7431 ; you-are-here center
+  _me:[30.2672,-97.7431],
+  coral:[30.2588,-97.7386],ansel:[30.2665,-97.7215],cofield:[30.2865,-97.7625],
+  mama:[30.2695,-97.7150],roast:[30.2705,-97.7220],foundry:[30.2690,-97.7365],
+  heights:[30.2685,-97.7440],kayak:[30.2455,-97.7480],gallery:[30.2660,-97.7185],
+  green:[30.2360,-97.7690],security:[30.2660,-97.7400],snap:[30.2470,-97.7510],
+  inn:[30.2500,-97.7490],hostwell:[30.2680,-97.7180],suya:[30.2650,-97.7200],
+  thread:[30.2480,-97.7500],
+  marrowfest:[30.2620,-97.7420],hoops:[30.2720,-97.7080],market:[30.2980,-97.7040],
+  gallery_night:[30.2665,-97.7190],paddle:[30.2450,-97.7470],
+};
+function geo(id){return GEO[id]||null;}
 const POSTER={
   fest:"linear-gradient(135deg,#ff6a3d,#ffb020 65%,#7c5cff)",
   music:"linear-gradient(135deg,#7c5cff,#4e9cff)",
@@ -719,6 +735,7 @@ ACTIONS={
   menuLogin:()=>{closeSheet();toast("🔑 Login screen (demo)");},
   menuSignout:()=>{closeSheet();toast("👋 Signed out (demo)");},
   menuItem:(label)=>{closeSheet();toast(label+" (demo)");},
+  mapOpen:(type,id)=>{open(type,id);},
   markAttending:(id)=>markAttending(id),
   toast:(m)=>toast(m),
   confirmAtt:(id,aud)=>confirmAtt(id,aud),
@@ -1092,18 +1109,41 @@ function renderMap(){
     hoodHtml=hoods.map(h=>{const bs=Object.keys(biz).filter(k=>biz[k].hood.includes(h.replace("The ","")));
       return bs.length?`<div class="sect">${h}</div><div class="grid">${bs.map(k=>bizTile(k)).join("")}</div>`:'';}).join("");
   }
-  setView(`<div class="h1">Map</div><div class="sub">Austin, TX · by neighborhood · distances from you.</div>
+  setView(`<div class="h1">Map</div><div class="sub">Austin, TX · live map · tap a pin to open it.</div>
   ${searchbar("Search this map…")}
-  <div class="card"><div style="height:170px;background:
-    radial-gradient(circle at 30% 40%, rgba(0,194,168,.25),transparent 40%),
-    radial-gradient(circle at 70% 60%, rgba(124,92,255,.25),transparent 40%),
-    linear-gradient(135deg,#12202a,#1a1630);position:relative">
-    ${['📍','🎪','🍜','🎨','🛶','🏨'].map((p,i)=>`<span style="position:absolute;font-size:22px;
-      left:${15+i*13}%;top:${20+((i*37)%60)}%">${p}</span>`).join("")}
-    <span style="position:absolute;bottom:8px;left:10px;font-size:11px;color:#fff;background:rgba(0,0,0,.4);padding:3px 8px;border-radius:10px">📍 You are here</span>
-    <span style="position:absolute;bottom:8px;right:10px;font-size:11px;color:var(--dim)">demo map</span>
-  </div></div>
+  <div class="card"><div id="leafmap" style="height:300px;width:100%"></div></div>
   ${hoodHtml}`);
+  initMap();
+}
+
+let _leaflet=null;
+function initMap(){
+  if(typeof L==="undefined")return; // library not loaded
+  const el=document.getElementById("leafmap");if(!el)return;
+  // tear down any prior instance bound to this container
+  if(_leaflet){try{_leaflet.remove();}catch(e){}_leaflet=null;}
+  setTimeout(()=>{
+    const node=document.getElementById("leafmap");if(!node)return;
+    const map=L.map(node,{zoomControl:true,attributionControl:true}).setView(GEO._me,13);
+    _leaflet=map;
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
+      maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+    // you-are-here
+    L.circleMarker(GEO._me,{radius:7,color:"#00c2a8",fillColor:"#00c2a8",fillOpacity:1,weight:2})
+      .addTo(map).bindPopup("📍 You are here");
+    // filter by search
+    const bizIds=Object.keys(biz).filter(k=>geo(k)&&matchQ(biz[k].n,biz[k].cat+" "+biz[k].hood));
+    const evIds=Object.keys(events).filter(k=>geo(k)&&matchQ(events[k].n,events[k].loc));
+    const bounds=[GEO._me];
+    bizIds.forEach(id=>{const b=biz[id];const g=geo(id);bounds.push(g);
+      const mk=L.marker(g).addTo(map);
+      mk.bindPopup(`<b>${b.ic} ${b.n}</b><br>${b.cat}<br>★ ${b.r||'new'} · ${miles(id)}<br><a href="#" onclick="ACTIONS.mapOpen('biz','${id}');return false">Open ›</a>`);});
+    evIds.forEach(id=>{const e=events[id];const g=geo(id);bounds.push(g);
+      const mk=L.marker(g).addTo(map);
+      mk.bindPopup(`<b>🎟️ ${e.n}</b><br>${e.date}<br>${miles(id)}<br><a href="#" onclick="ACTIONS.mapOpen('event','${id}');return false">Open ›</a>`);});
+    if(bounds.length>1){try{map.fitBounds(bounds,{padding:[30,30],maxZoom:14});}catch(e){}}
+    setTimeout(()=>{try{map.invalidateSize();}catch(e){}},150);
+  },60);
 }
 
 /* ============ PROFILE ============ */
