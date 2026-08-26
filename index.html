@@ -272,7 +272,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v16</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v17</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -662,7 +662,7 @@ function av(uid,size){const u=users[uid]||{name:uid,c:"#4e9cff"};
   const i=(u.name||uid)[0].toUpperCase();
   const ph=uphoto(uid);
   const dim=size?`width:${size}px;height:${size}px;font-size:${size*.4}px;`:'';
-  if(ph)return `<span class="avatar" style="${dim}background-image:url('${ph}');background-size:cover;background-position:center;color:transparent">${i}</span>`;
+  if(ph)return `<span class="avatar" style="${dim}background-image:url('${ph}');background-size:cover;background-position:center 8%;color:transparent">${i}</span>`;
   return `<span class="avatar" style="background:${u.c||'#4e9cff'};${dim}">${i}</span>`;}
 function stars(r){return "★".repeat(Math.round(r))+`<span style="color:var(--dim)">${"★".repeat(5-Math.round(r))}</span>`;}
 // escape a value for safe use inside an inline onclick='...' single-quoted JS string in HTML
@@ -757,8 +757,8 @@ function searchbar(ph){return `<div class="searchwrap"><span class="si">🔍</sp
 function matchQ(name,extra){if(!searchQ)return true;const q=searchQ.toLowerCase();
   return (name+" "+(extra||"")).toLowerCase().includes(q);}
 
-function imgStyle(url,grad,h){
-  const bg=url?`background-image:url('${url}');background-size:cover;background-position:center;`:`background:${grad};`;
+function imgStyle(url,grad,h,pos){
+  const bg=url?`background-image:url('${url}');background-size:cover;background-position:${pos||'center'};`:`background:${grad};`;
   return `${bg}${h?`height:${h}px;`:''}`;}
 
 // big hero event tile
@@ -859,7 +859,7 @@ function renderEvent(id){
       <div class="cap"><div class="capttl" style="font-size:13px">${b.n}</div>
       <div class="caploc">${role}</div></div></div>`;
     if(u)return `<div class="tile" ${da('open','user',ref)}>
-      <div class="tileimg" style="${imgStyle(uphoto(ref),POSTER.music,78)}"><span class="scrim"></span></div>
+      <div class="tileimg" style="${imgStyle(uphoto(ref),POSTER.music,78,'center top')}"><span class="scrim"></span></div>
       <div class="cap"><div class="capttl" style="font-size:13px">${u.name}</div>
       <div class="caploc">${role}</div></div></div>`;
     return `<div class="tile" style="opacity:.75">
