@@ -332,7 +332,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v29</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v30</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -924,7 +924,7 @@ ACTIONS={
   boost:(type,id,who)=>{const k=type+":"+id;boosts[k]=(boosts[k]||0)+1;render();toast("🚀 Boosted — shared with your followers");},
   showBlocked:()=>openSheet(sheetBlocked()),
   openPost:(pid)=>{stack.push({type:"post",id:pid});render();scrollTop();},
-  reachOut:(pid)=>{const p=board.find(x=>x.id===pid);closeSheet();toast(p&&p.kind==="request"?"📩 Offer sent to "+postByName(p):"📩 Inquiry sent — they'll get back to you");},
+  reachOut:(pid)=>reachOut(pid),
   contactSheet:(pid)=>openSheet(sheetContact(pid)),
   newPost:()=>openSheet(sheetNewPost()),
   submitPost:(kind)=>submitPost(kind),
@@ -1703,6 +1703,31 @@ function sheetContact(pid){
   <div class="finfo">🔒 They'll see your profile + this message. You can chat once they reply.</div>
   <button class="btn p" style="margin-top:12px" ${da('reachOut',p.id)}>Send</button>
   <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button>`;
+}
+function reachOut(pid){
+  const p=board.find(x=>x.id===pid);if(!p){closeSheet();return;}
+  const who=p.by; // author of the post (a user id)
+  const isReq=p.kind==="request";
+  // pull typed message if present, else a sensible default
+  const boxes=document.querySelectorAll("#sheetbox .finput");
+  let typed="";boxes.forEach(b=>{if(b.value&&b.value.trim())typed+=(typed?" · ":"")+b.value.trim();});
+  const opener=isReq
+    ? (typed||`Hey — saw your post “${p.title}”. I can help with that.`)
+    : (typed||`Hi — interested in your post “${p.title}”. Is it still available?`);
+  if(!threads[who])threads[who]=[];
+  const now=new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
+  // context line so the chat references the board post
+  threads[who].push({from:"me",text:`📋 Re: “${p.title}”`,t:now});
+  threads[who].push({from:"me",text:opener,t:now});
+  closeSheet();
+  // open the real thread
+  stack=[{type:"thread",id:who}];tab="profile";render();scrollTop();
+  toast("💬 Chat started");
+  // demo reply
+  setTimeout(()=>{
+    threads[who].push({from:who,text:isReq?"Appreciate it! What’s your rate + availability?":"Yep, still open — what date are you thinking?",t:new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})});
+    if(stack.length&&stack[stack.length-1].type==="thread"&&stack[stack.length-1].id===who)renderThread(who);
+  },1200);
 }
 function sheetNewPost(){
   return `<h3>📋 Post to the board</h3>
