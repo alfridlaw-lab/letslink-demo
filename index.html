@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Let's Link — Austin, TX</title>
+<style>
+:root{
+  --bg:#0d0f14; --card:#171b23; --card2:#1f2430; --line:#2a3140;
+  --ink:#eef1f6; --sub:#9aa4b6; --dim:#6b7688;
+  --brand:#00c2a8; --brand2:#7c5cff; --gold:#ffb020; --danger:#ff5470;
+  --shadow:0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+#phone{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);
+  position:relative;overflow:hidden;box-shadow:var(--shadow);}
+/* Top bar */
+.topbar{position:sticky;top:0;z-index:20;background:rgba(13,15,20,.92);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--line);
+  padding:14px 16px 10px;display:flex;align-items:center;gap:10px}
+.logo{font-weight:800;font-size:19px;letter-spacing:-.3px}
+.logo b{background:linear-gradient(90deg,var(--brand),var(--brand2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.topbar .me{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub)}
+.avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-weight:700;font-size:12px;color:#06121a;flex:0 0 auto}
+/* Content */
+#view{padding:14px 14px 96px;min-height:60vh}
+.h1{font-size:22px;font-weight:800;margin:6px 2px 4px;letter-spacing:-.4px}
+.sub{color:var(--sub);font-size:13px;margin:0 2px 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow)}
+.card .pad{padding:13px 14px}
+.banner{height:120px;background:linear-gradient(135deg,var(--brand2),var(--brand));
+  position:relative;display:flex;align-items:flex-end;padding:12px}
+.banner.fest{background:linear-gradient(135deg,#ff6a3d,#ffb020 70%,#7c5cff)}
+.banner.biz{background:linear-gradient(135deg,#2b5876,#4e4376)}
+.banner .tag{background:rgba(0,0,0,.5);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600}
+.title{font-size:17px;font-weight:700;margin:0 0 3px}
+.meta{color:var(--sub);font-size:12.5px;margin:0}
+.row{display:flex;align-items:center;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--card2);
+  border:1px solid var(--line);border-radius:20px;padding:5px 11px;font-size:12px;
+  color:var(--sub);margin:0 6px 6px 0;cursor:pointer}
+.chip.on{background:var(--brand);color:#05141a;border-color:var(--brand);font-weight:700}
+.stars{color:var(--gold);font-size:13px;font-weight:700}
+.social{display:flex;align-items:center;gap:-8px;margin:8px 0 2px}
+.social .avatar{width:26px;height:26px;font-size:11px;margin-left:-8px;border:2px solid var(--card)}
+.social .avatar:first-child{margin-left:0}
+.social .who{margin-left:10px;font-size:12.5px;color:var(--sub)}
+.social .who b{color:var(--ink)}
+.btn{display:block;width:100%;text-align:center;padding:13px;border-radius:12px;
+  border:none;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:4px}
+.btn.p{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#05141a}
+.btn.g{background:var(--card2);color:var(--ink);border:1px solid var(--line)}
+.btn.gold{background:linear-gradient(90deg,#ff6a3d,var(--gold));color:#2a1600}
+.sect{font-size:13px;font-weight:800;color:var(--sub);text-transform:uppercase;
+  letter-spacing:.6px;margin:20px 2px 10px;display:flex;align-items:center;gap:7px}
+.eco{display:flex;align-items:center;gap:11px;padding:11px 12px;background:var(--card);
+  border:1px solid var(--line);border-radius:13px;margin-bottom:8px;cursor:pointer}
+.eco .ic{width:38px;height:38px;border-radius:10px;background:var(--card2);
+  display:flex;align-items:center;justify-content:center;font-size:19px;flex:0 0 auto}
+.eco .nm{font-weight:600;font-size:14px}
+.eco .ds{color:var(--dim);font-size:12px;margin-top:1px}
+.eco .go{margin-left:auto;color:var(--dim);font-size:18px}
+.review{padding:13px 14px;background:var(--card);border:1px solid var(--line);
+  border-radius:16px;margin-bottom:10px;box-shadow:var(--shadow)}
+.review .top{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+.review .nm{font-weight:600;font-size:13px}
+.review .fol{font-size:10.5px;color:var(--brand);background:rgba(0,194,168,.12);
+  padding:2px 7px;border-radius:10px;margin-left:auto;font-weight:600}
+.review .tx{font-size:13px;color:var(--sub);line-height:1.45}
+.empty{color:var(--dim);font-size:13px;text-align:center;padding:22px 10px;font-style:italic}
+/* search */
+.searchwrap{display:flex;align-items:center;gap:8px;background:var(--card2);
+  border:1px solid var(--line);border-radius:13px;padding:10px 12px;margin:2px 2px 16px}
+.searchwrap .si{font-size:14px;opacity:.7}
+.search{flex:1;background:none;border:none;outline:none;color:var(--ink);font-size:14px}
+.search::placeholder{color:var(--dim)}
+.searchwrap .sx{color:var(--dim);font-size:14px;cursor:pointer;padding:0 2px}
+/* tiles */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  overflow:hidden;cursor:pointer;box-shadow:var(--shadow)}
+.tile.big{grid-column:1/-1;margin-bottom:2px}
+.tileimg{height:110px;position:relative;display:flex;align-items:flex-start;padding:9px;background-color:#1a1f2a}
+.tile.big .tileimg{height:150px}
+.tileimg .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35),transparent 45%,rgba(0,0,0,.25))}
+.tileimg>span:not(.scrim){z-index:2}
+/* sort bar */
+.sortbar{display:flex;gap:7px;overflow-x:auto;padding:0 2px 12px;-webkit-overflow-scrolling:touch}
+.sortbar::-webkit-scrollbar{display:none}
+.sortchip{white-space:nowrap;background:var(--card2);border:1px solid var(--line);
+  border-radius:20px;padding:7px 13px;font-size:12.5px;color:var(--sub);cursor:pointer;flex:0 0 auto}
+.sortchip.on{background:var(--brand);color:#05141a;border-color:var(--brand);font-weight:700}
+/* event mode toggle */
+.modebar{display:flex;gap:8px;margin:4px 2px 6px}
+.modebtn{flex:1;padding:12px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);color:var(--sub);font-size:13.5px;font-weight:700;cursor:pointer}
+.modebtn.on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#05141a;border-color:transparent}
+.modehint{color:var(--dim);font-size:12px;margin:0 4px 12px;line-height:1.4}
+/* user profile breakdown */
+.phero{position:relative;height:120px;border-radius:16px 16px 0 0;overflow:hidden}
+.phero .scrim{position:absolute;inset:0;background:linear-gradient(180deg,transparent,rgba(0,0,0,.5))}
+.pbody{background:var(--card);border:1px solid var(--line);border-top:none;
+  border-radius:0 0 16px 16px;padding:0 14px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.pav{margin-top:-34px;position:relative;z-index:2}
+.socialrow{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 2px}
+.soc{display:inline-flex;align-items:center;gap:6px;background:var(--card2);
+  border:1px solid var(--line);border-radius:20px;padding:7px 12px;font-size:12px;
+  color:var(--ink);cursor:pointer;text-decoration:none}
+.soc .sg{font-size:13px}
+.locked{background:var(--card2);border:1px dashed var(--line);border-radius:14px;
+  padding:22px 16px;text-align:center;margin-top:12px}
+.locked .lk{font-size:26px}
+.locked .lt{font-weight:700;margin:8px 0 3px;font-size:14px}
+.locked .ls{color:var(--dim);font-size:12.5px;line-height:1.45}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.pbeen{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer}
+.pbeen .pi{height:80px;position:relative}
+.pbeen .pi .scrim{position:absolute;inset:0;background:linear-gradient(180deg,transparent,rgba(0,0,0,.4))}
+.pbeen .pn{padding:8px 10px}
+.pbeen .pnn{font-size:12.5px;font-weight:600}
+.pbeen .pnr{font-size:11px;color:var(--gold);font-weight:700;margin-top:2px}
+.photostrip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+.photostrip::-webkit-scrollbar{display:none}
+.pshot{flex:0 0 auto;width:110px;height:110px;border-radius:12px;background-size:cover;
+  background-position:center;border:1px solid var(--line)}
+.statrow{display:flex;gap:10px;margin:12px 0 4px}
+.stat{flex:1;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:11px;text-align:center}
+.stat b{display:block;font-size:18px}
+.stat span{font-size:11px;color:var(--dim)}
+/* badges: one per corner, never share a row, distance never wraps */
+.tileimg .badge{position:absolute !important;top:7px;left:7px;max-width:60%;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;background:rgba(0,0,0,.62);border-radius:14px;
+  padding:3px 8px;font-size:10px;font-weight:600;backdrop-filter:blur(4px);line-height:1.3;z-index:3}
+.tileimg .rate{position:absolute !important;top:7px;right:7px;background:rgba(0,0,0,.62);
+  color:var(--gold);border-radius:14px;padding:3px 8px;font-size:10.5px;font-weight:800;
+  backdrop-filter:blur(4px);white-space:nowrap;line-height:1.3;z-index:3}
+.tileimg .dist{position:absolute !important;bottom:7px;left:7px;background:rgba(0,0,0,.62);
+  border-radius:14px;padding:3px 8px;font-size:10px;font-weight:700;backdrop-filter:blur(4px);
+  white-space:nowrap;line-height:1.3;z-index:3}
+.tileimg .stack{position:absolute !important;bottom:7px;right:7px;display:flex;z-index:3}
+.tileimg .stack .avatar{margin-left:-8px;border:2px solid rgba(0,0,0,.3)}
+.tileimg .stack .avatar:first-child{margin-left:0}
+.cap{padding:10px 11px 12px}
+.capttl{font-weight:700;font-size:14.5px;line-height:1.2;margin-bottom:3px}
+.tile.big .capttl{font-size:18px}
+.capline{color:var(--sub);font-size:12px;line-height:1.35;margin-bottom:5px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.caploc{color:var(--brand);font-size:11.5px;font-weight:600}
+/* following activity cards */
+.fcard{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow)}
+.fhead{display:flex;align-items:center;gap:10px;padding:12px 13px;cursor:pointer;
+  border-bottom:1px solid var(--line)}
+.flist{padding:6px 8px 8px}
+.act{display:flex;align-items:center;gap:9px;padding:9px 8px;border-radius:10px;cursor:pointer}
+.act:hover{background:var(--card2)}
+.actt{font-size:11px;font-weight:800;color:var(--brand);white-space:nowrap;flex:0 0 auto}
+.actx{font-size:12.5px;color:var(--sub);line-height:1.35;flex:1}
+.actgo{color:var(--dim);font-size:16px;flex:0 0 auto}
+.dcard{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:13px;margin-bottom:12px;cursor:pointer;box-shadow:var(--shadow)}
+.why{font-size:13px;color:var(--ink);line-height:1.45;background:var(--card2);
+  border:1px solid var(--line);border-radius:11px;padding:10px 11px}
+.whyact{font-size:11.5px;color:var(--dim);margin-top:7px;font-style:italic}
+.backbtn{background:none;border:none;color:var(--brand);font-size:14px;font-weight:600;
+  padding:2px 0 12px;cursor:pointer;display:flex;align-items:center;gap:5px}
+/* Bottom nav */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;
+  background:rgba(13,15,20,.95);backdrop-filter:blur(14px);border-top:1px solid var(--line);
+  display:flex;justify-content:space-around;padding:8px 4px 22px;z-index:30}
+.nav button{background:none;border:none;color:var(--dim);font-size:10.5px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;flex:1}
+.nav button .i{font-size:20px}
+.nav button.on{color:var(--brand)}
+/* toast */
+#toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--brand);color:#05141a;font-weight:700;font-size:13px;padding:11px 18px;
+  border-radius:24px;opacity:0;transition:.3s;z-index:50;pointer-events:none;box-shadow:var(--shadow)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* sheet */
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60;display:none;align-items:flex-end}
+#sheet.show{display:flex}
+.sheetbox{background:var(--card);width:100%;max-width:430px;margin:0 auto;
+  border-radius:20px 20px 0 0;padding:18px 16px 32px;animation:up .25s ease;
+  max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheetbox::-webkit-scrollbar{width:0}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheetbox h3{margin:2px 0 3px;font-size:17px}
+.opt{padding:14px;border:1px solid var(--line);border-radius:12px;margin-top:10px;
+  display:flex;align-items:center;gap:11px;cursor:pointer;font-size:14px}
+.opt .i{font-size:19px}
+.opt small{color:var(--dim);display:block;font-size:11.5px;margin-top:1px}
+.pill{font-size:11px;color:var(--gold);background:rgba(255,176,32,.12);padding:3px 9px;border-radius:10px;font-weight:600}
+.finput{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:11px;
+  padding:12px;font-size:14px;color:var(--ink);margin-bottom:9px;font-family:inherit;outline:none}
+.finput::placeholder{color:var(--dim)}
+.finfo{font-size:12px;color:var(--dim);background:var(--card2);border:1px dashed var(--line);
+  border-radius:11px;padding:10px 12px;line-height:1.4}
+.createrow{display:flex;gap:10px;margin:2px 0}
+.createbtn{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:15px 10px;text-align:center;cursor:pointer;box-shadow:var(--shadow)}
+.createbtn .ci{font-size:24px}
+.createbtn .ct{font-weight:700;font-size:13.5px;margin-top:5px}
+.createbtn .cs{font-size:11px;color:var(--dim);margin-top:2px}
+.endrow{display:flex;align-items:center;gap:11px;padding:13px 14px;background:var(--card);
+  border:1px solid var(--line);border-radius:14px;cursor:pointer;box-shadow:var(--shadow)}
+.endrow .ei{font-size:20px}
+.endrow .en{font-weight:700;font-size:14px}
+.endrow .es{font-size:12px;color:var(--dim);margin-top:1px}
+.endrow .eg{margin-left:auto;color:var(--dim);font-size:18px}
+/* booking fee + criteria */
+.feebox{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin:4px 0 10px}
+.feerow{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.feeamt{font-size:20px;font-weight:800;color:var(--brand)}
+.feeunit{font-size:12px;color:var(--sub)}
+.feepill{margin-left:auto;font-size:10.5px;color:var(--gold);background:rgba(255,176,32,.12);
+  padding:3px 9px;border-radius:10px;font-weight:600}
+.feemin{font-size:12px;color:var(--dim);margin-top:6px}
+.crit{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--sub);
+  line-height:1.45;padding:5px 0}
+.crit .critc{color:var(--brand);font-weight:800;flex:0 0 auto}
+/* business account toggle */
+.bizacct{background:linear-gradient(135deg,rgba(0,194,168,.12),rgba(124,92,255,.12));
+  border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
+.bizacct .bh{display:flex;align-items:center;gap:10px}
+.bizacct .bi{font-size:22px}
+.bizacct .bt{font-weight:700;font-size:14.5px}
+.bizacct .bd{font-size:12px;color:var(--sub);margin-top:2px}
+.toggle{margin-left:auto;width:46px;height:27px;border-radius:20px;background:var(--card2);
+  border:1px solid var(--line);position:relative;cursor:pointer;flex:0 0 auto;transition:.2s}
+.toggle.on{background:var(--brand)}
+.toggle .knob{position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;
+  background:#fff;transition:.2s}
+.toggle.on .knob{left:22px}
+.bkfield{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:11px 12px;margin-top:9px}
+.bkfield .bl{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+.bkfield .bv{font-size:14px;margin-top:3px}
+/* create form sections + uploader */
+.fsec{font-size:12px;font-weight:800;color:var(--brand);text-transform:uppercase;
+  letter-spacing:.5px;margin:14px 0 7px}
+.uploader{border:1.5px dashed var(--line);border-radius:12px;padding:18px 12px;text-align:center;
+  cursor:pointer;background:var(--card2)}
+.uploader .upi{font-size:26px}
+.uploader .upt{font-weight:700;font-size:13.5px;margin-top:5px}
+.uploader .ups{font-size:11.5px;color:var(--dim);margin-top:2px}
+.upfile{font-size:12.5px;color:var(--sub);background:var(--card2);border:1px solid var(--line);
+  border-radius:10px;padding:8px 11px;margin-top:8px}
+.docrow{font-size:13px;color:var(--sub);padding:6px 0;display:flex;gap:8px;align-items:center}
+.me{cursor:pointer}
+/* account dropdown menu */
+.mhead{display:flex;align-items:center;gap:10px;padding:2px 2px 4px}
+.mdiv{height:1px;background:var(--line);margin:10px -16px}
+.mopt{display:flex;align-items:center;gap:12px;padding:13px 6px;cursor:pointer;
+  font-size:14.5px;border-radius:10px}
+.mopt:hover{background:var(--card2)}
+.mopt .mi{font-size:18px;width:24px;text-align:center;flex:0 0 auto}
+.mopt .mg{margin-left:auto;color:var(--dim);font-size:16px}
+.mopt.md{color:var(--danger)}
+.sheetbox h3{position:sticky;top:-18px;background:var(--card);margin:-2px -16px 3px;padding:6px 16px 8px;z-index:5}
+.sheetactions{position:sticky;bottom:-32px;background:var(--card);margin:8px -16px -32px;padding:12px 16px 32px;
+  box-shadow:0 -8px 16px rgba(0,0,0,.3)}
+</style>
+</head>
+<body>
+<div id="phone">
+  <div class="topbar">
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v16</span></div>
+    <div class="me" data-act="openMenu">
+      <span id="meName">Keith</span>
+      <span class="avatar" id="meAv" style="background:#ffb020">K</span>
+      <span style="color:var(--dim);font-size:11px;margin-left:2px">▾</span>
+    </div>
+  </div>
+  <div id="view"></div>
+  <div class="nav" id="nav"></div>
+</div>
+<div id="toast"></div>
+<div id="sheet"><div class="sheetbox" id="sheetbox"></div></div>
+
+<script>
+/* ============ GLOBAL ERROR CATCHER (shows errors on-screen instead of blank) ============ */
+window.onerror=function(msg,src,line,col,err){
+  var v=document.getElementById("view");
+  if(v)v.innerHTML='<div style="padding:20px;color:#ff5470;font-size:13px;font-family:monospace;line-height:1.5">'+
+    '<b>⚠️ Render error caught:</b><br><br>'+String(msg)+'<br><br>line '+line+':'+col+
+    (err&&err.stack?'<br><br>'+String(err.stack).replace(/</g,"&lt;").slice(0,500):'')+'</div>';
+  return false;
+};
+
+/* ============ BOOKING DATA (fee + hire criteria per business) ============ */
+// booking[id] = {fee, unit, deposit, criteria:[...]}. Falls back to category defaults.
+const booking={
+  security:{fee:"$65",unit:"/guard/hr",deposit:"25% deposit",min:"4-hr minimum",
+    criteria:["Event date + headcount required","14-day advance booking","Certificate of insurance for venue","Final headcount 72h before"]},
+  green:{fee:"$1,200",unit:"/event build",deposit:"$300 deposit",min:"48-hr lead time",
+    criteria:["Site walk-through required","Power/water access confirmed","Teardown window agreed upfront"]},
+  snap:{fee:"$450",unit:"/4 hrs",deposit:"$100 deposit",min:"3-hr minimum",
+    criteria:["Power outlet within 20ft","Covered space if outdoors","Custom backdrop art 7 days ahead"]},
+  grace_lens:{fee:"$300",unit:"/hr",deposit:"50% deposit",min:"2-hr minimum",
+    criteria:["Shot list shared in advance","Travel fee outside Austin","Gallery delivered in 10 days"]},
+  inn:{fee:"$189",unit:"/night",deposit:"1-night deposit",min:"2-night min on event weekends",
+    criteria:["Card on file","Check-in after 3pm","Group rates for 5+ rooms"]},
+  hostwell:{fee:"$145",unit:"/night",deposit:"$150 deposit",min:"2-night minimum",
+    criteria:["ID verification","No parties without prior OK","Quiet hours after 10pm"]},
+  kayak:{fee:"$45",unit:"/person",deposit:"Full prepay",min:"Groups of 2+",
+    criteria:["Sign waiver","Basic swim ability","Weather-dependent, free reschedule"]},
+  suya:{fee:"$800",unit:"/event day",deposit:"$200 deposit",min:"50-plate minimum",
+    criteria:["10x10 vendor space + power","Menu locked 5 days ahead","Health-permit venues only"]},
+};
+const FEE_DEFAULTS={
+  "Restaurant":{fee:"$25",unit:"/reservation hold",deposit:"Refundable hold",min:"Parties of 6+",criteria:["Card holds large parties","48h cancellation"]},
+  "Bar":{fee:"$150",unit:"/table min spend",deposit:"Card on file",min:"Bottle service tables",criteria:["21+ only","Dress code applies"]},
+  "Service":{fee:"Quote",unit:"on request",deposit:"Varies",min:"Advance booking",criteria:["Details shared for quote"]},
+  "Brand":{fee:"Wholesale",unit:"inquiry",deposit:"—",min:"Bulk orders",criteria:["Min order for events"]},
+  "default":{fee:"Contact",unit:"to book",deposit:"—",min:"—",criteria:["Message for availability"]},
+};
+function bookInfo(id){
+  if(booking[id])return booking[id];
+  const b=biz[id];const c=(b&&b.cat||"").toLowerCase();
+  if(c.includes("restaurant")||c.includes("brunch")||c.includes("caf")||c.includes("vietnam")||c.includes("african")||c.includes("seafood"))return FEE_DEFAULTS["Restaurant"];
+  if(c.includes("bar")||c.includes("cocktail")||c.includes("music")||c.includes("night"))return FEE_DEFAULTS["Bar"];
+  if(c.includes("security")||c.includes("landscap")||c.includes("photo")||c.includes("staff")||c.includes("service"))return FEE_DEFAULTS["Service"];
+  if(c.includes("cloth")||c.includes("brand")||c.includes("access"))return FEE_DEFAULTS["Brand"];
+  return FEE_DEFAULTS["default"];
+}
+
+/* ============ SEED DATA (Austin, TX) ============ */
+const COLORS=["#ffb020","#7c5cff","#00c2a8","#ff6a3d","#4e9cff","#ff5470","#2ec7a0","#c86dd7","#f5a623","#5ac8fa","#ff8a5c","#8fd14f"];
+let ci=0; const col=()=>COLORS[ci++%COLORS.length];
+
+const users={
+  dee_eats:{name:"Keith Clements",h:"@keith_c",vibe:"Austin's unofficial food critic",star:1,foll:48,c:"#ffb020"},
+  priya_night:{name:"KC Clements",h:"@kc_clements",vibe:"Nightlife & music head",star:1,foll:52,c:"#2ec7a0"},
+  ruthie_roams:{name:"Haileigh Alexander",h:"@haileigh_a",vibe:"Traveler / stay-and-explore",c:"#c86dd7"},
+  sunny_flats:{name:"Charles Allen",h:"@charles_allen",vibe:"Family hero, free-weekend master",c:"#ffb020"},
+  marcus_vale:{name:"Markeith Bonner",h:"@markeith_b",vibe:"What's-happening tastemaker",star:1,foll:61,c:"#e0b34a"},
+  kojo_beats:{name:"Evin Bartlett",h:"@evin_b",vibe:"DJ/producer, East Austin",c:"#5ac8fa"},
+  harlow_lena:{name:"Kyle Ellis",h:"@kyle_ellis",vibe:"Style & rooftop culture",c:"#4e9cff"},
+  grace_lens:{name:"Jean Clements",h:"@jean_c",vibe:"Photographer, everyone's plug",c:"#7c5cff"},
+  sam_hostwell:{name:"Nola Clements",h:"@nola_c",vibe:"Superhost, tourism side",c:"#ff8a5c"},
+  coach_bo:{name:"Tiffany Moody",h:"@tiffany_moody",vibe:"Runs open-run hoops, East Austin",c:"#ff6a3d"},
+  tati_makes:{name:"Keno Clements",h:"@keno_c",vibe:"Maker & small-biz owner",c:"#5a7a9a"},
+  rob_secures:{name:"Rob Delacroix",h:"@rob_secures",vibe:"Event security & staffing",c:"#8fd14f"},
+};
+// who each hero-persona follows (for review filtering)
+const follows={
+  dee_eats:["marcus_vale","priya_night","ruthie_roams","sunny_flats"],
+  priya_night:["dee_eats","marcus_vale","kojo_beats","harlow_lena"],
+  ruthie_roams:["dee_eats","sam_hostwell","grace_lens","marcus_vale"],
+  sunny_flats:["dee_eats","coach_bo","grace_lens","harlow_lena"],
+};
+const HEROES=["dee_eats","priya_night","ruthie_roams","sunny_flats"];
+
+const biz={
+  coral:{n:"Coral & Cornbread",cat:"Southern / seafood",hood:"Rainey Street",d:"Low-country boils, string-light patio",r:4.7,cta:"Book a table",ic:"🦐",
+    rev:[["dee_eats","The garlic-butter boil is a love letter to the Gulf. Get the cornbread. Get two.",5],["ruthie_roams","Best patio on Rainey. Brought friends, they wept a little.",5]]},
+  ansel:{n:"Ansel Noodle House",cat:"Vietnamese / late-night",hood:"East Austin",d:"Open till 3am. Pho that fixes everything",r:4.6,cta:"Order ahead",ic:"🍜",
+    rev:[["priya_night","The official after-show HQ. Broth cures everything.",5],["dee_eats","Under-the-radar goat curry on Sundays. Tell no one.",4]]},
+  cofield:{n:"Cofield Table",cat:"Brunch / farm-to-table",hood:"Clarksville",d:"Weekend brunch institution",r:4.5,cta:"Book a table",ic:"🍳",
+    rev:[["sunny_flats","Highchairs, crayons, AND a proper flat white. Holy trinity.",5],["dee_eats","Market-hash changes weekly. Solid if you beat noon.",4]]},
+  mama:{n:"Mama Okafor's",cat:"West African",hood:"East Austin",d:"Jollof & suya with soul",r:4.9,cta:"Order ahead",ic:"🍛",
+    rev:[["dee_eats","My family recipes. Biased, not wrong. Best jollof in Ossaway.",5],["marcus_vale","Bring cash, an appetite, and a nap plan.",5]]},
+  roast:{n:"The Roasthouse",cat:"Café / roaster",hood:"East Austin",d:"Warehouse roaster + espresso bar",r:4.6,cta:"Order ahead",ic:"☕",
+    rev:[["dee_eats","Single-origin flight + cardamom bun = my whole personality.",5],["grace_lens","Great light, patient baristas, strong wifi. My office.",4]]},
+  foundry:{n:"The Foundry",cat:"Live-music venue / bar",hood:"Red River District",d:"Austin's flagship live-music room",r:4.7,cta:"Get tickets",ic:"🎸",
+    rev:[["priya_night","The room where the scene happens. Kojo Fridays are unreal.",5],["marcus_vale","Load-in's a pain but the crowd is worth every stair.",5]]},
+  heights:{n:"Skyline Rooftop",cat:"Cocktail bar (rooftop)",hood:"Downtown",d:"Sunset cocktails above Congress Ave",r:4.4,cta:"Reserve",ic:"🍸",
+    rev:[["harlow_lena","My Thursday office. The smoked-rosemary marg is criminal.",5],["priya_night","Views > pricing, but the views really are that good.",4]]},
+  kayak:{n:"Lady Bird Kayak Co.",cat:"Outdoor rental",hood:"Lady Bird Lake",d:"Guided paddles under the skyline",r:4.8,cta:"Book a paddle",ic:"🛶",
+    rev:[["ruthie_roams","Sunrise mangrove tour = most peaceful hour I've spent here.",5],["sunny_flats","Kids loved the tandem yaks. Guides were saints.",5]]},
+  gallery:{n:"East Side Arts Collective",cat:"Gallery / attraction",hood:"East Austin",d:"Rotating local shows, East Austin Studio Tour",r:4.5,cta:"View shows",ic:"🎨",
+    rev:[["grace_lens","Showed my festival series here. Community shows up.",5],["tati_makes","My craft-night base. They champion makers.",4]]},
+  green:{n:"Greenmark Landscaping",cat:"Landscaping & event grounds",hood:"South Austin",d:"Yards, patios, festival-grounds crews",r:4.6,cta:"Get a quote",ic:"🌿",
+    rev:[["sam_hostwell","Two rental yards guest-ready in a day. They do festival grounds too.",5],["marcus_vale","Reliable for build-out. Grass looks intentional.",4]]},
+  security:{n:"Delacroix Event Security",cat:"Security & staffing",hood:"Downtown",d:"Doors, wristbands, crowd flow",r:4.8,cta:"Hire for your event",ic:"🛡️",
+    rev:[["priya_night","Calm, professional, never heavy-handed. Why big nights stay safe.",5],["marcus_vale","Rob's crew ran our gate like a Swiss watch.",5]]},
+  snap:{n:"SnapPod Photo Booths",cat:"Photo booth service",hood:"South Congress",d:"Open-air booths, instant prints, GIFs",r:4.5,cta:"Book a booth",ic:"📸",
+    rev:[["harlow_lena","Booked for the boutique launch. Line all night, on-brand prints.",5],["grace_lens","I shoot candids, they handle fun photos. Great tandem.",4]]},
+  inn:{n:"The Congress Hotel",cat:"Boutique hotel",hood:"South Congress",d:"48 rooms, restored SoCo landmark",r:4.7,cta:"Book a room",ic:"🏨",
+    rev:[["ruthie_roams","Corner room over the water is worth planning a trip around.",5],["marcus_vale","Where I stash visiting artists. Walkable to everything.",5]]},
+  hostwell:{n:"Hostwell Rentals",cat:"Airbnb host",hood:"East Austin & SoCo",d:"Sam's superhost portfolio",r:4.9,cta:"Book a stay",ic:"🔑",
+    rev:[["ruthie_roams","Sam leaves a hand-drawn map. Superhost for real.",5],["grace_lens","Pier loft light is unreal at sunrise. Booked twice.",5]]},
+  suya:{n:"Suya Sista Cart",cat:"Food vendor (festival)",hood:"mobile — East Austin",d:"Skewers, spice, block-long lines",r:4.8,cta:"Pre-order",ic:"🍢",
+    rev:[["marcus_vale","Every festival I've loved had this cart. Coincidence? No.",5],["priya_night","2am suya after The Foundry is spiritually necessary.",5]]},
+  thread:{n:"ATX Thread Co.",cat:"Clothing & accessories",hood:"South Congress",d:"Austin merch people actually wear",r:4.6,cta:"Shop the drop",ic:"👕",
+    rev:[["harlow_lena","Yes it's mine. The linen line sells out because it slaps.",5],["ruthie_roams","The 'ATX' tote is my forever travel bag.",4]]},
+};
+
+const events={
+  marrowfest:{n:"SXSW",hero:1,host:"marcus_vale",partner:"foundry",
+    date:"Mar 13–22 · Austin, TX",loc:"Downtown Austin · multi-venue",
+    d:"South by Southwest — the convergence of music, film, and tech. Hundreds of showcases, panels, and pop-ups across downtown Austin. One badge, one ecosystem: every venue, food vendor, stay, and service is tagged, reviewable, and bookable right here.",
+    att:["priya_night","dee_eats","harlow_lena"],
+    eco:{
+      "🎤 Performers":[["kojo_beats","Night-two headline set",1],["Vela & the Tides","Day-party showcase"],["Marsh Kids Collective","Youth stage"]],
+      "🍔 Food":[["suya","Skewer pop-up",1],["coral","Gulf shrimp shack",1],["ansel","Late-night noodle tent",1],["Frostline Shave Ice","Cooldown corner"]],
+      "🎡 Side Entertainment":[["snap","Badge GIF wall",1],["thread","Limited SXSW drop",1],["Tidewheel","Rooftop lounge"],["gallery","Live-mural corner",1]],
+      "🛡️ Staff & Services":[["security","Gates, wristbands, crowd flow",1],["Bay Med Response","First-aid tents"],["grace_lens","Official photographer",1],["green","Venue build-out",1]],
+      "🏨 Travel & Stay":[["inn","Official badge hotel",1],["hostwell","Overflow stays",1],["BayLift Rideshare","Designated pickup"]],
+      "📍 Nearby":[["kayak","Recovery paddle on the lake",1]],
+    }},
+  hoops:{n:"East Austin Open Run",host:"coach_bo",date:"Every Sunday · 9:00 AM",loc:"Givens Park court, East Austin",
+    d:"Weekly open-run hoops + free youth clinic before the grown-folks game.",att:["coach_bo","sunny_flats","marcus_vale"],
+    eco:{"🍔 Food":[["suya","Courtside",1],["mama","Post-game plates",1]]}},
+  market:{n:"Mueller Farmers Market",host:"tati_makes",date:"Every Sunday · 10AM–2PM",loc:"Mueller Lake Park",
+    d:"Produce, makers, coffee cart, craft tables for kids. Austin's most wholesome hour.",att:["sunny_flats","tati_makes","dee_eats"],
+    eco:{"🍔 Food":[["roast","Coffee cart",1],["cofield","Breakfast-to-go",1]]}},
+  gallery_night:{n:"East Side Gallery Night",host:"grace_lens",date:"First Thursday · 6–10 PM",loc:"East Austin gallery row",
+    d:"New openings up the block, cheap wine, live sketching, late noodles after.",att:["grace_lens","harlow_lena","ruthie_roams"],
+    eco:{"🎨 Featured":[["gallery","Grace's show",1]],"🍔 After":[["ansel","After-crowd",1],["thread","Pop-up",1]]}},
+  paddle:{n:"Lady Bird Sunset Paddle",host:"kayak",date:"Fridays · 6:30 PM",loc:"Lady Bird Lake launch",
+    d:"Golden-hour guided paddle under the downtown skyline. Beginner-friendly, bats at dusk.",att:["ruthie_roams","sam_hostwell","sunny_flats"],
+    eco:{"🏨 Add-ons":[["inn","Package deal",1],["hostwell","Guest add-on",1],["grace_lens","Photo add-on",1]]}},
+};
+
+/* ============ DISTANCE + IMAGERY ============ */
+// deterministic "miles away" per entity (demo), plus a gradient poster per category
+const DIST={
+  marrowfest:1.2,hoops:3.4,market:0.8,gallery_night:2.1,paddle:1.5,
+  coral:1.3,ansel:2.4,cofield:0.9,mama:3.1,roast:1.8,foundry:2.0,heights:2.7,
+  kayak:1.4,gallery:2.3,green:1.1,security:2.0,snap:2.8,inn:1.2,hostwell:1.6,suya:3.0,thread:2.6
+};
+function miles(id){const d=DIST[id];return d?`${d} mi`:"nearby";}
+const POSTER={
+  fest:"linear-gradient(135deg,#ff6a3d,#ffb020 65%,#7c5cff)",
+  music:"linear-gradient(135deg,#7c5cff,#4e9cff)",
+  food:"linear-gradient(135deg,#ff6a3d,#ff5470)",
+  cafe:"linear-gradient(135deg,#8a5a2b,#d9a066)",
+  bar:"linear-gradient(135deg,#2b5876,#7c5cff)",
+  outdoor:"linear-gradient(135deg,#1d976c,#2ec7a0)",
+  art:"linear-gradient(135deg,#c86dd7,#7c5cff)",
+  service:"linear-gradient(135deg,#3a4a5a,#2ec7a0)",
+  stay:"linear-gradient(135deg,#2b5876,#4e4376)",
+  brand:"linear-gradient(135deg,#c86dd7,#ff8a5c)",
+  market:"linear-gradient(135deg,#1d976c,#ffb020)",
+  event:"linear-gradient(135deg,#4e9cff,#7c5cff)"
+};
+// real photos (remote, keyword-based) — loads when phone has internet; gradient shows underneath as fallback
+const PHOTO={
+  marrowfest:"1501281668745-f7f57925c3b4", // concert crowd
+  hoops:"1546519638-68e109498ffc", // basketball
+  market:"1488459716781-31db52582fe9", // farmers market
+  gallery_night:"1531058020387-3be344556be6", // gallery
+  paddle:"1544551763-46a013bb70d5", // kayak
+  coral:"1504674900247-0877df9cc836", // food plate
+  ansel:"1569718212165-3a8278d5f624", // noodles
+  cofield:"1533089860892-a7c6f0a88666", // brunch
+  mama:"1604908176997-125f25cc6f3d", // african food
+  roast:"1495474472287-4d71bcdd2085", // coffee
+  foundry:"1470229722913-7c0e2dbbafd3", // live music venue
+  heights:"1470337458703-46ad1756a187", // cocktail bar
+  kayak:"1544551763-46a013bb70d5", // kayak
+  gallery:"1531058020387-3be344556be6", // gallery
+  green:"1558904541-efa843a96f01", // landscaping
+  security:"1521737604893-d14cc237f11d", // security crowd
+  snap:"1554080353-a576cf803bda", // photo booth
+  inn:"1566073771259-6a8506099945", // hotel
+  hostwell:"1522708323590-d24dbb6b0267", // airbnb interior
+  suya:"1555939594-58d7cb561 ad9".replace(" ",""), // grilled skewers
+  thread:"1441984904996-e0b6ba687e04", // clothing store
+};
+// demo personas mapped to One Piece characters — images self-hosted in repo (no hotlink/referer issues)
+const OP={
+  dee_eats:"img/crew/luffy.png",      // Keith → Luffy
+  priya_night:"img/crew/zoro.png",    // KC → Zoro
+  ruthie_roams:"img/crew/hancock.png",// Haileigh → Boa Hancock
+  sunny_flats:"img/crew/sanji.png",   // Charles → Sanji
+  marcus_vale:"img/crew/usopp.png",   // Markeith → Usopp
+  kojo_beats:"img/crew/brook.png",    // Evin → Brook
+  harlow_lena:"img/crew/franky.png",  // Kyle → Franky
+  grace_lens:"img/crew/robin.png",    // Jean → Robin
+  sam_hostwell:"img/crew/chopper.png",// Nola → Chopper
+  coach_bo:"img/crew/nami.png",       // Tiffany → Nami
+  tati_makes:"img/crew/garp.png",     // Keno → Garp
+};
+const uphoto=(id)=>OP[id]||null;
+const photoUrl=(id,w,h)=>PHOTO[id]?`https://images.unsplash.com/photo-${PHOTO[id]}?w=${w||500}&h=${h||300}&fit=crop`:null;
+function posterFor(cat){cat=(cat||"").toLowerCase();
+  if(cat.includes("seafood")||cat.includes("african")||cat.includes("brunch")||cat.includes("vietnam")||cat.includes("vendor"))return POSTER.food;
+  if(cat.includes("caf")||cat.includes("roaster"))return POSTER.cafe;
+  if(cat.includes("music")||cat.includes("bar")||cat.includes("cocktail")||cat.includes("night"))return POSTER.bar;
+  if(cat.includes("outdoor")||cat.includes("rental"))return POSTER.outdoor;
+  if(cat.includes("gallery")||cat.includes("attraction"))return POSTER.art;
+  if(cat.includes("security")||cat.includes("landscap")||cat.includes("photo")||cat.includes("staff"))return POSTER.service;
+  if(cat.includes("hotel")||cat.includes("airbnb")||cat.includes("host"))return POSTER.stay;
+  if(cat.includes("cloth")||cat.includes("brand")||cat.includes("access"))return POSTER.brand;
+  return POSTER.event;}
+
+/* ============ RECENT ACTIVITY (latest 3 per followed entity) ============ */
+// each: {t:type emoji-label, x:what they did, ref:optional link target [type,id]}
+const activity={
+  marcus_vale:[
+    {t:"🎪 Hosting",x:"Announced Marrowfest lineup — three stages on the pier",ref:["event","marrowfest"]},
+    {t:"⭐ Reviewed",x:'"Mama Okafor\'s: bring cash, an appetite, and a nap plan."',ref:["biz","mama"]},
+    {t:"📍 Checked in",x:"At The Foundry for Kojo\'s Friday set",ref:["biz","foundry"]}],
+  priya_night:[
+    {t:"✅ Going",x:"Marked attending Marrowfest",ref:["event","marrowfest"]},
+    {t:"⭐ Reviewed",x:'"Delacroix Security: never heavy-handed. Why big nights stay safe."',ref:["biz","security"]},
+    {t:"🍜 Recommended",x:"Ansel Noodle House as the official after-show HQ",ref:["biz","ansel"]}],
+  dee_eats:[
+    {t:"⭐ Reviewed",x:'"Coral & Cornbread\'s garlic-butter boil is a love letter to the Gulf."',ref:["biz","coral"]},
+    {t:"🍽️ Scouting",x:"Hunting produce at Mueller Farmers Market",ref:["event","market"]},
+    {t:"✅ Going",x:"Marked attending Marrowfest",ref:["event","marrowfest"]}],
+  ruthie_roams:[
+    {t:"⭐ Reviewed",x:'"The Congress Hotel corner room over SoCo is worth a whole trip."',ref:["biz","inn"]},
+    {t:"📍 Checked in",x:"Lady Bird Sunset Paddle — bats at dusk",ref:["event","paddle"]},
+    {t:"🧭 Guided",x:"Posted a 2-day Austin itinerary for first-timers"}],
+  sunny_flats:[
+    {t:"👪 Family pick",x:"Took the kids to Lady Bird Kayak Co. tandem yaks",ref:["biz","kayak"]},
+    {t:"⭐ Reviewed",x:'"Cofield Table: highchairs, crayons, AND a proper flat white."',ref:["biz","cofield"]},
+    {t:"✅ Going",x:"Sunday Flats Open Run — kids in the clinic",ref:["event","hoops"]}],
+  kojo_beats:[
+    {t:"🎤 Performing",x:"Sunset main-stage headline set at Marrowfest",ref:["event","marrowfest"]},
+    {t:"📍 Checked in",x:"Studio session, dropping a new edit Friday"},
+    {t:"🎶 Curating",x:"Locked the Marrowfest after-party bill"}],
+  harlow_lena:[
+    {t:"👕 Dropped",x:"Limited Marrowfest merch line at Bay Thread Co.",ref:["biz","thread"]},
+    {t:"✅ Going",x:"Marked attending Marrowfest",ref:["event","marrowfest"]},
+    {t:"⭐ Reviewed",x:'"Heights Rooftop smoked-rosemary margarita is criminal."',ref:["biz","heights"]}],
+  grace_lens:[
+    {t:"📸 Shooting",x:"Official photographer for Marrowfest",ref:["event","marrowfest"]},
+    {t:"🎨 Featured",x:"New show at East Side Arts Collective",ref:["biz","gallery"]},
+    {t:"⭐ Reviewed",x:'"Hostwell pier loft light is unreal at sunrise."',ref:["biz","hostwell"]}],
+  sam_hostwell:[
+    {t:"🔑 Opened",x:"Marrowfest overflow stays now bookable",ref:["biz","hostwell"]},
+    {t:"⭐ Reviewed",x:'"Greenmark got two rental yards guest-ready in a day."',ref:["biz","green"]},
+    {t:"📍 Checked in",x:"Lady Bird Sunset Paddle with guests",ref:["event","paddle"]}],
+  coach_bo:[
+    {t:"🏀 Hosting",x:"Sunday Flats Open Run + free youth clinic",ref:["event","hoops"]},
+    {t:"🍛 Recommended",x:"Suya Sista Cart courtside for post-game plates",ref:["biz","suya"]},
+    {t:"📍 Checked in",x:"Community court cleanup crew, Saturday AM"}],
+  tati_makes:[
+    {t:"🧵 Hosting",x:"Leading vendors at Mueller Farmers Market",ref:["event","market"]},
+    {t:"🎨 Craft night",x:"Booth at East Side Arts Collective",ref:["biz","gallery"]},
+    {t:"📍 Checked in",x:"Restocked the maker table for Saturday"}],
+  rob_secures:[
+    {t:"🛡️ Staffing",x:"Running gates + crowd flow for Marrowfest",ref:["event","marrowfest"]},
+    {t:"✅ Secured",x:"Flawless run at last Foundry sellout",ref:["biz","foundry"]},
+    {t:"📍 Hiring",x:"Posted 6 event-staff openings for the fall"}],
+};
+// why-to-follow blurbs for Discover People
+const whyFollow={
+  marcus_vale:"The Bay's #1 connector — follow him and you\'ll never miss what\'s happening.",
+  priya_night:"Plugged into every DJ + after-hours spot. Your nightlife shortcut.",
+  dee_eats:"48k trust her plate. Follow to eat like a local, never a tourist.",
+  ruthie_roams:"Turns weekends into itineraries. Follow for trusted travel + stays.",
+  sunny_flats:"Master of the free family weekend. Follow for kid-friendly wins.",
+  kojo_beats:"Headliner + after-party curator. Follow to catch sets first.",
+  harlow_lena:"Style plug + rooftop culture. Follow for drops and the good tables.",
+  grace_lens:"Everyone\'s photographer. Follow to see Austin through her lens.",
+  sam_hostwell:"Superhost who knows the tourism side cold. Follow for the best stays.",
+  coach_bo:"Community glue in East Austin. Follow for hoops + youth clinics.",
+  tati_makes:"Maker + market lead. Follow for craft nights and small-biz finds.",
+  rob_secures:"Runs the safest nights in Austin. Follow — or hire — for your event.",
+};
+
+/* ============ USER PROFILE DATA (socials, places been, photos, privacy) ============ */
+const socials={
+  dee_eats:{ig:"dee.eats.atx",tiktok:"deeeats",x:"dee_eats",yt:"DeeEatsATX"},
+  priya_night:{ig:"priya.after.dark",tiktok:"priyanight",x:"priya_night",snap:"priyaa"},
+  ruthie_roams:{ig:"ruthie.roams",tiktok:"ruthieroams",x:"ruthieroams",fb:"ruthie.calder"},
+  sunny_flats:{ig:"sunny.and.crew",fb:"sonia.reyes",tiktok:"sunnycrew"},
+  marcus_vale:{ig:"marcusvale",x:"marcusvale",tiktok:"marcusvale",yt:"MarcusValeATX",snap:"mvale"},
+  kojo_beats:{ig:"kojo.beats",tiktok:"kojobeats",sc:"kojobeats"},
+  harlow_lena:{ig:"lena.harlow",tiktok:"lenaharlow",x:"lenaharlow"},
+  grace_lens:{ig:"grace.lens",x:"gracelens",yt:"GraceLens"},
+  sam_hostwell:{ig:"hostwell.stays",fb:"sam.hostwell"},
+  coach_bo:{ig:"coachbo.hoops",x:"coachbo"},
+  tati_makes:{ig:"tati.makes",tiktok:"tatimakes",fb:"tatiana.cruz"},
+  rob_secures:{ig:"delacroix.security",fb:"delacroix.events",x:"delacroixsec"},
+};
+const SOCIAL_META={ig:["Instagram","📷"],tiktok:["TikTok","🎵"],x:["X / Twitter","𝕏"],fb:["Facebook","👥"],snap:["Snapchat","👻"],sc:["SoundCloud","🎧"],yt:["YouTube","▶️"]};
+// privacy per user: public | friends | private. friends = only visible if you follow them (or they follow you / shared)
+const privacy={
+  dee_eats:"public",marcus_vale:"public",priya_night:"public",grace_lens:"public",
+  ruthie_roams:"friends",sunny_flats:"friends",harlow_lena:"friends",kojo_beats:"public",
+  sam_hostwell:"public",coach_bo:"public",tati_makes:"friends",rob_secures:"public",
+};
+// places each user has "been" (biz id -> {rating, photo?, note})
+const been={
+  dee_eats:[["mama",5,1],["coral",5,1],["ansel",4,1],["roast",5,0],["cofield",4,0]],
+  priya_night:[["foundry",5,1],["ansel",5,1],["security",5,0],["heights",4,1]],
+  marcus_vale:[["mama",5,1],["foundry",5,1],["inn",5,0],["suya",5,1],["security",5,0]],
+  ruthie_roams:[["inn",5,1],["coral",5,1],["hostwell",5,1],["kayak",5,1]],
+  sunny_flats:[["kayak",5,1],["cofield",5,0],["market",5,1]],
+  grace_lens:[["gallery",5,1],["hostwell",5,1],["roast",4,0],["snap",4,1]],
+  harlow_lena:[["heights",5,1],["thread",5,1],["snap",5,0]],
+  kojo_beats:[["foundry",5,1],["ansel",5,0]],
+  sam_hostwell:[["hostwell",5,1],["green",5,0],["inn",4,1]],
+  coach_bo:[["suya",5,1],["mama",5,0]],
+  tati_makes:[["gallery",4,1],["market",5,1]],
+  rob_secures:[["foundry",5,0],["security",5,0]],
+};
+// things each persona has linked/endorsed (official collabs, tags, promos) -> {type,id,role}
+const endorsed={
+  dee_eats:[["biz","mama","Official taste partner"],["biz","coral","Endorsed — sponsored review"],["event","market","Promoting this week"]],
+  priya_night:[["biz","foundry","Official nightlife partner"],["event","marrowfest","SXSW ambassador"],["biz","ansel","Endorsed after-spot"]],
+  marcus_vale:[["event","marrowfest","Host + headline promoter"],["biz","inn","Official stay partner"],["biz","security","Trusted vendor"]],
+  ruthie_roams:[["biz","inn","Endorsed stay"],["biz","hostwell","Affiliate host partner"],["event","paddle","Promoting"]],
+  sunny_flats:[["biz","kayak","Family-approved partner"],["event","market","Promoting"]],
+};
+// can the current viewer (me) see this user's full breakdown?
+function canSee(uid){
+  if(uid===me)return true;
+  if(privacy[uid]==="public")return true;
+  const iFollow=(follows[me]||[]).includes(uid);
+  const theyFollowMe=(follows[uid]||[]).includes(me);
+  return iFollow||theyFollowMe; // "friends" = mutual/either-direction connection, or explicitly shared
+}
+
+/* ============ STATE ============ */
+let me="dee_eats";
+let eventMode="todo"; // todo | hire
+let showEndorsed=false;
+let bizAccount=false; // user toggled into business-account mode
+let createdBiz=[]; // ids of user-created businesses
+let createdEvents=[]; // ids of user-created events
+let pendingDocs=[]; // uploaded legal docs for the in-progress business form
+let newCount=0;
+let attending={marrowfest:false};
+let reviewFilter="follow"; // everyone | follow | close
+let searchQ="";
+let sortMode="proximity"; // proximity | close | interacted
+// demo "interaction score" per entity (higher = more you've interacted)
+const INTERACT={mama:98,coral:91,marrowfest:95,ansel:80,roast:76,foundry:70,market:66,
+  gallery_night:60,paddle:58,hoops:55,cofield:72,heights:50,kayak:64,gallery:48,
+  green:30,security:40,snap:35,inn:62,hostwell:45,suya:88,thread:52};
+const CLOSE={dee_eats:["marcus_vale","priya_night"],priya_night:["kojo_beats","marcus_vale"],
+  ruthie_roams:["sam_hostwell","grace_lens"],sunny_flats:["coach_bo","grace_lens"]};
+// events/biz "close-friend" score = how many of your close friends touched it
+function closeScore(id){const cf=CLOSE[me]||[];const e=events[id];
+  const att=e?(e.att||[]):Object.entries(biz[id]?.rev||[]).map(r=>r[1]&&r[1][0]);
+  const revUsers=biz[id]?biz[id].rev.map(r=>r[0]):[];
+  const touch=(e?e.att||[]:revUsers);
+  return touch.filter(u=>cf.includes(u)).length;}
+function sortIds(ids){
+  const arr=[...ids];
+  if(sortMode==="proximity")arr.sort((a,b)=>(DIST[a]||99)-(DIST[b]||99));
+  else if(sortMode==="interacted")arr.sort((a,b)=>(INTERACT[b]||0)-(INTERACT[a]||0));
+  else if(sortMode==="close")arr.sort((a,b)=>closeScore(b)-closeScore(a)||(DIST[a]||99)-(DIST[b]||99));
+  return arr;}
+function sortbar(){
+  const opts=[["proximity","📍 Nearest"],["close","⭐ Close friends"],["interacted","🔥 Most interacted"]];
+  return `<div class="sortbar">${opts.map(([k,l])=>
+    `<span class="sortchip ${sortMode===k?'on':''}" ${da('setSort',k)}>${l}</span>`).join("")}</div>`;}
+function setSort(m){sortMode=m;render();}
+
+/* ============ HELPERS ============ */
+const $=(s)=>document.querySelector(s);
+// always re-query these live so they can never be stale/null
+function setView(html){const el=document.getElementById("view");if(el)el.innerHTML=html;}
+function setNav(html){const el=document.getElementById("nav");if(el)el.innerHTML=html;}
+function av(uid,size){const u=users[uid]||{name:uid,c:"#4e9cff"};
+  const i=(u.name||uid)[0].toUpperCase();
+  const ph=uphoto(uid);
+  const dim=size?`width:${size}px;height:${size}px;font-size:${size*.4}px;`:'';
+  if(ph)return `<span class="avatar" style="${dim}background-image:url('${ph}');background-size:cover;background-position:center;color:transparent">${i}</span>`;
+  return `<span class="avatar" style="background:${u.c||'#4e9cff'};${dim}">${i}</span>`;}
+function stars(r){return "★".repeat(Math.round(r))+`<span style="color:var(--dim)">${"★".repeat(5-Math.round(r))}</span>`;}
+// escape a value for safe use inside an inline onclick='...' single-quoted JS string in HTML
+function esc(s){return String(s).replace(/\\/g,"").replace(/'/g,"\u2019").replace(/"/g,"&quot;");}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1900);}
+function setMe(uid){me=uid;const u=users[uid];$("#meName").textContent=u.name.split(" ")[0];
+  const a=$("#meAv");a.textContent=u.name[0];a.style.background=u.c;render();}
+
+/* ============ EVENT DELEGATION (bulletproof for mobile Safari) ============ */
+// One global click listener. Elements carry data-act + data-args; no inline onclick needed.
+document.addEventListener("click",function(ev){
+  const el=ev.target.closest("[data-act]");
+  if(!el)return;
+  const act=el.getAttribute("data-act");
+  const args=(el.getAttribute("data-args")||"").split("|");
+  ev.stopPropagation();
+  try{ ACTIONS[act]&&ACTIONS[act].apply(null,args); }
+  catch(e){ const v=document.getElementById("view"); if(v)v.innerHTML='<div style="padding:20px;color:#ff5470;font-family:monospace;font-size:13px">Action error: '+act+' — '+e.message+'</div>'; }
+});
+// action registry
+let ACTIONS={};
+// helper to build a data-attr trigger: da('open','biz','coral') -> data-act="open" data-args="biz|coral"
+function da(act){const args=[].slice.call(arguments,1).map(a=>String(a).replace(/\|/g,"\uff5c").replace(/"/g,"&quot;")).join("|");
+  return `data-act="${act}" data-args="${args}"`;}
+
+/* ============ NAV ============ */
+let tab="discover";
+const TABS=[["discover","🧭","Discover"],["events","🎟️","Events"],["map","📍","Map"],["following","👥","Following"],["profile","👤","You"]];
+function nav(){setNav(TABS.map(([id,i,l])=>
+  `<button class="${tab===id?'on':''}" ${da('go',id)}><span class="i">${i}</span>${l}</button>`).join(""));}
+function go(t){tab=t;stack=[];render();scrollTop();}
+
+/* ============ ROUTER (with a small stack for detail views) ============ */
+let stack=[]; // {type:'biz'|'event'|'user', id}
+function scrollTop(){try{window.scrollTo(0,0);}catch(e){}}
+function open(type,id){stack.push({type,id});render();scrollTop();}
+function back(){stack.pop();render();scrollTop();}
+// register all delegated actions
+ACTIONS={
+  go:(t)=>go(t),
+  open:(type,id)=>open(type,id),
+  back:()=>back(),
+  setSort:(m)=>setSort(m),
+  setFilter:(f)=>setFilter(f),
+  setEventMode:(m)=>setEventMode(m),
+  setMe:(u)=>setMe(u),
+  openMenu:()=>openSheet(sheetMenu()),
+  menuProfile:()=>{closeSheet();stack=[{type:"user",id:me}];tab="profile";render();scrollTop();},
+  menuGoProfile:()=>{closeSheet();go("profile");},
+  menuSettings:()=>openSheet(sheetSettings()),
+  menuCustomize:()=>openSheet(sheetCustomize()),
+  menuSwitch:()=>openSheet(sheetSwitch()),
+  menuLogin:()=>{closeSheet();toast("🔑 Login screen (demo)");},
+  menuSignout:()=>{closeSheet();toast("👋 Signed out (demo)");},
+  menuItem:(label)=>{closeSheet();toast(label+" (demo)");},
+  markAttending:(id)=>markAttending(id),
+  toast:(m)=>toast(m),
+  confirmAtt:(id,aud)=>confirmAtt(id,aud),
+  unAtt:(id)=>unAtt(id),
+  closeSheet:()=>closeSheet(),
+  onSearchClear:()=>onSearch(""),
+  createEvent:()=>openSheet(sheetCreate("event")),
+  createBiz:()=>openSheet(sheetCreate("biz")),
+  mockUpload:()=>mockUpload(),
+  toggleEndorsed:()=>{showEndorsed=!showEndorsed;render();},
+  toggleBizAccount:()=>{bizAccount=!bizAccount;render();toast(bizAccount?'🏢 Business account ON':'Switched back to personal');},
+  editBooking:()=>openSheet(sheetBooking()),
+  saveBooking:()=>{closeSheet();toast('✓ Booking info saved (demo)');},
+  submitCreate:(kind)=>submitCreate(kind),
+};
+
+function render(){
+  nav();
+  if(stack.length){const top=stack[stack.length-1];
+    if(top.type==="biz")return renderBiz(top.id);
+    if(top.type==="event")return renderEvent(top.id);
+    if(top.type==="user")return renderUser(top.id);
+  }
+  if(tab==="discover")return renderDiscover();
+  if(tab==="events")return renderEvents();
+  if(tab==="map")return renderMap();
+  if(tab==="following")return renderFollowing();
+  if(tab==="profile")return renderProfile();
+}
+
+/* ============ DISCOVER (tile-based) ============ */
+function friendsAttending(eid){const f=follows[me]||[];return (events[eid].att||[]).filter(u=>f.includes(u));}
+function searchbar(ph){return `<div class="searchwrap"><span class="si">🔍</span>
+  <input class="search" placeholder="${ph}" value="${searchQ.replace(/"/g,'&quot;')}" oninput="onSearch(this.value)">
+  ${searchQ?`<span class="sx" ${da('onSearchClear')}>✕</span>`:''}</div>`;}
+function matchQ(name,extra){if(!searchQ)return true;const q=searchQ.toLowerCase();
+  return (name+" "+(extra||"")).toLowerCase().includes(q);}
+
+function imgStyle(url,grad,h){
+  const bg=url?`background-image:url('${url}');background-size:cover;background-position:center;`:`background:${grad};`;
+  return `${bg}${h?`height:${h}px;`:''}`;}
+
+// big hero event tile
+function eventTile(id,big){const e=events[id];const fa=friendsAttending(id);
+  const grad=e.hero?POSTER.fest:POSTER.event;
+  const cap=fa.length?`${fa.map(u=>users[u].name.split(" ")[0]).join(", ")} ${fa.length>1?'are':'is'} going`:e.date;
+  return `<div class="tile ${big?'big':''}" ${da('open','event',id)}>
+    <div class="tileimg" style="${imgStyle(photoUrl(id,big?800:400,big?400:280),grad)}">
+      <span class="scrim"></span>
+      <span class="badge">🎟️ Event</span>
+      <span class="dist">📍 ${miles(id)}</span>
+      ${fa.length?`<span class="stack">${fa.slice(0,3).map(u=>av(u,22)).join("")}</span>`:''}
+    </div>
+    <div class="cap">
+      <div class="capttl">${e.hero?'🎪 ':''}${e.n}</div>
+      <div class="capline">${cap}</div>
+      <div class="caploc">📍 ${e.loc}</div>
+    </div></div>`;}
+
+// business tile
+function bizTile(id){const b=biz[id];
+  return `<div class="tile" ${da('open','biz',id)}>
+    <div class="tileimg" style="${imgStyle(photoUrl(id,400,280),posterFor(b.cat))}">
+      <span class="scrim"></span>
+      <span class="badge">${b.ic} ${b.cat.split(' ')[0]}</span>
+      <span class="dist">📍 ${miles(id)}</span>
+      <span class="rate">★ ${b.r}</span>
+    </div>
+    <div class="cap">
+      <div class="capttl">${b.n}</div>
+      <div class="capline">${b.d}</div>
+      <div class="caploc">📍 ${b.hood} · ${miles(id)} away</div>
+    </div></div>`;}
+
+function renderDiscover(){
+  const allBiz=Object.keys(biz);const allEv=Object.keys(events);
+  const fBiz=allBiz.filter(id=>matchQ(biz[id].n,biz[id].cat+" "+biz[id].hood));
+  const fEv=allEv.filter(id=>matchQ(events[id].n,events[id].loc));
+  let body;
+  if(searchQ){
+    body=`<div class="sect">Results for "${searchQ}"</div>
+      <div class="grid">${fEv.map(e=>eventTile(e)).join("")}${fBiz.map(b=>bizTile(b)).join("")}</div>
+      ${(!fEv.length&&!fBiz.length)?'<div class="empty">Nothing matched. Try a place, food, or event name.</div>':''}`;
+  }else{
+    const bizSorted=sortIds(["mama","coral","ansel","roast","suya","foundry","inn","heights"]);
+    const evSorted=sortIds(["market","gallery_night","paddle","hoops"]);
+    body=`
+    ${eventTile("marrowfest",1)}
+    <div class="sect">🍽️ Places for you</div>
+    <div class="grid">${bizSorted.map(b=>bizTile(b)).join("")}</div>
+    <div class="sect">📅 Happening soon</div>
+    <div class="grid">${evSorted.map(e=>eventTile(e)).join("")}</div>`;
+  }
+  setView(`<div class="h1">Discover</div>
+  <div class="sub">Austin at a glance — filtered through your people.</div>
+  ${searchbar("Search events, food, places…")}
+  ${searchQ?'':sortbar()}
+  ${body}`);
+}
+function onSearch(v){searchQ=v;render();}
+function bizRow(id){const b=biz[id];return `<div class="eco" ${da('open','biz',id)}>
+  <div class="ic">${b.ic}</div><div><div class="nm">${b.n}</div>
+  <div class="ds">${b.cat} · <span class="stars">★${b.r}</span> · 📍 ${b.hood} · ${miles(id)}</div></div>
+  <div class="go">›</div></div>`;}
+function eventRow(id){const e=events[id];return `<div class="eco" ${da('open','event',id)}>
+  <div class="ic">📅</div><div><div class="nm">${e.n}</div>
+  <div class="ds">${e.date} · 📍 ${e.loc} · ${miles(id)}</div></div><div class="go">›</div></div>`;}
+
+/* ============ EVENTS LIST ============ */
+function renderEvents(){
+  const all=Object.keys(events);
+  const f=all.filter(id=>matchQ(events[id].n,events[id].loc));
+  setView(`<div class="h1">Events</div>
+  <div class="sub">Every event is a hub — tap to see its whole ecosystem.</div>
+  ${searchbar("Search events…")}
+  ${eventTile("marrowfest",1)}
+  <div class="grid">${f.filter(id=>id!=="marrowfest").map(e=>eventTile(e)).join("")}</div>
+  ${!f.length?'<div class="empty">No events matched.</div>':''}`);
+}
+
+/* ============ EVENT DETAIL (the hero) ============ */
+function renderEvent(id){
+  const e=events[id];const host=users[e.host]||{name:biz[e.host]?.n||e.host};
+  const fa=friendsAttending(id);const going=attending[id];
+  // classify each eco section into TO-DO (what to enjoy) vs HIRE (services/support you can book)
+  const HIRE_SECTS=["🛡️ Staff & Services"];
+  const HIRE_CATS=/security|landscap|photo|staff|grounds|medic/i;
+  function sectMode(sect){return HIRE_SECTS.includes(sect)?"hire":"todo";}
+  function itemIsHire(sect,ref){const b=biz[ref];
+    if(sectMode(sect)==="hire")return true;
+    return b&&HIRE_CATS.test(b.cat);}
+
+  function ecoTile(ref,role){
+    const b=biz[ref],u=users[ref];
+    if(b)return `<div class="tile" ${da('open','biz',ref)}>
+      <div class="tileimg" style="${imgStyle(photoUrl(ref,300,180),posterFor(b.cat),78)}">
+        <span class="scrim"></span><span class="badge">${b.ic}</span><span class="rate">★ ${b.r}</span></div>
+      <div class="cap"><div class="capttl" style="font-size:13px">${b.n}</div>
+      <div class="caploc">${role}</div></div></div>`;
+    if(u)return `<div class="tile" ${da('open','user',ref)}>
+      <div class="tileimg" style="${imgStyle(uphoto(ref),POSTER.music,78)}"><span class="scrim"></span></div>
+      <div class="cap"><div class="capttl" style="font-size:13px">${u.name}</div>
+      <div class="caploc">${role}</div></div></div>`;
+    return `<div class="tile" style="opacity:.75">
+      <div class="tileimg" style="height:78px;background:${POSTER.event};align-items:center;justify-content:center;font-size:24px">✨</div>
+      <div class="cap"><div class="capttl" style="font-size:13px">${ref}</div>
+      <div class="caploc" style="color:var(--dim)">${role}</div></div></div>`;}
+
+  let eco="";
+  for(const[sect,items]of Object.entries(e.eco||{})){
+    const kept=items.filter(([ref,role])=>{
+      const isHire=itemIsHire(sect,ref);
+      return eventMode==="hire"?isHire:!isHire;
+    });
+    if(!kept.length)continue;
+    eco+=`<div class="sect">${sect}</div><div class="grid">`;
+    eco+=kept.map(([ref,role])=>ecoTile(ref,role)).join("")+`</div>`;
+  }
+  if(!eco)eco=`<div class="empty">Nothing in this view yet.</div>`;
+
+  const modeBar=e.hero?`<div class="modebar">
+    <button class="modebtn ${eventMode==='todo'?'on':''}" ${da('setEventMode','todo')}>🎉 What to do</button>
+    <button class="modebtn ${eventMode==='hire'?'on':''}" ${da('setEventMode','hire')}>🤝 Hire & support</button>
+  </div>
+  <p class="modehint">${eventMode==='todo'?'Everything to see, hear, eat & enjoy at '+e.n+'.':'The vendors, crews & talent behind '+e.n+' — tap any to book or hire.'}</p>`:'';
+
+  setView(`<button class="backbtn" ${da('back')}>‹ Back</button>
+  <div class="card"><div class="banner" style="${imgStyle(photoUrl(id,800,400),e.hero?POSTER.fest:POSTER.event)};height:150px"><span class="scrim"></span><span class="tag" style="position:relative;z-index:2">${e.hero?'⭐ Hero event':'Event'}</span></div>
+  <div class="pad">
+    <div class="title" style="font-size:20px">${e.hero?'🎪 ':''}${e.n}</div>
+    <p class="meta">${e.date}</p><p class="meta">📍 ${e.loc} · <b style="color:var(--brand)">${miles(id)} away</b></p>
+    <div class="row" style="margin:9px 0" ${da('open','user',e.host)} >
+      ${users[e.host]?av(e.host):'<span class="ic" style="width:26px;height:26px;font-size:14px">🏢</span>'}
+      <span class="meta">Hosted by <b style="color:var(--ink)">${host.name}</b></span></div>
+    <p class="meta" style="line-height:1.5;color:var(--sub);margin:8px 0 12px">${e.d}</p>
+    ${fa.length?`<div class="social">${fa.map(u=>av(u)).join("")}<span class="who"><b>${fa.map(u=>users[u].name.split(" ")[0]).join(", ")}</b> ${fa.length>1?'are':'is'} going</span></div>`:''}
+    <button class="btn ${going?'g':'gold'}" ${da('markAttending',id)}>${going?'✓ You are going — tap to manage':'＋ Mark attending'}</button>
+  </div></div>
+  ${modeBar}
+  ${eco}
+  <div style="height:10px"></div>`);
+}
+function setEventMode(m){eventMode=m;render();}
+
+function markAttending(id){
+  if(attending[id]){openSheet(sheetManage(id));return;}
+  openSheet(sheetAudience(id));
+}
+
+/* ============ BUSINESS DETAIL (friend-filtered reviews) ============ */
+function renderBiz(id){
+  const b=biz[id];const f=follows[me]||[];
+  let revs=b.rev;
+  if(reviewFilter==="follow")revs=b.rev.filter(([u])=>f.includes(u)||u===me);
+  setView(`<button class="backbtn" ${da('back')}>‹ Back</button>
+  <div class="card"><div class="banner biz"><span class="tag">${b.ic} ${b.cat}</span></div>
+  <div class="pad">
+    <div class="title" style="font-size:20px">${b.n}</div>
+    <p class="meta">📍 ${b.hood} · <b style="color:var(--brand)">${miles(id)} away</b> · ${b.r?`<span class="stars">${stars(b.r)} ${b.r}</span>`:'<span style="color:var(--dim)">New · no reviews yet</span>'}</p>
+    <p class="meta" style="margin:7px 0 12px;color:var(--sub)">${b.d}</p>
+    <div class="feebox">
+      <div class="feerow"><span class="feeamt">${bookInfo(id).fee}</span><span class="feeunit">${bookInfo(id).unit}</span>
+        <span class="feepill">${bookInfo(id).deposit}</span></div>
+      ${bookInfo(id).min&&bookInfo(id).min!=='—'?`<div class="feemin">⏱️ ${bookInfo(id).min}</div>`:''}
+    </div>
+    <button class="btn p" ${da('toast','✓ '+b.cta+' — '+bookInfo(id).fee+' '+bookInfo(id).unit+' (demo)')}>${b.cta} · ${bookInfo(id).fee}</button>
+    <button class="btn g" style="margin-top:8px" ${da('toast','Tagged '+b.n+' to your '+users[me].name.split(' ')[0]+' profile')}>＋ Tag / recommend</button>
+  </div></div>
+  <div class="sect">📋 Rules & criteria for hire</div>
+  <div class="card"><div class="pad">
+    ${bookInfo(id).criteria.map(c=>`<div class="crit"><span class="critc">✓</span>${c}</div>`).join("")}
+  </div></div>
+  ${b.disclaimer?`<div class="sect">⚠️ Disclaimer</div>
+  <div class="card"><div class="pad"><p class="meta" style="color:var(--sub);line-height:1.5;margin:0">${b.disclaimer}</p></div></div>`:''}
+  ${(b.docs&&b.docs.length)?`<div class="sect">📎 Legal documentation</div>
+  <div class="card"><div class="pad">${b.docs.map(d=>`<div class="docrow">📄 ${d} <span style="color:var(--brand);margin-left:auto;font-size:11px">verified</span></div>`).join("")}</div></div>`:''}
+  <div class="sect">Reviews</div>
+  <div>
+    <span class="chip ${reviewFilter==='everyone'?'on':''}" ${da('setFilter','everyone')}>Everyone</span>
+    <span class="chip ${reviewFilter==='follow'?'on':''}" ${da('setFilter','follow')}>People I follow</span>
+  </div>
+  <div style="margin-top:10px">
+  ${revs.length?revs.map(([u,tx,r])=>`
+    <div class="review"><div class="top">${av(u,28)}<span class="nm">${users[u]?users[u].name:u}</span>
+    ${(f.includes(u))?'<span class="fol">Following</span>':''}</div>
+    <div class="stars" style="margin-bottom:4px">${stars(r)}</div>
+    <div class="tx">${tx}</div></div>`).join(""):
+    `<div class="empty">No reviews from people you follow yet.<br>Flip to "Everyone" to see all ${b.rev.length}.</div>`}
+  </div>
+  <div style="height:10px"></div>`);
+}
+function setFilter(f){reviewFilter=f;render();}
+
+/* ============ USER DETAIL ============ */
+function socialLinks(id){
+  const s=socials[id];if(!s)return'';
+  return `<div class="socialrow">${Object.entries(s).map(([k,handle])=>{
+    const m=SOCIAL_META[k];if(!m)return'';
+    return `<span class="soc" ${da('toast','Opening '+m[0]+': @'+handle+' (demo)')}><span class="sg">${m[1]}</span>@${handle}</span>`;
+  }).join("")}</div>`;
+}
+function renderUser(id){
+  const u=users[id];if(!u){setView(`<button class="backbtn" ${da('back')}>‹ Back</button><div class="empty">${id}</div>`);return;}
+  const iFollow=(follows[me]||[]).includes(id);
+  const isMe=id===me;
+  const visible=canSee(id);
+  const places=been[id]||[];
+  const photos=places.filter(p=>p[2]); // has photo
+  const revCount=Object.values(biz).filter(b=>b.rev.some(r=>r[0]===id)).length;
+
+  // header
+  let html=`<button class="backbtn" ${da('back')}>‹ Back</button>
+  <div class="phero" style="${imgStyle(photos[0]?photoUrl(photos[0][0],600,300):null,POSTER.music)}"><span class="scrim"></span></div>
+  <div class="pbody">
+    <div class="pav">${av(id,68)}</div>
+    <div class="title" style="margin-top:8px;font-size:20px">${u.name} ${u.star?'⭐':''}</div>
+    <p class="meta">${u.h}${u.foll?' · '+u.foll+'k followers':''} · <span style="color:${visible?'var(--brand)':'var(--gold)'}">${isMe?'You':(privacy[id]==="public"?'Public':(visible?'Connected':'Private'))}</span></p>
+    <p class="meta" style="margin-top:6px;color:var(--sub)">${u.vibe}</p>
+    ${!isMe?`<button class="btn ${iFollow?'g':'p'}" style="margin-top:12px" ${da('toast',(iFollow?'Unfollowed':'Following')+' '+u.name)}>${iFollow?'✓ Following':'＋ Follow'}</button>`:''}
+    ${socialLinks(id)}
+  </div>`;
+
+  if(!visible){
+    html+=`<div class="locked">
+      <div class="lk">🔒</div>
+      <div class="lt">${u.name.split(" ")[0]}'s activity is private</div>
+      <div class="ls">Follow them (or get added as a close friend) to see where they've been, their reviews, and photos they've posted.</div>
+      <button class="btn p" style="margin-top:12px;max-width:220px;margin-left:auto;margin-right:auto" ${da('toast','Follow request sent to '+u.name)}>＋ Follow to unlock</button>
+    </div>`;
+    setView(html);return;
+  }
+
+  // stats
+  html+=`<div class="statrow">
+    <div class="stat"><b>${places.length}</b><span>Places been</span></div>
+    <div class="stat"><b>${revCount}</b><span>Reviews</span></div>
+    <div class="stat"><b>${photos.length}</b><span>Photos</span></div>
+  </div>`;
+
+  // photos posted
+  if(photos.length){
+    html+=`<div class="sect">📸 Photos posted</div>
+      <div class="photostrip">${photos.map(([bid])=>
+        `<div class="pshot" style="background-image:url('${photoUrl(bid,240,240)}')" ${da('open','biz',bid)}></div>`).join("")}</div>`;
+  }
+
+  // places been (with their rating)
+  html+=`<div class="sect">📍 Where ${isMe?'you\'ve':u.name.split(" ")[0]+"'s"} been</div>
+    <div class="pgrid">${places.map(([bid,rating])=>{const b=biz[bid];if(!b)return'';
+      return `<div class="pbeen" ${da('open','biz',bid)}>
+        <div class="pi" style="${imgStyle(photoUrl(bid,300,180),posterFor(b.cat))}"><span class="scrim"></span></div>
+        <div class="pn"><div class="pnn">${b.ic} ${b.n}</div><div class="pnr">${'★'.repeat(rating)} rated ${rating}.0</div></div></div>`;
+    }).join("")}</div>`;
+
+  // listings owned by this user (created businesses + events) — shareable
+  const ownBiz=Object.keys(biz).filter(k=>biz[k].created&&biz[k].owner===id);
+  const ownEv=Object.keys(events).filter(k=>events[k].created&&events[k].host===id);
+  if(ownBiz.length||ownEv.length){
+    html+=`<div class="sect">🏪 ${isMe?'Your':u.name.split(" ")[0]+"'s"} listings</div>
+      ${ownBiz.map(bid=>bizRow(bid)).join("")}
+      ${ownEv.map(eid=>eventRow(eid)).join("")}`;
+  }
+
+  // reviews written
+  const myRevs=[];
+  for(const[bid,b]of Object.entries(biz))b.rev.forEach(([ru,tx,r])=>{if(ru===id)myRevs.push([bid,tx,r]);});
+  if(myRevs.length){
+    html+=`<div class="sect">⭐ ${isMe?'Your':u.name.split(" ")[0]+"'s"} reviews</div>
+      ${myRevs.map(([bid,tx,r])=>`<div class="review" ${da('open','biz',bid)}>
+        <div class="top"><span class="nm">${biz[bid].ic} ${biz[bid].n}</span><span class="fol" style="color:var(--gold);background:rgba(255,176,32,.12)">★ ${r}</span></div>
+        <div class="tx">${tx}</div></div>`).join("")}`;
+  }
+  html+=`<div style="height:10px"></div>`;
+  setView(html);
+}
+
+/* ============ FOLLOWING ============ */
+function actChip(a){
+  const clickable=a.ref?`${da('open',a.ref[0],a.ref[1])}`:'';
+  return `<div class="act" ${clickable}>
+    <span class="actt">${a.t}</span>
+    <span class="actx">${a.x}</span>
+    ${a.ref?'<span class="actgo">›</span>':''}</div>`;
+}
+function followCard(u){
+  const acts=(activity[u]||[]).slice(0,3);
+  return `<div class="fcard">
+    <div class="fhead" ${da('open','user',u)}>
+      ${av(u,40)}
+      <div style="margin-left:2px">
+        <div class="nm">${users[u].name} ${users[u].star?'⭐':''}</div>
+        <div class="ds">${users[u].vibe}${users[u].foll?' · '+users[u].foll+'k':''}</div>
+      </div><div class="go">›</div>
+    </div>
+    <div class="flist">${acts.length?acts.map(actChip).join(""):'<div class="empty" style="padding:10px">No recent activity.</div>'}</div>
+  </div>`;
+}
+function renderFollowing(){
+  let f=follows[me]||[];
+  const cf=CLOSE[me]||[];
+  if(sortMode==="close")f=[...f].sort((a,b)=>(cf.includes(b)?1:0)-(cf.includes(a)?1:0));
+  else if(sortMode==="interacted")f=[...f].sort((a,b)=>(users[b].foll||0)-(users[a].foll||0));
+  const disc=Object.keys(users).filter(u=>u!==me&&!(follows[me]||[]).includes(u)).slice(0,5);
+  setView(`<div class="h1">Following</div>
+  <div class="sub">Latest from your people — tap any activity to jump right to it.</div>
+  ${sortbar()}
+  ${f.map(u=>followCard(u)).join("")}
+  <div class="sect">👀 Discover people</div>
+  ${disc.map(u=>`<div class="dcard" ${da('open','user',u)}>
+    <div class="fhead" style="padding:0;margin-bottom:8px">
+      ${av(u,40)}<div style="margin-left:2px">
+      <div class="nm">${users[u].name} ${users[u].star?'⭐':''}</div>
+      <div class="ds">${users[u].vibe}${users[u].foll?' · '+users[u].foll+'k followers':''}</div></div></div>
+    <div class="why">💡 ${whyFollow[u]||"Worth a follow in Austin."}</div>
+    ${(activity[u]&&activity[u][0])?`<div class="whyact">Recently: ${activity[u][0].t.replace(/^[^ ]+ /,'')} — ${activity[u][0].x.replace(/^"|"$/g,'')}</div>`:''}
+    <button class="btn p" style="margin-top:10px;padding:10px" ${da('toast','Following '+users[u].name)}>＋ Follow</button>
+  </div>`).join("")}`);
+}
+
+/* ============ MAP (stylized) ============ */
+function renderMap(){
+  const hoods=["Downtown","East Austin","South Congress","Rainey Street","Red River District","Clarksville","South Austin","Lady Bird Lake"];
+  let hoodHtml;
+  if(searchQ){
+    const bHits=Object.keys(biz).filter(k=>matchQ(biz[k].n,biz[k].cat+" "+biz[k].hood));
+    const eHits=Object.keys(events).filter(k=>matchQ(events[k].n,events[k].loc));
+    hoodHtml=`<div class="sect">Results for "${searchQ}"</div>
+      <div class="grid">${eHits.map(e=>eventTile(e)).join("")}${bHits.map(b=>bizTile(b)).join("")}</div>
+      ${(!bHits.length&&!eHits.length)?'<div class="empty">No places matched.</div>':''}`;
+  }else{
+    hoodHtml=hoods.map(h=>{const bs=Object.keys(biz).filter(k=>biz[k].hood.includes(h.replace("The ","")));
+      return bs.length?`<div class="sect">${h}</div><div class="grid">${bs.map(k=>bizTile(k)).join("")}</div>`:'';}).join("");
+  }
+  setView(`<div class="h1">Map</div><div class="sub">Austin, TX · by neighborhood · distances from you.</div>
+  ${searchbar("Search this map…")}
+  <div class="card"><div style="height:170px;background:
+    radial-gradient(circle at 30% 40%, rgba(0,194,168,.25),transparent 40%),
+    radial-gradient(circle at 70% 60%, rgba(124,92,255,.25),transparent 40%),
+    linear-gradient(135deg,#12202a,#1a1630);position:relative">
+    ${['📍','🎪','🍜','🎨','🛶','🏨'].map((p,i)=>`<span style="position:absolute;font-size:22px;
+      left:${15+i*13}%;top:${20+((i*37)%60)}%">${p}</span>`).join("")}
+    <span style="position:absolute;bottom:8px;left:10px;font-size:11px;color:#fff;background:rgba(0,0,0,.4);padding:3px 8px;border-radius:10px">📍 You are here</span>
+    <span style="position:absolute;bottom:8px;right:10px;font-size:11px;color:var(--dim)">demo map</span>
+  </div></div>
+  ${hoodHtml}`);
+}
+
+/* ============ PROFILE ============ */
+function renderProfile(){
+  const u=users[me];
+  const myAtt=Object.keys(attending).filter(k=>attending[k]);
+  const myEnd=endorsed[me]||[];
+  let endHtml=`<div class="endrow" ${da('toggleEndorsed')}>
+    <div class="ei">🔗</div>
+    <div><div class="en">Linked & endorsed</div>
+    <div class="es">${myEnd.length} event${myEnd.length===1?'':'s'}/business${myEnd.length===1?'':'es'} you promote or collab with</div></div>
+    <div class="eg">${showEndorsed?'⌃':'›'}</div></div>`;
+  if(showEndorsed){
+    endHtml+=myEnd.length?myEnd.map(([type,id,role])=>{
+      const nm=type==="event"?events[id].n:biz[id].n;
+      const ic=type==="event"?"🎟️":(biz[id].ic||"🏢");
+      return `<div class="eco" style="margin-top:8px" ${da('open',type,id)}>
+        <div class="ic">${ic}</div><div><div class="nm">${nm}</div>
+        <div class="ds" style="color:var(--brand)">⭐ ${role}</div></div><div class="go">›</div></div>`;
+    }).join(""):'<div class="empty" style="margin-top:8px">Nothing linked yet — endorse an event or business to show it here.</div>';
+  }
+  setView(`<div class="h1">You</div>
+  <div class="card"><div class="pad" style="text-align:center;padding:22px">
+    ${av(me,66)}<div class="title" style="margin-top:10px;font-size:20px">${u.name} ${u.star?'⭐':''}</div>
+    <p class="meta">${u.h}${u.foll?' · '+u.foll+'k followers':''}</p>
+    <p class="meta" style="margin-top:6px;color:var(--sub)">${u.vibe}</p>
+  </div></div>
+  <div class="sect">Account type</div>
+  <div class="bizacct">
+    <div class="bh">
+      <div class="bi">${bizAccount?'🏢':'👤'}</div>
+      <div><div class="bt">${bizAccount?'Business account':'Personal account'}</div>
+      <div class="bd">${bizAccount?'You can be found, reviewed & booked':'Switch on to list services & take bookings'}</div></div>
+      <div class="toggle ${bizAccount?'on':''}" ${da('toggleBizAccount')}><div class="knob"></div></div>
+    </div>
+    ${bizAccount?`
+    <div class="bkfield"><div class="bl">Base fee</div><div class="bv">$— <span style="color:var(--dim);font-size:12px">set your rate</span></div></div>
+    <div class="bkfield"><div class="bl">Deposit / minimum</div><div class="bv" style="color:var(--dim);font-size:13px">Not set yet</div></div>
+    <div class="bkfield"><div class="bl">Rules & criteria for hire</div><div class="bv" style="color:var(--dim);font-size:13px">Add your requirements</div></div>
+    <button class="btn p" style="margin-top:10px" ${da('editBooking')}>💳 Set up booking info</button>
+    `:''}
+  </div>
+  <div class="sect">Create & promote</div>
+  <div class="createrow">
+    <div class="createbtn" ${da('createEvent')}><div class="ci">🎉</div><div class="ct">Create event</div><div class="cs">Tag your whole ecosystem</div></div>
+    <div class="createbtn" ${da('createBiz')}><div class="ci">🏢</div><div class="ct">List business</div><div class="cs">Get found, reviewed, booked</div></div>
+  </div>
+  ${(createdBiz.length||createdEvents.length)?`<div class="sect">Your listings</div>
+    ${createdBiz.map(id=>bizRow(id)).join("")}
+    ${createdEvents.map(id=>eventRow(id)).join("")}`:''}
+  <div class="sect">Linked & endorsed</div>
+  ${endHtml}
+  <div class="sect">Attending</div>
+  ${myAtt.length?myAtt.map(e=>eventRow(e)).join(""):'<div class="empty">Nothing yet — mark an event to promote it to your people.</div>'}
+  <div class="sect">Audience controls</div>
+  <div class="eco"><div class="ic">👥</div><div><div class="nm">Followers</div><div class="ds">Default for posts & attendance</div></div></div>
+  <div class="eco"><div class="ic">⭐</div><div><div class="nm">Close friends</div><div class="ds">A tighter circle</div></div></div>
+  <div class="eco"><div class="ic">🎯</div><div><div class="nm">Specific people / groups</div><div class="ds">Hand-pick who sees it</div></div></div>`);
+}
+
+/* ============ SHEETS ============ */
+function openSheet(html){$("#sheetbox").innerHTML=html;$("#sheet").classList.add("show");}
+function closeSheet(){$("#sheet").classList.remove("show");}
+$("#sheet").addEventListener("click",e=>{if(e.target.id==="sheet")closeSheet();});
+function sheetAudience(id){
+  return `<h3>Who can see you're going?</h3>
+  <p class="meta" style="margin:0 0 6px">Marking attendance promotes ${events[id].n} to your audience.</p>
+  <div class="opt" ${da('confirmAtt',id,'Followers')}><span class="i">👥</span><div>Followers<small>Everyone who follows you</small></div></div>
+  <div class="opt" ${da('confirmAtt',id,'Close friends')}><span class="i">⭐</span><div>Close friends<small>Your tighter circle</small></div></div>
+  <div class="opt" ${da('confirmAtt',id,'Specific people')}><span class="i">🎯</span><div>Specific people / groups<small>Hand-pick who sees it</small></div></div>`;
+}
+function menuOpt(icon,label,act,arg,danger){
+  const d=arg?da(act,arg):da(act);
+  return `<div class="mopt${danger?' md':''}" ${d}><span class="mi">${icon}</span><span>${label}</span><span class="mg">›</span></div>`;
+}
+function sheetMenu(){
+  const u=users[me];
+  return `<div class="mhead">${av(me,46)}<div style="margin-left:4px">
+    <div style="font-weight:700;font-size:15px">${u.name}</div>
+    <div class="meta" style="margin:0">${u.h}</div></div></div>
+  <div class="mdiv"></div>
+  ${menuOpt('👤','View profile','menuProfile')}
+  ${menuOpt('📄','Your listings & activity','menuGoProfile')}
+  ${menuOpt('⚙️','Settings','menuSettings')}
+  ${menuOpt('🎨','Customization','menuCustomize')}
+  ${menuOpt('🔔','Notifications','menuItem','Notifications')}
+  ${menuOpt('🔒','Privacy & audience','menuItem','Privacy & audience')}
+  ${menuOpt('💳','Payments & bookings','menuItem','Payments & bookings')}
+  ${menuOpt('🔄','Switch account','menuSwitch')}
+  ${menuOpt('❓','Help & support','menuItem','Help & support')}
+  <div class="mdiv"></div>
+  ${menuOpt('🔑','Log in','menuLogin')}
+  ${menuOpt('👋','Sign out','menuSignout',null,true)}`;
+}
+function sheetSettings(){
+  return `<h3>⚙️ Settings</h3>
+  ${menuOpt('👤','Account info','menuItem','Account info')}
+  ${menuOpt('🔔','Notifications','menuItem','Notifications')}
+  ${menuOpt('🔒','Privacy & audience defaults','menuItem','Privacy')}
+  ${menuOpt('📍','Location & distance units','menuItem','Location settings')}
+  ${menuOpt('💳','Payment methods','menuItem','Payment methods')}
+  ${menuOpt('🏢','Business account','menuItem','Business account settings')}
+  ${menuOpt('🚫','Blocked accounts','menuItem','Blocked accounts')}
+  <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Close</button>`;
+}
+function sheetCustomize(){
+  return `<h3>🎨 Customization</h3>
+  <p class="meta" style="margin:0 0 10px">Make the app yours.</p>
+  ${menuOpt('🌙','Theme (Dark · on)','menuItem','Theme')}
+  ${menuOpt('🎨','Accent color','menuItem','Accent color')}
+  ${menuOpt('🖼️','Profile banner','menuItem','Profile banner')}
+  ${menuOpt('🔤','Text size','menuItem','Text size')}
+  ${menuOpt('🧭','Default tab on open','menuItem','Default tab')}
+  ${menuOpt('🏷️','Interests & feed tuning','menuItem','Interests')}
+  <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Close</button>`;
+}
+function sheetSwitch(){
+  return `<h3>🔄 Switch account</h3>
+  <p class="meta" style="margin:0 0 10px">Demo: view the app as another personality.</p>
+  ${Object.keys(users).map(uid=>`<div class="mopt" ${da('setMe',uid)}>${av(uid,32)}<span style="margin-left:2px">${users[uid].name}${uid===me?' <span style="color:var(--brand);font-size:11px">• current</span>':''}</span><span class="mg">›</span></div>`).join("")}
+  <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Close</button>`;
+}
+function sheetBooking(){
+  return `<h3>💳 Booking info</h3>
+  <p class="meta" style="margin:0 0 10px">Set what people pay to book you and your rules for hire.</p>
+  <input class="finput" placeholder="Base fee (e.g. $65)">
+  <input class="finput" placeholder="Unit (e.g. /guard/hr, /night, /event)">
+  <input class="finput" placeholder="Deposit (e.g. 25% deposit)">
+  <input class="finput" placeholder="Minimum (e.g. 4-hr minimum)">
+  <textarea class="finput" rows="3" placeholder="Rules & criteria for hire (one per line)"></textarea>
+  <div class="finfo">💰 This shows on your business profile so clients know your rate + requirements before they book.</div>
+  <button class="btn p" style="margin-top:12px" ${da('saveBooking')}>Save booking info</button>
+  <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button>`;
+}
+function sheetCreate(kind){
+  const isEv=kind==="event";
+  if(isEv)return `<h3>🎉 Create an event</h3>
+  <p class="meta" style="margin:0 0 10px">Post it, then tag every vendor, artist & service supporting it — each becomes bookable.</p>
+  <input class="finput" id="f_name" placeholder="Event name (e.g. Rooftop Day Party)">
+  <input class="finput" id="f_date" placeholder="Date & time (e.g. Sat, Nov 8 · 4PM)">
+  <input class="finput" id="f_loc" placeholder="Neighborhood / location in Austin">
+  <textarea class="finput" id="f_desc" rows="2" placeholder="Short description"></textarea>
+  <div class="finfo">🔗 After posting you'll tag: performers · food · staff/security · travel · nearby</div>
+  <div class="sheetactions">
+  <button class="btn p" ${da('submitCreate','event')}>Create event</button>
+  <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button></div>`;
+  // BUSINESS form — full commerce fields
+  return `<h3>🏢 List your business</h3>
+  <p class="meta" style="margin:0 0 10px">Create your profile so people can find, review, and book you.</p>
+  <div class="fsec">Basics</div>
+  <input class="finput" id="f_name" placeholder="Business name">
+  <input class="finput" id="f_cat" placeholder="Category (food, security, photo…)">
+  <input class="finput" id="f_loc" placeholder="Neighborhood in Austin">
+  <textarea class="finput" id="f_desc" rows="2" placeholder="Short description"></textarea>
+  <div class="fsec">💳 Booking fee</div>
+  <input class="finput" id="f_fee" placeholder="Base fee (e.g. $65)">
+  <input class="finput" id="f_unit" placeholder="Unit (e.g. /hr, /night, /event)">
+  <input class="finput" id="f_dep" placeholder="Deposit (e.g. 25% deposit)">
+  <div class="fsec">📋 Rules & criteria for hire</div>
+  <textarea class="finput" id="f_crit" rows="3" placeholder="One requirement per line (e.g. 14-day advance booking)"></textarea>
+  <div class="fsec">⚠️ Disclaimer</div>
+  <textarea class="finput" id="f_disc" rows="2" placeholder="Liability, cancellation policy, terms…"></textarea>
+  <div class="fsec">📎 Legal documentation</div>
+  <div class="uploader" ${da('mockUpload')}>
+    <div class="upi">📄</div>
+    <div class="upt">Upload legal docs</div>
+    <div class="ups">Business license, insurance cert, permits (PDF/JPG)</div>
+  </div>
+  <div id="uplist"></div>
+  <div class="sheetactions">
+  <button class="btn p" ${da('submitCreate','biz')}>Create business</button>
+  <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button></div>`;
+}
+function sheetManage(id){
+  return `<h3>You're going to ${events[id].n}</h3>
+  <div class="opt" ${da('toast','Audience updated')}><span class="i">✏️</span><div>Change audience</div></div>
+  <div class="opt" ${da('unAtt',id)}><span class="i">✖️</span><div style="color:var(--danger)">Remove attendance</div></div>`;
+}
+function confirmAtt(id,aud){attending[id]=true;closeSheet();
+  toast(`✓ You're going — shared with ${aud}`);render();}
+function unAtt(id){attending[id]=false;closeSheet();toast("Removed");render();}
+
+/* ============ CREATE FLOW (real — persists + shows what you made) ============ */
+function fval(id){const el=document.getElementById(id);return el?el.value.trim():"";}
+function mockUpload(){
+  const names=["Business_License.pdf","Insurance_Certificate.pdf","Health_Permit.jpg","Liability_Waiver.pdf"];
+  const doc=names[pendingDocs.length%names.length];
+  pendingDocs.push(doc);
+  const list=document.getElementById("uplist");
+  if(list)list.innerHTML=pendingDocs.map(d=>`<div class="upfile">📄 ${d} <span style="color:var(--brand)">✓ uploaded</span></div>`).join("");
+  toast("📎 "+doc+" attached (demo)");
+}
+function submitCreate(kind){
+  const name=fval("f_name")||(kind==="event"?"Untitled Event":"Untitled Business");
+  const loc=fval("f_loc")||"Austin";
+  const desc=fval("f_desc")||"Newly created — add details.";
+  newCount++;
+  if(kind==="event"){
+    const id="newev"+newCount;
+    events[id]={n:name,host:me,date:fval("f_date")||"Date TBD",loc:loc,d:desc,att:[me],eco:{},created:1};
+    DIST[id]=(Math.random()*3+0.4).toFixed(1)*1;
+    createdEvents.push(id);
+    attending[id]=true;
+    closeSheet();pendingDocs=[];
+    toast("🎉 Event created!");
+    stack=[{type:"event",id}];tab="events";render();scrollTop();
+  }else{
+    const id="newbiz"+newCount;
+    const crit=fval("f_crit").split("\n").map(x=>x.trim()).filter(Boolean);
+    biz[id]={n:name,cat:fval("f_cat")||"Service",hood:loc,d:desc,r:0,cta:"Book now",ic:"🏢",
+      rev:[],created:1,owner:me,disclaimer:fval("f_disc"),docs:pendingDocs.slice()};
+    DIST[id]=(Math.random()*3+0.4).toFixed(1)*1;
+    booking[id]={fee:fval("f_fee")||"Contact",unit:fval("f_unit")||"to book",
+      deposit:fval("f_dep")||"—",min:"—",criteria:crit.length?crit:["Message for availability"]};
+    createdBiz.push(id);
+    if(!bizAccount)bizAccount=true;
+    closeSheet();pendingDocs=[];
+    toast("🏢 Business created!");
+    stack=[{type:"biz",id}];tab="profile";render();scrollTop();
+  }
+}
+
+/* ============ BOOT ============ */
+setMe("dee_eats"); // Keith Clements is the fixed user
+render();
+</script>
+</body>
+</html>
