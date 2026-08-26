@@ -353,6 +353,12 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .fabrow:hover{background:var(--card2)}
 .fabnm{font-weight:600;font-size:13.5px}
 .fabprev{font-size:12px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* verified badge */
+.vbadge{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
+  border-radius:50%;background:linear-gradient(135deg,#3ba7ff,#00c2a8);color:#fff;font-size:10px;
+  font-weight:900;vertical-align:middle;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.vrow{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#3ba7ff;font-weight:600;
+  background:rgba(59,167,255,.12);border:1px solid var(--line);border-radius:14px;padding:4px 10px;margin:6px 0 2px;cursor:pointer}
 .sheetbox h3{position:sticky;top:-18px;background:var(--card);margin:-2px -16px 3px;padding:6px 16px 8px;z-index:5}
 .sheetactions{position:sticky;bottom:-32px;background:var(--card);margin:8px -16px -32px;padding:12px 16px 32px;
   box-shadow:0 -8px 16px rgba(0,0,0,.3)}
@@ -361,7 +367,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v32</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v33</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -454,17 +460,17 @@ const follows={
 const HEROES=["dee_eats","priya_night","ruthie_roams","sunny_flats"];
 
 const biz={
-  coral:{n:"Coral & Cornbread",cat:"Southern / seafood",hood:"Rainey Street",d:"Low-country boils, string-light patio",r:4.7,cta:"Book a table",ic:"🦐",
+  coral:{n:"Coral & Cornbread",cat:"Southern / seafood",hood:"Rainey Street",d:"Low-country boils, string-light patio",r:4.7,cta:"Book a table",ic:"🦐",verified:1,verDocs:["Food service license","Liquor license"],
     rev:[["dee_eats","The garlic-butter boil is a love letter to the Gulf. Get the cornbread. Get two.",5],["ruthie_roams","Best patio on Rainey. Brought friends, they wept a little.",5]]},
   ansel:{n:"Ansel Noodle House",cat:"Vietnamese / late-night",hood:"East Austin",d:"Open till 3am. Pho that fixes everything",r:4.6,cta:"Order ahead",ic:"🍜",
     rev:[["priya_night","The official after-show HQ. Broth cures everything.",5],["dee_eats","Under-the-radar goat curry on Sundays. Tell no one.",4]]},
   cofield:{n:"Cofield Table",cat:"Brunch / farm-to-table",hood:"Clarksville",d:"Weekend brunch institution",r:4.5,cta:"Book a table",ic:"🍳",
     rev:[["sunny_flats","Highchairs, crayons, AND a proper flat white. Holy trinity.",5],["dee_eats","Market-hash changes weekly. Solid if you beat noon.",4]]},
-  mama:{n:"Mama Okafor's",cat:"West African",hood:"East Austin",d:"Jollof & suya with soul",r:4.9,cta:"Order ahead",ic:"🍛",
+  mama:{n:"Mama Okafor's",cat:"West African",hood:"East Austin",d:"Jollof & suya with soul",r:4.9,cta:"Order ahead",ic:"🍛",verified:1,verDocs:["Food service license","Health inspection A-grade"],
     rev:[["dee_eats","My family recipes. Biased, not wrong. Best jollof in Ossaway.",5],["marcus_vale","Bring cash, an appetite, and a nap plan.",5]]},
   roast:{n:"The Roasthouse",cat:"Café / roaster",hood:"East Austin",d:"Warehouse roaster + espresso bar",r:4.6,cta:"Order ahead",ic:"☕",
     rev:[["dee_eats","Single-origin flight + cardamom bun = my whole personality.",5],["grace_lens","Great light, patient baristas, strong wifi. My office.",4]]},
-  foundry:{n:"The Foundry",cat:"Live-music venue / bar",hood:"Red River District",d:"Austin's flagship live-music room",r:4.7,cta:"Get tickets",ic:"🎸",
+  foundry:{n:"The Foundry",cat:"Live-music venue / bar",hood:"Red River District",d:"Austin's flagship live-music room",r:4.7,cta:"Get tickets",ic:"🎸",verified:1,verDocs:["Venue occupancy permit","Liquor license","Fire-safety cert"],
     rev:[["priya_night","The room where the scene happens. Kojo Fridays are unreal.",5],["marcus_vale","Load-in's a pain but the crowd is worth every stair.",5]]},
   heights:{n:"Skyline Rooftop",cat:"Cocktail bar (rooftop)",hood:"Downtown",d:"Sunset cocktails above Congress Ave",r:4.4,cta:"Reserve",ic:"🍸",
     rev:[["harlow_lena","My Thursday office. The smoked-rosemary marg is criminal.",5],["priya_night","Views > pricing, but the views really are that good.",4]]},
@@ -474,11 +480,11 @@ const biz={
     rev:[["grace_lens","Showed my festival series here. Community shows up.",5],["tati_makes","My craft-night base. They champion makers.",4]]},
   green:{n:"Greenmark Landscaping",cat:"Landscaping & event grounds",hood:"South Austin",d:"Yards, patios, festival-grounds crews",r:4.6,cta:"Get a quote",ic:"🌿",
     rev:[["sam_hostwell","Two rental yards guest-ready in a day. They do festival grounds too.",5],["marcus_vale","Reliable for build-out. Grass looks intentional.",4]]},
-  security:{n:"Delacroix Event Security",cat:"Security & staffing",hood:"Downtown",d:"Doors, wristbands, crowd flow",r:4.8,cta:"Hire for your event",ic:"🛡️",
+  security:{n:"Delacroix Event Security",cat:"Security & staffing",hood:"Downtown",d:"Doors, wristbands, crowd flow",r:4.8,cta:"Hire for your event",ic:"🛡️",verified:1,verDocs:["State security license","Liability insurance cert","Bonded & background-checked"],
     rev:[["priya_night","Calm, professional, never heavy-handed. Why big nights stay safe.",5],["marcus_vale","Rob's crew ran our gate like a Swiss watch.",5]]},
   snap:{n:"SnapPod Photo Booths",cat:"Photo booth service",hood:"South Congress",d:"Open-air booths, instant prints, GIFs",r:4.5,cta:"Book a booth",ic:"📸",
     rev:[["harlow_lena","Booked for the boutique launch. Line all night, on-brand prints.",5],["grace_lens","I shoot candids, they handle fun photos. Great tandem.",4]]},
-  inn:{n:"The Congress Hotel",cat:"Boutique hotel",hood:"South Congress",d:"48 rooms, restored SoCo landmark",r:4.7,cta:"Book a room",ic:"🏨",
+  inn:{n:"The Congress Hotel",cat:"Boutique hotel",hood:"South Congress",d:"48 rooms, restored SoCo landmark",r:4.7,cta:"Book a room",ic:"🏨",verified:1,verDocs:["Business registration","Lodging permit","Health & safety inspection"],
     rev:[["ruthie_roams","Corner room over the water is worth planning a trip around.",5],["marcus_vale","Where I stash visiting artists. Walkable to everything.",5]]},
   hostwell:{n:"Hostwell Rentals",cat:"Airbnb host",hood:"East Austin & SoCo",d:"Sam's superhost portfolio",r:4.9,cta:"Book a stay",ic:"🔑",
     rev:[["ruthie_roams","Sam leaves a hand-drawn map. Superhost for real.",5],["grace_lens","Pier loft light is unreal at sunrise. Booked twice.",5]]},
@@ -489,7 +495,7 @@ const biz={
 };
 
 const events={
-  marrowfest:{n:"SXSW",hero:1,host:"marcus_vale",partner:"foundry",
+  marrowfest:{n:"SXSW",hero:1,verified:1,verDocs:["Event organizer accreditation","City event permit","Insurance & safety plan on file"],host:"marcus_vale",partner:"foundry",
     date:"Mar 13–22 · Austin, TX",loc:"Downtown Austin · multi-venue",
     d:"South by Southwest — the convergence of music, film, and tech. Hundreds of showcases, panels, and pop-ups across downtown Austin. One badge, one ecosystem: every venue, food vendor, stay, and service is tagged, reviewable, and bookable right here.",
     att:["priya_night","dee_eats","harlow_lena"],
@@ -882,6 +888,9 @@ function av(uid,size){const u=users[uid]||{name:uid,c:"#4e9cff"};
   if(ph)return `<span class="avatar" style="${dim}background-image:url('${ph}');background-size:cover;background-position:center 8%;color:transparent">${i}</span>`;
   return `<span class="avatar" style="background:${u.c||'#4e9cff'};${dim}">${i}</span>`;}
 function stars(r){return "★".repeat(Math.round(r))+`<span style="color:var(--dim)">${"★".repeat(5-Math.round(r))}</span>`;}
+// verified badge (inline). isVerified(id) checks biz or events.
+function isVerified(id){return (biz[id]&&biz[id].verified)||(events[id]&&events[id].verified);}
+function vbadge(size){return `<span class="vbadge" title="Verified" ${da('verifyInfo')}>✔</span>`;}
 // escape a value for safe use inside an inline onclick='...' single-quoted JS string in HTML
 function esc(s){return String(s).replace(/\\/g,"").replace(/'/g,"\u2019").replace(/"/g,"&quot;");}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");
@@ -958,6 +967,9 @@ ACTIONS={
   boost:(type,id,who)=>{const k=type+":"+id;boosts[k]=(boosts[k]||0)+1;render();toast("🚀 Boosted — shared with your followers");},
   showBlocked:()=>openSheet(sheetBlocked()),
   toggleFab:()=>toggleFab(),
+  verifyInfo:()=>openSheet(sheetVerifyInfo()),
+  applyVerify:()=>openSheet(sheetApplyVerify()),
+  submitVerify:()=>{closeSheet();toast("🛡️ Verification submitted — review takes 2–3 days");},
   fabOpenThread:(uid)=>{closeFab();stack=[{type:"thread",id:uid}];tab="profile";render();scrollTop();},
   fabInbox:()=>{closeFab();stack=[{type:"inbox",id:"inbox"}];tab="profile";render();scrollTop();},
   openPost:(pid)=>{stack.push({type:"post",id:pid});render();scrollTop();},
@@ -1024,7 +1036,7 @@ function eventTile(id,big){const e=events[id];const fa=friendsAttending(id);
       ${fa.length?`<span class="stack">${fa.slice(0,3).map(u=>av(u,22)).join("")}</span>`:''}
     </div>
     <div class="cap">
-      <div class="capttl">${e.hero?'🎪 ':''}${e.n}</div>
+      <div class="capttl">${e.hero?'🎪 ':''}${e.n}${e.verified?' '+vbadge():''}</div>
       <div class="capline">${cap}</div>
       <div class="caploc">📍 ${e.loc}</div>
     </div></div>`;}
@@ -1039,7 +1051,7 @@ function bizTile(id){const b=biz[id];
       <span class="rate">★ ${b.r}</span>
     </div>
     <div class="cap">
-      <div class="capttl">${b.n}</div>
+      <div class="capttl">${b.n}${b.verified?' '+vbadge():''}</div>
       <div class="capline">${b.d}</div>
       <div class="caploc">📍 ${b.hood} · ${miles(id)} away</div>
     </div></div>`;}
@@ -1211,7 +1223,8 @@ function renderEvent(id){
   setView(`<button class="backbtn" ${da('back')}>‹ Back</button>
   <div class="card"><div class="banner" style="${imgStyle(photoUrl(id,800,400),e.hero?POSTER.fest:POSTER.event)};height:150px"><span class="scrim"></span><span class="tag" style="position:relative;z-index:2">${e.hero?'⭐ Hero event':'Event'}</span></div>
   <div class="pad">
-    <div class="title" style="font-size:20px">${e.hero?'🎪 ':''}${e.n}</div>
+    <div class="title" style="font-size:20px">${e.hero?'🎪 ':''}${e.n}${e.verified?' '+vbadge():''}</div>
+    ${e.verified?`<div class="vrow" ${da('verifyInfo')}><span class="vbadge" style="position:static;display:inline-flex">✔</span> Verified event · organizer & permits confirmed</div>`:''}
     <p class="meta">${e.date}</p><p class="meta">📍 ${e.loc} · <b style="color:var(--brand)">${miles(id)} away</b></p>
     <div class="row" style="margin:9px 0" ${da('open','user',e.host)} >
       ${users[e.host]?av(e.host):'<span class="ic" style="width:26px;height:26px;font-size:14px">🏢</span>'}
@@ -1239,7 +1252,8 @@ function renderBiz(id){
   setView(`<button class="backbtn" ${da('back')}>‹ Back</button>
   <div class="card"><div class="banner biz"><span class="tag">${b.ic} ${b.cat}</span></div>
   <div class="pad">
-    <div class="title" style="font-size:20px">${b.n}</div>
+    <div class="title" style="font-size:20px">${b.n}${b.verified?' '+vbadge():''}</div>
+    ${b.verified?`<div class="vrow" ${da('verifyInfo')}><span class="vbadge" style="position:static;display:inline-flex">✔</span> Verified business · credentials confirmed</div>`:''}
     <p class="meta">📍 ${b.hood} · <b style="color:var(--brand)">${miles(id)} away</b> · ${b.r?`<span class="stars">${stars(b.r)} ${b.r}</span>`:'<span style="color:var(--dim)">New · no reviews yet</span>'}</p>
     <p class="meta" style="margin:7px 0 12px;color:var(--sub)">${b.d}</p>
     <div class="feebox">
@@ -1614,6 +1628,7 @@ function renderProfile(){
     <div class="bkfield"><div class="bl">Deposit / minimum</div><div class="bv" style="color:var(--dim);font-size:13px">Not set yet</div></div>
     <div class="bkfield"><div class="bl">Rules & criteria for hire</div><div class="bv" style="color:var(--dim);font-size:13px">Add your requirements</div></div>
     <button class="btn p" style="margin-top:10px" ${da('editBooking')}>💳 Set up booking info</button>
+    <button class="btn g" style="margin-top:8px" ${da('applyVerify')}>🛡️ Apply for verification</button>
     `:''}
   </div>
   <div class="sect">Create & promote</div>
@@ -1705,6 +1720,29 @@ function sheetSwitch(){
   <p class="meta" style="margin:0 0 10px">Demo: view the app as another personality.</p>
   ${Object.keys(users).map(uid=>`<div class="mopt" ${da('setMe',uid)}>${av(uid,32)}<span style="margin-left:2px">${users[uid].name}${uid===me?' <span style="color:var(--brand);font-size:11px">• current</span>':''}</span><span class="mg">›</span></div>`).join("")}
   <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Close</button>`;
+}
+function sheetVerifyInfo(){
+  return `<h3><span class="vbadge" style="position:static;display:inline-flex">✔</span> Verified on Let's Link</h3>
+  <p class="meta" style="margin:0 0 12px;line-height:1.55">The verified check means this business or event has submitted <b style="color:var(--ink)">confirmed and notarized</b> documentation — and our team reviewed it.</p>
+  <div class="crit"><span class="critc">✔</span>Notarized business certificate / registration</div>
+  <div class="crit"><span class="critc">✔</span>Relevant licenses & permits for their category</div>
+  <div class="crit"><span class="critc">✔</span>Accreditations & insurance where required</div>
+  <div class="crit"><span class="critc">✔</span>Identity of the owner/organizer confirmed</div>
+  <div class="finfo" style="margin-top:12px">🛡️ Verified doesn't guarantee an experience — but it means they're real, licensed, and accountable. Book and attend with peace of mind.</div>
+  <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Got it</button>`;
+}
+function sheetApplyVerify(){
+  return `<h3>🛡️ Apply for verification</h3>
+  <p class="meta" style="margin:0 0 10px">Submit your credentials to earn the verified check. Builds trust and boosts bookings.</p>
+  <div class="fsec">Required documents</div>
+  <div class="uploader" ${da('mockUpload')}><div class="upi">📜</div><div class="upt">Upload notarized certificate</div><div class="ups">Business registration, notarized</div></div>
+  <div class="uploader" style="margin-top:8px" ${da('mockUpload')}><div class="upi">🎓</div><div class="upt">Upload licenses & accreditations</div><div class="ups">Permits relevant to your category</div></div>
+  <div id="uplist"></div>
+  <input class="finput" style="margin-top:10px" placeholder="Legal business name">
+  <input class="finput" placeholder="Business / EIN / license number">
+  <div class="finfo">Review takes 2–3 business days. You'll get a message when your check is live.</div>
+  <button class="btn p" style="margin-top:12px" ${da('submitVerify')}>Submit for review</button>
+  <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button>`;
 }
 function sheetUserMenu(uid){
   const nm=users[uid]?users[uid].name:uid;
