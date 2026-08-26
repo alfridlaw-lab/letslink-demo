@@ -298,7 +298,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v20</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v21</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -909,12 +909,13 @@ function renderDiscover(){
   const allEv=Object.keys(events).filter(id=>matchQ(events[id].n,events[id].loc)&&catMatchEvent(id));
   let body;
   if(searchQ){
+    const bz=sortIds(allBiz), ev=sortIds(allEv);
     body=`<div class="sect">Results for "${searchQ}"</div>
-      <div class="grid">${allEv.map(e=>eventTile(e)).join("")}${allBiz.map(b=>bizTile(b)).join("")}</div>
-      ${(!allEv.length&&!allBiz.length)?'<div class="empty">Nothing matched. Try a place, food, or event name.</div>':''}`;
+      <div class="grid">${ev.map(e=>eventTile(e)).join("")}${bz.map(b=>bizTile(b)).join("")}</div>
+      ${(!ev.length&&!bz.length)?'<div class="empty">Nothing matched. Try a place, food, or event name.</div>':''}`;
   }else if(catFilter!=="all"){
-    // filtered view: one combined grid
-    const bz=sortIds(allBiz), ev=allEv;
+    // filtered view: one combined grid — sort applies here too
+    const bz=sortIds(allBiz), ev=sortIds(allEv);
     body=`<div class="sect">${(CATS.find(c=>c[0]===catFilter)||[])[2]||''} in Austin</div>
       <div class="grid">${ev.map(e=>eventTile(e)).join("")}${bz.map(b=>bizTile(b)).join("")}</div>
       ${(!bz.length&&!ev.length)?'<div class="empty">Nothing in this category yet.</div>':''}`;
@@ -932,7 +933,7 @@ function renderDiscover(){
   <div class="sub">Austin at a glance — filtered through your people.</div>
   ${searchbar("Search events, food, places…")}
   ${catbar()}
-  ${(searchQ||catFilter!=="all")?'':sortbar()}
+  ${sortbar()}
   ${body}`);
 }
 function onSearch(v){searchQ=v;render();}
