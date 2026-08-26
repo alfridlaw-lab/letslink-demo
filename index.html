@@ -324,6 +324,32 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
   display:inline-block;background:rgba(124,92,255,.12);border:1px solid var(--line);
   border-radius:16px;padding:5px 11px}
 .boostrow:hover{background:rgba(124,92,255,.2)}
+/* floating messenger bubble + window */
+#fabwrap{position:fixed;bottom:92px;left:50%;transform:translateX(calc(215px - 100%));
+  width:0;z-index:45;pointer-events:none}
+@media(max-width:460px){#fabwrap{left:auto;right:14px;transform:none}}
+#fab{pointer-events:auto;position:absolute;bottom:0;right:0;width:52px;height:52px;border-radius:50%;
+  border:none;font-size:22px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4);
+  background:linear-gradient(135deg,var(--brand),var(--brand2));color:#05141a;
+  display:flex;align-items:center;justify-content:center}
+#fab.open{background:var(--card2);color:var(--ink);border:1px solid var(--line)}
+#fabdot{position:absolute;top:2px;right:2px;width:11px;height:11px;border-radius:50%;
+  background:var(--danger);border:2px solid var(--bg)}
+#fab.open #fabdot{display:none}
+#fabwin{pointer-events:auto;position:absolute;bottom:62px;right:0;width:300px;max-width:82vw;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.5);
+  overflow:hidden;opacity:0;transform:translateY(12px) scale(.97);transform-origin:bottom right;
+  transition:.18s;visibility:hidden}
+#fabwin.show{opacity:1;transform:translateY(0) scale(1);visibility:visible}
+.fabhead{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-bottom:1px solid var(--line)}
+.fabhead b{font-size:15px}
+.fabseeall{font-size:12px;color:var(--brand);cursor:pointer;font-weight:600}
+.fablist{max-height:320px;overflow-y:auto}
+.fablist::-webkit-scrollbar{width:0}
+.fabrow{display:flex;align-items:center;gap:9px;padding:11px 13px;cursor:pointer;border-bottom:1px solid var(--line)}
+.fabrow:hover{background:var(--card2)}
+.fabnm{font-weight:600;font-size:13.5px}
+.fabprev{font-size:12px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sheetbox h3{position:sticky;top:-18px;background:var(--card);margin:-2px -16px 3px;padding:6px 16px 8px;z-index:5}
 .sheetactions{position:sticky;bottom:-32px;background:var(--card);margin:8px -16px -32px;padding:12px 16px 32px;
   box-shadow:0 -8px 16px rgba(0,0,0,.3)}
@@ -332,7 +358,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v30</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v31</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -344,6 +370,11 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 </div>
 <div id="toast"></div>
 <div id="sheet"><div class="sheetbox" id="sheetbox"></div></div>
+<!-- floating messenger -->
+<div id="fabwrap">
+  <div id="fabwin"></div>
+  <button id="fab" data-act="toggleFab">💬<span id="fabdot"></span></button>
+</div>
 
 <script>
 /* ============ GLOBAL ERROR CATCHER (shows errors on-screen instead of blank) ============ */
@@ -923,6 +954,9 @@ ACTIONS={
   submitReport:(uid,reason)=>{closeSheet();toast("🚩 Report submitted — our team will review");},
   boost:(type,id,who)=>{const k=type+":"+id;boosts[k]=(boosts[k]||0)+1;render();toast("🚀 Boosted — shared with your followers");},
   showBlocked:()=>openSheet(sheetBlocked()),
+  toggleFab:()=>toggleFab(),
+  fabOpenThread:(uid)=>{closeFab();stack=[{type:"thread",id:uid}];tab="profile";render();scrollTop();},
+  fabInbox:()=>{closeFab();stack=[{type:"inbox",id:"inbox"}];tab="profile";render();scrollTop();},
   openPost:(pid)=>{stack.push({type:"post",id:pid});render();scrollTop();},
   reachOut:(pid)=>reachOut(pid),
   contactSheet:(pid)=>openSheet(sheetContact(pid)),
@@ -944,7 +978,8 @@ ACTIONS={
   submitCreate:(kind)=>submitCreate(kind),
 };
 
-function render(){
+function render(){ _render(); try{renderFab();}catch(e){} }
+function _render(){
   nav();
   if(stack.length){const top=stack[stack.length-1];
     if(top.type==="biz")return renderBiz(top.id);
@@ -1703,6 +1738,32 @@ function sheetContact(pid){
   <div class="finfo">🔒 They'll see your profile + this message. You can chat once they reply.</div>
   <button class="btn p" style="margin-top:12px" ${da('reachOut',p.id)}>Send</button>
   <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button>`;
+}
+/* ============ FLOATING MESSENGER ============ */
+let fabOpen=false;
+function toggleFab(){fabOpen=!fabOpen;renderFab();}
+function closeFab(){fabOpen=false;renderFab();}
+function renderFab(){
+  const win=document.getElementById("fabwin");const fab=document.getElementById("fab");
+  if(!win||!fab)return;
+  fab.classList.toggle("open",fabOpen);
+  fab.innerHTML=fabOpen?"✕":'💬';
+  win.classList.toggle("show",fabOpen);
+  if(!fabOpen){win.innerHTML="";return;}
+  const ids=Object.keys(threads);
+  win.innerHTML=`
+    <div class="fabhead"><b>Messages</b><span class="fabseeall" data-act="fabInbox">See all ›</span></div>
+    <div class="fablist">
+    ${ids.length?ids.map(uid=>{
+      const nm=users[uid]?users[uid].name:(biz[uid]?biz[uid].n:uid);
+      return `<div class="fabrow" data-act="fabOpenThread" data-args="${uid}">
+        ${users[uid]?av(uid,34):`<div class="pbadge" style="width:34px;height:34px;font-size:16px">${(biz[uid]&&biz[uid].ic)||'🏢'}</div>`}
+        <div style="margin-left:2px;min-width:0;flex:1">
+          <div class="fabnm">${nm}</div>
+          <div class="fabprev">${threadPreview(uid)}</div>
+        </div></div>`;}).join("")
+      :'<div class="empty" style="padding:16px">No messages yet.</div>'}
+    </div>`;
 }
 function reachOut(pid){
   const p=board.find(x=>x.id===pid);if(!p){closeSheet();return;}
