@@ -311,7 +311,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v25</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v26</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -829,7 +829,7 @@ function da(act){const args=[].slice.call(arguments,1).map(a=>String(a).replace(
 
 /* ============ NAV ============ */
 let tab="discover";
-const TABS=[["discover","🧭","Discover"],["board","📋","Board"],["map","📍","Map"],["following","👥","Following"],["profile","👤","You"]];
+const TABS=[["discover","🧭","Discover"],["board","📋","Board"],["map","📍","Map"],["following","🔗","Links"],["profile","👤","You"]];
 function nav(){setNav(TABS.map(([id,i,l])=>
   `<button class="${tab===id?'on':''}" ${da('go',id)}><span class="i">${i}</span>${l}</button>`).join(""));}
 function go(t){tab=t;stack=[];render();scrollTop();}
@@ -1296,7 +1296,7 @@ function renderFollowing(){
   if(peopleQ){
     const q=peopleQ.toLowerCase();
     const hits=Object.keys(users).filter(u=>(users[u].name+" "+users[u].h+" "+users[u].vibe).toLowerCase().includes(q));
-    setView(`<div class="h1">Following</div>
+    setView(`<div class="h1">Links</div>
     <div class="sub">Find anyone — friends, creators, celebs — by name.</div>
     ${peopleSearchbar()}
     <div class="sect">${hits.length} result${hits.length===1?'':'s'} for "${peopleQ}"</div>
@@ -1308,8 +1308,8 @@ function renderFollowing(){
   if(sortMode==="close")f=[...f].sort((a,b)=>(cf.includes(b)?1:0)-(cf.includes(a)?1:0));
   else if(sortMode==="interacted")f=[...f].sort((a,b)=>(users[b].foll||0)-(users[a].foll||0));
   const disc=Object.keys(users).filter(u=>u!==me&&!(follows[me]||[]).includes(u)).slice(0,5);
-  setView(`<div class="h1">Following</div>
-  <div class="sub">Latest from your people — tap any activity to jump right to it.</div>
+  setView(`<div class="h1">Links</div>
+  <div class="sub">Your people + find anyone — search friends, creators & celebs by name.</div>
   ${peopleSearchbar()}
   ${sortbar()}
   ${f.map(u=>followCard(u)).join("")}
