@@ -298,7 +298,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v23</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v24</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -747,7 +747,10 @@ function catbar(){
   return `<div class="catbar">${CATS.map(([k,e,l])=>
     `<span class="catchip ${catFilter===k?'on':''}" ${da('setCat',k)}>${e} ${l}</span>`).join("")}</div>`;
 }
-function setCat(c){catFilter=c;render();}
+function setCat(c){catFilter=c;
+  // on the map, update controls + in-view list in place (don't rebuild the map / lose the view)
+  if(tab==="map"&&!stack.length&&_leaflet){refreshMapControls();updateInView();return;}
+  render();}
 // demo "interaction score" per entity (higher = more you've interacted)
 const INTERACT={mama:98,coral:91,marrowfest:95,ansel:80,roast:76,foundry:70,market:66,
   gallery_night:60,paddle:58,hoops:55,cofield:72,heights:50,kayak:64,gallery:48,
@@ -1279,33 +1282,39 @@ function renderFollowing(){
   </div>`).join("")}`);
 }
 
-/* ============ MAP (stylized) ============ */
+/* ============ MAP ============ */
 let mapSort="proximity"; // proximity | close | interacted (for the in-view list)
+function mapControls(){
+  return `<div id="mapctrls">${catbar()}
+  <div class="sortbar" style="margin-top:2px">
+    <span class="sortchip ${mapSort==='proximity'?'on':''}" ${da('setMapSort','proximity')}>📍 Distance</span>
+    <span class="sortchip ${mapSort==='close'?'on':''}" ${da('setMapSort','close')}>⭐ Close friends</span>
+    <span class="sortchip ${mapSort==='interacted'?'on':''}" ${da('setMapSort','interacted')}>🔥 Most interacted</span>
+  </div></div>`;
+}
 function renderMap(){
   setView(`<div class="h1">Map</div><div class="sub">Austin, TX · live map · the list below shows only what's in view.</div>
   ${searchbar("Search this map…")}
   <div class="card"><div id="leafmap" style="height:300px;width:100%"></div></div>
-  <div class="sortbar" style="margin-top:12px">
-    <span class="sortchip ${mapSort==='proximity'?'on':''}" ${da('setMapSort','proximity')}>📍 Distance</span>
-    <span class="sortchip ${mapSort==='close'?'on':''}" ${da('setMapSort','close')}>⭐ Close friends</span>
-    <span class="sortchip ${mapSort==='interacted'?'on':''}" ${da('setMapSort','interacted')}>🔥 Most interacted</span>
-  </div>
+  <div style="margin-top:12px">${mapControls()}</div>
   <div id="inview"><div class="empty">Loading map…</div></div>`);
   initMap();
 }
-function setMapSort(m){mapSort=m;updateInView();}
-// which pins fall inside the current map viewport
+function setMapSort(m){mapSort=m;refreshMapControls();updateInView();}
+// re-render the map controls in place so active states (sort + category) update visually
+function refreshMapControls(){const el=document.getElementById("mapctrls");if(el)el.outerHTML=mapControls();}
+// which pins fall inside the current map viewport (respects category filter + search)
 function updateInView(){
   const el=document.getElementById("inview");if(!el)return;
   if(!_leaflet){el.innerHTML='';return;}
   let b; try{b=_leaflet.getBounds();}catch(e){return;}
-  const bizIds=Object.keys(biz).filter(k=>geo(k)&&matchQ(biz[k].n,biz[k].cat+" "+biz[k].hood)&&b.contains(geo(k)));
-  const evIds=Object.keys(events).filter(k=>geo(k)&&matchQ(events[k].n,events[k].loc)&&b.contains(geo(k)));
+  const bizIds=Object.keys(biz).filter(k=>geo(k)&&matchQ(biz[k].n,biz[k].cat+" "+biz[k].hood)&&catMatchBiz(k)&&b.contains(geo(k)));
+  const evIds=Object.keys(events).filter(k=>geo(k)&&matchQ(events[k].n,events[k].loc)&&catMatchEvent(k)&&b.contains(geo(k)));
   const bz=sortListBy(bizIds), ev=sortListBy(evIds);
   const total=bz.length+ev.length;
   el.innerHTML=`<div class="sect">In view · ${total} place${total===1?'':'s'}</div>
     ${total?`<div class="grid">${ev.map(eventTile).join("")}${bz.map(bizTile).join("")}</div>`
-      :'<div class="empty">Nothing in this area — zoom out or pan to see more.</div>'}`;
+      :'<div class="empty">Nothing in this area — zoom out, pan, or clear the category filter.</div>'}`;
 }
 function sortListBy(ids){
   const arr=[...ids];
