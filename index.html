@@ -306,6 +306,19 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .followbtn{flex:0 0 auto;background:linear-gradient(90deg,var(--brand),var(--brand2));color:#05141a;
   border:none;border-radius:20px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer}
 .followbtn.on{background:var(--card2);color:var(--sub);border:1px solid var(--line)}
+/* chat / messages */
+.chathead{display:flex;align-items:center;gap:10px;padding:6px 2px 12px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.chathead .backbtn{font-size:22px;color:var(--brand);background:none;border:none;cursor:pointer;flex:0 0 auto}
+.chatscroll{min-height:40vh;max-height:58vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 2px 12px}
+.chatscroll::-webkit-scrollbar{width:0}
+.bubble{max-width:78%;padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.4;position:relative}
+.bubble.mine{align-self:flex-end;background:linear-gradient(90deg,var(--brand),var(--brand2));color:#05141a;border-bottom-right-radius:5px}
+.bubble.theirs{align-self:flex-start;background:var(--card2);border:1px solid var(--line);border-bottom-left-radius:5px}
+.bubble .btime{display:block;font-size:9.5px;opacity:.6;margin-top:3px}
+.chatinput{display:flex;gap:8px;align-items:center;position:sticky;bottom:0;background:var(--bg);padding:8px 0 4px}
+.cinput{flex:1;background:var(--card2);border:1px solid var(--line);border-radius:22px;padding:11px 15px;color:var(--ink);font-size:14px;outline:none}
+.sendbtn{flex:0 0 auto;width:42px;height:42px;border-radius:50%;border:none;font-size:19px;font-weight:800;
+  background:linear-gradient(135deg,var(--brand),var(--brand2));color:#05141a;cursor:pointer}
 .sheetbox h3{position:sticky;top:-18px;background:var(--card);margin:-2px -16px 3px;padding:6px 16px 8px;z-index:5}
 .sheetactions{position:sticky;bottom:-32px;background:var(--card);margin:8px -16px -32px;padding:12px 16px 32px;
   box-shadow:0 -8px 16px rgba(0,0,0,.3)}
@@ -314,7 +327,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v27</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v28</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -716,6 +729,28 @@ let peopleQ=""; // user search query on Following tab
 // who follows a given user (reverse graph)
 function followersOf(uid){return Object.keys(follows).filter(u=>(follows[u]||[]).includes(uid));}
 
+/* ============ MESSAGING / INBOX ============ */
+// threads keyed by the OTHER user id; each = array of {from, text, t}
+let threads={
+  marcus_vale:[
+    {from:"marcus_vale",text:"Yo Keith, you pulling up to SXSW day 2?",t:"2:14 PM"},
+    {from:"me",text:"For sure. You got the pier stage lineup?",t:"2:16 PM"},
+    {from:"marcus_vale",text:"Sending it now — Kojo headlines sunset 🔥",t:"2:16 PM"}],
+  priya_night:[
+    {from:"priya_night",text:"Ansel after the show? broth cures all 🍜",t:"11:02 PM"},
+    {from:"me",text:"say less. 12:30?",t:"11:03 PM"}],
+  rob_secures:[
+    {from:"rob_secures",text:"Saw you might need security for a function — we’re open that weekend.",t:"Mon"}],
+  dee_eats_note:[],
+};
+delete threads.dee_eats_note;
+let activeThread=null;
+function threadPreview(uid){const t=threads[uid];if(!t||!t.length)return"";const last=t[t.length-1];
+  return (last.from==="me"?"You: ":"")+last.text;}
+function unreadCount(){return 0;} // demo: all read
+function sortedThreads(){return Object.keys(threads).sort((a,b)=>{
+  const ta=threads[a],tb=threads[b];return 0;});}
+
 /* ============ STATE ============ */
 let me="dee_eats";
 let eventMode="todo"; // todo | hire
@@ -871,6 +906,9 @@ ACTIONS={
   peopleClear:()=>{peopleQ="";render();},
   showFollowers:()=>{stack.push({type:"list",id:"followers"});render();scrollTop();},
   showFollowing:()=>{stack.push({type:"list",id:"following"});render();scrollTop();},
+  openInbox:()=>{stack.push({type:"inbox",id:"inbox"});render();scrollTop();},
+  openThread:(uid)=>{stack.push({type:"thread",id:uid});render();scrollTop();},
+  sendMsg:(uid)=>sendMsg(uid),
   openPost:(pid)=>{stack.push({type:"post",id:pid});render();scrollTop();},
   reachOut:(pid)=>{const p=board.find(x=>x.id===pid);closeSheet();toast(p&&p.kind==="request"?"📩 Offer sent to "+postByName(p):"📩 Inquiry sent — they'll get back to you");},
   contactSheet:(pid)=>openSheet(sheetContact(pid)),
@@ -900,6 +938,8 @@ function render(){
     if(top.type==="user")return renderUser(top.id);
     if(top.type==="post")return renderPost(top.id);
     if(top.type==="list")return renderPeopleList(top.id);
+    if(top.type==="inbox")return renderInbox();
+    if(top.type==="thread")return renderThread(top.id);
   }
   if(tab==="discover")return renderDiscover();
   if(tab==="board")return renderBoard();
@@ -1208,7 +1248,10 @@ function renderUser(id){
     <div class="title" style="margin-top:8px;font-size:20px">${u.name} ${u.star?'⭐':''}</div>
     <p class="meta">${u.h}${u.foll?' · '+u.foll+'k followers':''} · <span style="color:${visible?'var(--brand)':'var(--gold)'}">${isMe?'You':(privacy[id]==="public"?'Public':(visible?'Connected':'Private'))}</span></p>
     <p class="meta" style="margin-top:6px;color:var(--sub)">${u.vibe}</p>
-    ${!isMe?`<button class="btn ${iFollow?'g':'p'}" style="margin-top:12px" ${da('toast',(iFollow?'Unfollowed':'Following')+' '+u.name)}>${iFollow?'✓ Following':'＋ Follow'}</button>`:''}
+    ${!isMe?`<div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn ${iFollow?'g':'p'}" style="flex:1" ${da('toast',(iFollow?'Unfollowed':'Following')+' '+u.name)}>${iFollow?'✓ Following':'＋ Follow'}</button>
+      <button class="btn g" style="flex:1" ${da('openThread',id)}>💬 Message</button>
+    </div>`:''}
     ${socialLinks(id)}
   </div>`;
 
@@ -1333,6 +1376,61 @@ function renderFollowing(){
 function peopleSearchbar(){return `<div class="searchwrap"><span class="si">🔍</span>
   <input class="search" placeholder="Search people by name…" value="${peopleQ.replace(/"/g,'&quot;')}" oninput="ACTIONS.onPeopleSearch(this.value)">
   ${peopleQ?`<span class="sx" ${da('peopleClear')}>✕</span>`:''}</div>`;}
+/* ============ INBOX + CHAT THREAD ============ */
+function renderInbox(){
+  const ids=Object.keys(threads);
+  setView(`<button class="backbtn" ${da('back')}>‹ Back</button>
+  <div class="h1">Messages</div>
+  <div class="sub">Chat with people & businesses — right inside the app.</div>
+  ${peopleSearchbarMsg()}
+  ${ids.length?ids.map(uid=>{
+    const nm=users[uid]?users[uid].name:(biz[uid]?biz[uid].n:uid);
+    return `<div class="prow" ${da('openThread',uid)} style="cursor:pointer">
+      <div class="prleft">${users[uid]?av(uid,44):`<div class="pbadge" style="width:44px;height:44px">${(biz[uid]&&biz[uid].ic)||'🏢'}</div>`}
+        <div style="margin-left:2px;min-width:0;flex:1">
+          <div class="nm">${nm} ${users[uid]&&users[uid].star?'⭐':''}</div>
+          <div class="ds" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${threadPreview(uid)}</div>
+        </div>
+      </div><div class="go">›</div></div>`;}).join("")
+    :'<div class="empty">No messages yet. Start a chat from anyone’s profile.</div>'}`);
+}
+function peopleSearchbarMsg(){return `<div class="searchwrap"><span class="si">🔍</span>
+  <input class="search" placeholder="Search messages…" oninput="">
+  </div>`;}
+function renderThread(uid){
+  const nm=users[uid]?users[uid].name:(biz[uid]?biz[uid].n:uid);
+  const msgs=threads[uid]||[];
+  setView(`<div class="chathead">
+    <button class="backbtn" style="padding:0;margin:0" ${da('back')}>‹</button>
+    ${users[uid]?av(uid,36):`<div class="pbadge">${(biz[uid]&&biz[uid].ic)||'🏢'}</div>`}
+    <div style="margin-left:2px"><div class="nm" ${users[uid]?da('open','user',uid):''} style="cursor:pointer">${nm} ${users[uid]&&users[uid].star?'⭐':''}</div>
+    <div class="ds">${users[uid]?users[uid].h:'Business'}</div></div>
+  </div>
+  <div class="chatscroll" id="chatscroll">
+    ${msgs.length?msgs.map(m=>`<div class="bubble ${m.from==='me'?'mine':'theirs'}">${m.text}<span class="btime">${m.t||''}</span></div>`).join("")
+      :'<div class="empty">Say hi — start the conversation.</div>'}
+  </div>
+  <div class="chatinput">
+    <input class="cinput" id="msgbox" placeholder="Message…" onkeydown="if(event.key==='Enter'){ACTIONS.sendMsg('${uid}')}">
+    <button class="sendbtn" ${da('sendMsg',uid)}>↑</button>
+  </div>`);
+  setTimeout(()=>{const s=document.getElementById("chatscroll");if(s)s.scrollTop=s.scrollHeight;},50);
+}
+function sendMsg(uid){
+  const box=document.getElementById("msgbox");if(!box)return;
+  const txt=box.value.trim();if(!txt)return;
+  if(!threads[uid])threads[uid]=[];
+  const now=new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
+  threads[uid].push({from:"me",text:txt,t:now});
+  box.value="";
+  renderThread(uid);
+  // demo auto-reply
+  setTimeout(()=>{
+    const replies=["For sure!","Bet, let’s link 🤝","Sounds good — I’ll follow up.","🔥","Appreciate you!"];
+    threads[uid].push({from:uid,text:replies[Math.floor(Math.random()*replies.length)],t:new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})});
+    if(stack.length&&stack[stack.length-1].type==="thread"&&stack[stack.length-1].id===uid)renderThread(uid);
+  },1100);
+}
 function renderPeopleList(which){
   const ids=which==="followers"?followersOf(me):(follows[me]||[]);
   const title=which==="followers"?"Followers":"Following";
@@ -1445,6 +1543,7 @@ function renderProfile(){
     <div class="ffrow">
       <div class="ffstat" ${da('showFollowing')}><b>${followingCount}</b><span>Following</span></div>
       <div class="ffstat" ${da('showFollowers')}><b>${users[me].foll?users[me].foll+'k':followerCount}</b><span>Followers</span></div>
+      <div class="ffstat" ${da('openInbox')}><b>💬</b><span>Messages</span></div>
     </div>
   </div></div>
   <div class="sect">Account type</div>
