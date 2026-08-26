@@ -319,6 +319,11 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .cinput{flex:1;background:var(--card2);border:1px solid var(--line);border-radius:22px;padding:11px 15px;color:var(--ink);font-size:14px;outline:none}
 .sendbtn{flex:0 0 auto;width:42px;height:42px;border-radius:50%;border:none;font-size:19px;font-weight:800;
   background:linear-gradient(135deg,var(--brand),var(--brand2));color:#05141a;cursor:pointer}
+/* boost + moderation */
+.boostrow{margin-top:9px;font-size:12px;font-weight:700;color:var(--brand2);cursor:pointer;
+  display:inline-block;background:rgba(124,92,255,.12);border:1px solid var(--line);
+  border-radius:16px;padding:5px 11px}
+.boostrow:hover{background:rgba(124,92,255,.2)}
 .sheetbox h3{position:sticky;top:-18px;background:var(--card);margin:-2px -16px 3px;padding:6px 16px 8px;z-index:5}
 .sheetactions{position:sticky;bottom:-32px;background:var(--card);margin:8px -16px -32px;padding:12px 16px 32px;
   box-shadow:0 -8px 16px rgba(0,0,0,.3)}
@@ -327,7 +332,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v28</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v29</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -745,6 +750,8 @@ let threads={
 };
 delete threads.dee_eats_note;
 let activeThread=null;
+let blocked={}; // uid -> 1 if blocked
+let boosts={}; // "type:id" -> count of boosts by the user
 function threadPreview(uid){const t=threads[uid];if(!t||!t.length)return"";const last=t[t.length-1];
   return (last.from==="me"?"You: ":"")+last.text;}
 function unreadCount(){return 0;} // demo: all read
@@ -909,6 +916,13 @@ ACTIONS={
   openInbox:()=>{stack.push({type:"inbox",id:"inbox"});render();scrollTop();},
   openThread:(uid)=>{stack.push({type:"thread",id:uid});render();scrollTop();},
   sendMsg:(uid)=>sendMsg(uid),
+  userMenu:(uid)=>openSheet(sheetUserMenu(uid)),
+  blockUser:(uid)=>{blocked[uid]=1;closeSheet();toast("🚫 Blocked "+(users[uid]?users[uid].name:uid));back();},
+  unblockUser:(uid)=>{delete blocked[uid];render();toast("Unblocked");},
+  reportUser:(uid)=>openSheet(sheetReport(uid)),
+  submitReport:(uid,reason)=>{closeSheet();toast("🚩 Report submitted — our team will review");},
+  boost:(type,id,who)=>{const k=type+":"+id;boosts[k]=(boosts[k]||0)+1;render();toast("🚀 Boosted — shared with your followers");},
+  showBlocked:()=>openSheet(sheetBlocked()),
   openPost:(pid)=>{stack.push({type:"post",id:pid});render();scrollTop();},
   reachOut:(pid)=>{const p=board.find(x=>x.id===pid);closeSheet();toast(p&&p.kind==="request"?"📩 Offer sent to "+postByName(p):"📩 Inquiry sent — they'll get back to you");},
   contactSheet:(pid)=>openSheet(sheetContact(pid)),
@@ -1216,7 +1230,8 @@ function renderBiz(id){
     <div class="review"><div class="top">${av(u,28)}<span class="nm">${users[u]?users[u].name:u}</span>
     ${(f.includes(u))?'<span class="fol">Following</span>':''}</div>
     <div class="stars" style="margin-bottom:4px">${stars(r)}</div>
-    <div class="tx">${tx}</div></div>`).join(""):
+    <div class="tx">${tx}</div>
+    <div class="boostrow" ${da('boost','rec',id+'_'+u)}>🚀 Boost this rec${boosts['rec:'+id+'_'+u]?' · '+boosts['rec:'+id+'_'+u]:''}</div></div>`).join(""):
     `<div class="empty">No reviews from people you follow yet.<br>Flip to "Everyone" to see all ${b.rev.length}.</div>`}
   </div>
   <div style="height:10px"></div>`);
@@ -1251,7 +1266,9 @@ function renderUser(id){
     ${!isMe?`<div style="display:flex;gap:8px;margin-top:12px">
       <button class="btn ${iFollow?'g':'p'}" style="flex:1" ${da('toast',(iFollow?'Unfollowed':'Following')+' '+u.name)}>${iFollow?'✓ Following':'＋ Follow'}</button>
       <button class="btn g" style="flex:1" ${da('openThread',id)}>💬 Message</button>
-    </div>`:''}
+      <button class="btn g" style="flex:0 0 46px" ${da('userMenu',id)}>⋯</button>
+    </div>
+    <button class="btn g" style="margin-top:8px" ${da('boost','user',id)}>🚀 Boost ${u.name.split(" ")[0]}'s recs to your followers${boosts['user:'+id]?' · '+boosts['user:'+id]:''}</button>`:''}
     ${socialLinks(id)}
   </div>`;
 
@@ -1344,7 +1361,7 @@ function renderFollowing(){
   // user search across ALL people by name/handle/vibe
   if(peopleQ){
     const q=peopleQ.toLowerCase();
-    const hits=Object.keys(users).filter(u=>(users[u].name+" "+users[u].h+" "+users[u].vibe).toLowerCase().includes(q));
+    const hits=Object.keys(users).filter(u=>!blocked[u]&&(users[u].name+" "+users[u].h+" "+users[u].vibe).toLowerCase().includes(q));
     setView(`<div class="h1">Links</div>
     <div class="sub">Find anyone — friends, creators, celebs — by name.</div>
     ${peopleSearchbar()}
@@ -1356,7 +1373,7 @@ function renderFollowing(){
   const cf=CLOSE[me]||[];
   if(sortMode==="close")f=[...f].sort((a,b)=>(cf.includes(b)?1:0)-(cf.includes(a)?1:0));
   else if(sortMode==="interacted")f=[...f].sort((a,b)=>(users[b].foll||0)-(users[a].foll||0));
-  const disc=Object.keys(users).filter(u=>u!==me&&!(follows[me]||[]).includes(u)).slice(0,5);
+  const disc=Object.keys(users).filter(u=>u!==me&&!blocked[u]&&!(follows[me]||[]).includes(u)).slice(0,5);
   setView(`<div class="h1">Links</div>
   <div class="sub">Your people + find anyone — search friends, creators & celebs by name.</div>
   ${peopleSearchbar()}
@@ -1621,7 +1638,17 @@ function sheetSettings(){
   ${menuOpt('📍','Location & distance units','menuItem','Location settings')}
   ${menuOpt('💳','Payment methods','menuItem','Payment methods')}
   ${menuOpt('🏢','Business account','menuItem','Business account settings')}
-  ${menuOpt('🚫','Blocked accounts','menuItem','Blocked accounts')}
+  ${menuOpt('🚫','Blocked accounts','showBlocked')}
+  <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Close</button>`;
+}
+function sheetBlocked(){
+  const ids=Object.keys(blocked);
+  return `<h3>🚫 Blocked accounts</h3>
+  ${ids.length?ids.map(uid=>`<div class="prow"><div class="prleft">${av(uid,40)}
+    <div style="margin-left:2px"><div class="nm">${users[uid]?users[uid].name:uid}</div>
+    <div class="ds">Blocked</div></div></div>
+    <button class="followbtn on" ${da('unblockUser',uid)}>Unblock</button></div>`).join("")
+    :'<div class="empty">You haven’t blocked anyone.</div>'}
   <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Close</button>`;
 }
 function sheetCustomize(){
@@ -1640,6 +1667,30 @@ function sheetSwitch(){
   <p class="meta" style="margin:0 0 10px">Demo: view the app as another personality.</p>
   ${Object.keys(users).map(uid=>`<div class="mopt" ${da('setMe',uid)}>${av(uid,32)}<span style="margin-left:2px">${users[uid].name}${uid===me?' <span style="color:var(--brand);font-size:11px">• current</span>':''}</span><span class="mg">›</span></div>`).join("")}
   <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Close</button>`;
+}
+function sheetUserMenu(uid){
+  const nm=users[uid]?users[uid].name:uid;
+  const isBlocked=blocked[uid];
+  return `<div class="mhead">${av(uid,42)}<div style="margin-left:4px">
+    <div style="font-weight:700;font-size:15px">${nm}</div>
+    <div class="meta" style="margin:0">${users[uid]?users[uid].h:''}</div></div></div>
+  <div class="mdiv"></div>
+  ${menuOpt('💬','Message','openThread',uid)}
+  ${menuOpt('🚀','Boost their profile','boost','user|'+uid)}
+  ${menuOpt('🔇','Mute','menuItem','Muted '+nm)}
+  <div class="mdiv"></div>
+  ${isBlocked
+    ? `<div class="mopt" ${da('unblockUser',uid)}><span class="mi">✅</span><span>Unblock ${nm}</span><span class="mg">›</span></div>`
+    : `<div class="mopt md" ${da('blockUser',uid)}><span class="mi">🚫</span><span>Block ${nm}</span><span class="mg">›</span></div>`}
+  <div class="mopt md" ${da('reportUser',uid)}><span class="mi">🚩</span><span>Report ${nm}</span><span class="mg">›</span></div>`;
+}
+function sheetReport(uid){
+  const nm=users[uid]?users[uid].name:uid;
+  const reasons=[["Spam or scam","spam"],["Harassment or bullying","harass"],["Fake account / impersonation","fake"],["Inappropriate content","content"],["Something else","other"]];
+  return `<h3>🚩 Report ${nm}</h3>
+  <p class="meta" style="margin:0 0 10px">What's going on? Reports are confidential.</p>
+  ${reasons.map(([label,code])=>`<div class="opt" ${da('submitReport',uid,code)}><span class="i">•</span><div>${label}</div></div>`).join("")}
+  <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Cancel</button>`;
 }
 function sheetContact(pid){
   const p=board.find(x=>x.id===pid);if(!p)return'';
