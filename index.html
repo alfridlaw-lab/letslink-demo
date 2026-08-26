@@ -32,7 +32,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;
   justify-content:center;font-weight:700;font-size:12px;color:#06121a;flex:0 0 auto}
 /* Content */
-#view{padding:14px 14px 96px;min-height:60vh}
+#view{padding:14px 14px 150px;min-height:60vh}
 .h1{font-size:22px;font-weight:800;margin:6px 2px 4px;letter-spacing:-.4px}
 .sub{color:var(--sub);font-size:13px;margin:0 2px 14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
@@ -328,10 +328,13 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 #fabwrap{position:fixed;bottom:92px;left:50%;transform:translateX(calc(215px - 100%));
   width:0;z-index:45;pointer-events:none}
 @media(max-width:460px){#fabwrap{left:auto;right:14px;transform:none}}
-#fab{pointer-events:auto;position:absolute;bottom:0;right:0;width:52px;height:52px;border-radius:50%;
-  border:none;font-size:22px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4);
+#fab{pointer-events:auto;position:absolute;bottom:0;right:0;width:50px;height:50px;border-radius:50%;
+  border:none;font-size:21px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4);
   background:linear-gradient(135deg,var(--brand),var(--brand2));color:#05141a;
-  display:flex;align-items:center;justify-content:center}
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .25s, transform .25s}
+#fab.idle{opacity:.55;transform:scale(.9)}
+#fab:active{transform:scale(.94)}
 #fab.open{background:var(--card2);color:var(--ink);border:1px solid var(--line)}
 #fabdot{position:absolute;top:2px;right:2px;width:11px;height:11px;border-radius:50%;
   background:var(--danger);border:2px solid var(--bg)}
@@ -358,7 +361,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v31</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v32</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -1910,6 +1913,15 @@ function submitCreate(kind){
 /* ============ BOOT ============ */
 setMe("dee_eats"); // Keith Clements is the fixed user
 render();
+// bubble fades to unobtrusive while scrolling, returns to full when you stop (never blocks reading)
+(function(){
+  let t=null;
+  window.addEventListener("scroll",()=>{
+    const fab=document.getElementById("fab");if(!fab||fabOpen)return;
+    fab.classList.add("idle");
+    clearTimeout(t);t=setTimeout(()=>fab.classList.remove("idle"),650);
+  },{passive:true});
+})();
 </script>
 </body>
 </html>
