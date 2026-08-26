@@ -290,6 +290,19 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .bcfoot{display:flex;align-items:center;gap:8px}
 .bcwhen{font-size:11.5px;color:var(--dim)}
 .bccta{margin-left:auto;font-size:12px;font-weight:700;color:var(--brand)}
+/* followers/following stats on You tab */
+.ffrow{display:flex;gap:10px;margin-top:14px}
+.ffstat{flex:1;background:var(--card2);border:1px solid var(--line);border-radius:12px;
+  padding:11px;cursor:pointer}
+.ffstat b{display:block;font-size:18px}
+.ffstat span{font-size:11px;color:var(--dim)}
+/* person row (search results + follower/following lists) */
+.prow{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--card);
+  border:1px solid var(--line);border-radius:13px;margin-bottom:8px}
+.prleft{display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer}
+.followbtn{flex:0 0 auto;background:linear-gradient(90deg,var(--brand),var(--brand2));color:#05141a;
+  border:none;border-radius:20px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer}
+.followbtn.on{background:var(--card2);color:var(--sub);border:1px solid var(--line)}
 .sheetbox h3{position:sticky;top:-18px;background:var(--card);margin:-2px -16px 3px;padding:6px 16px 8px;z-index:5}
 .sheetactions{position:sticky;bottom:-32px;background:var(--card);margin:8px -16px -32px;padding:12px 16px 32px;
   box-shadow:0 -8px 16px rgba(0,0,0,.3)}
@@ -298,7 +311,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v24</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v25</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -696,6 +709,9 @@ const boardSeed=[
 ];
 let board=boardSeed.slice();
 let boardFilter="all"; // all | offer | request
+let peopleQ=""; // user search query on Following tab
+// who follows a given user (reverse graph)
+function followersOf(uid){return Object.keys(follows).filter(u=>(follows[u]||[]).includes(uid));}
 
 /* ============ STATE ============ */
 let me="dee_eats";
@@ -845,6 +861,10 @@ ACTIONS={
   setCat:(c)=>setCat(c),
   setBoardFilter:(f)=>{boardFilter=f;render();},
   setMapSort:(m)=>setMapSort(m),
+  onPeopleSearch:(v)=>{peopleQ=v;render();},
+  peopleClear:()=>{peopleQ="";render();},
+  showFollowers:()=>{stack.push({type:"list",id:"followers"});render();scrollTop();},
+  showFollowing:()=>{stack.push({type:"list",id:"following"});render();scrollTop();},
   openPost:(pid)=>{stack.push({type:"post",id:pid});render();scrollTop();},
   reachOut:(pid)=>{const p=board.find(x=>x.id===pid);closeSheet();toast(p&&p.kind==="request"?"📩 Offer sent to "+postByName(p):"📩 Inquiry sent — they'll get back to you");},
   contactSheet:(pid)=>openSheet(sheetContact(pid)),
@@ -873,6 +893,7 @@ function render(){
     if(top.type==="event")return renderEvent(top.id);
     if(top.type==="user")return renderUser(top.id);
     if(top.type==="post")return renderPost(top.id);
+    if(top.type==="list")return renderPeopleList(top.id);
   }
   if(tab==="discover")return renderDiscover();
   if(tab==="board")return renderBoard();
@@ -1260,7 +1281,28 @@ function followCard(u){
     <div class="flist">${acts.length?acts.map(actChip).join(""):'<div class="empty" style="padding:10px">No recent activity.</div>'}</div>
   </div>`;
 }
+// compact person row (for search results + lists)
+function personRow(u){
+  const iFollow=(follows[me]||[]).includes(u);
+  return `<div class="prow">
+    <div class="prleft" ${da('open','user',u)}>${av(u,40)}
+      <div style="margin-left:2px;min-width:0"><div class="nm">${users[u].name} ${users[u].star?'⭐':''}</div>
+      <div class="ds">${users[u].h}${users[u].foll?' · '+users[u].foll+'k':''}</div></div></div>
+    ${u!==me?`<button class="followbtn ${iFollow?'on':''}" ${da('toast',(iFollow?'Unfollowed ':'Following ')+users[u].name)}>${iFollow?'Following':'＋ Follow'}</button>`:''}
+  </div>`;
+}
 function renderFollowing(){
+  // user search across ALL people by name/handle/vibe
+  if(peopleQ){
+    const q=peopleQ.toLowerCase();
+    const hits=Object.keys(users).filter(u=>(users[u].name+" "+users[u].h+" "+users[u].vibe).toLowerCase().includes(q));
+    setView(`<div class="h1">Following</div>
+    <div class="sub">Find anyone — friends, creators, celebs — by name.</div>
+    ${peopleSearchbar()}
+    <div class="sect">${hits.length} result${hits.length===1?'':'s'} for "${peopleQ}"</div>
+    ${hits.length?hits.map(personRow).join(""):'<div class="empty">No one matched. Try another name.</div>'}`);
+    return;
+  }
   let f=follows[me]||[];
   const cf=CLOSE[me]||[];
   if(sortMode==="close")f=[...f].sort((a,b)=>(cf.includes(b)?1:0)-(cf.includes(a)?1:0));
@@ -1268,6 +1310,7 @@ function renderFollowing(){
   const disc=Object.keys(users).filter(u=>u!==me&&!(follows[me]||[]).includes(u)).slice(0,5);
   setView(`<div class="h1">Following</div>
   <div class="sub">Latest from your people — tap any activity to jump right to it.</div>
+  ${peopleSearchbar()}
   ${sortbar()}
   ${f.map(u=>followCard(u)).join("")}
   <div class="sect">👀 Discover people</div>
@@ -1280,6 +1323,17 @@ function renderFollowing(){
     ${(activity[u]&&activity[u][0])?`<div class="whyact">Recently: ${activity[u][0].t.replace(/^[^ ]+ /,'')} — ${activity[u][0].x.replace(/^"|"$/g,'')}</div>`:''}
     <button class="btn p" style="margin-top:10px;padding:10px" ${da('toast','Following '+users[u].name)}>＋ Follow</button>
   </div>`).join("")}`);
+}
+function peopleSearchbar(){return `<div class="searchwrap"><span class="si">🔍</span>
+  <input class="search" placeholder="Search people by name…" value="${peopleQ.replace(/"/g,'&quot;')}" oninput="ACTIONS.onPeopleSearch(this.value)">
+  ${peopleQ?`<span class="sx" ${da('peopleClear')}>✕</span>`:''}</div>`;}
+function renderPeopleList(which){
+  const ids=which==="followers"?followersOf(me):(follows[me]||[]);
+  const title=which==="followers"?"Followers":"Following";
+  setView(`<button class="backbtn" ${da('back')}>‹ Back</button>
+  <div class="h1">${title}</div>
+  <div class="sub">${ids.length} ${which==="followers"?'people follow you':'people you follow'}</div>
+  ${ids.length?ids.map(personRow).join(""):'<div class="empty">Nobody here yet.</div>'}`);
 }
 
 /* ============ MAP ============ */
@@ -1375,11 +1429,17 @@ function renderProfile(){
         <div class="ds" style="color:var(--brand)">⭐ ${role}</div></div><div class="go">›</div></div>`;
     }).join(""):'<div class="empty" style="margin-top:8px">Nothing linked yet — endorse an event or business to show it here.</div>';
   }
+  const followingCount=(follows[me]||[]).length;
+  const followerCount=followersOf(me).length;
   setView(`<div class="h1">You</div>
-  <div class="card"><div class="pad" style="text-align:center;padding:22px">
+  <div class="card"><div class="pad" style="text-align:center;padding:22px 16px 16px">
     ${av(me,66)}<div class="title" style="margin-top:10px;font-size:20px">${u.name} ${u.star?'⭐':''}</div>
-    <p class="meta">${u.h}${u.foll?' · '+u.foll+'k followers':''}</p>
+    <p class="meta">${u.h}</p>
     <p class="meta" style="margin-top:6px;color:var(--sub)">${u.vibe}</p>
+    <div class="ffrow">
+      <div class="ffstat" ${da('showFollowing')}><b>${followingCount}</b><span>Following</span></div>
+      <div class="ffstat" ${da('showFollowers')}><b>${users[me].foll?users[me].foll+'k':followerCount}</b><span>Followers</span></div>
+    </div>
   </div></div>
   <div class="sect">Account type</div>
   <div class="bizacct">
