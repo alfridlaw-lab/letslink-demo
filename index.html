@@ -266,6 +266,13 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .mopt .mi{font-size:18px;width:24px;text-align:center;flex:0 0 auto}
 .mopt .mg{margin-left:auto;color:var(--dim);font-size:16px}
 .mopt.md{color:var(--danger)}
+/* category filter bar */
+.catbar{display:flex;gap:7px;overflow-x:auto;padding:0 2px 12px;-webkit-overflow-scrolling:touch}
+.catbar::-webkit-scrollbar{display:none}
+.catchip{white-space:nowrap;background:var(--card2);border:1px solid var(--line);
+  border-radius:20px;padding:7px 13px;font-size:12.5px;color:var(--sub);cursor:pointer;flex:0 0 auto}
+.catchip.on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#05141a;
+  border-color:transparent;font-weight:700}
 .sheetbox h3{position:sticky;top:-18px;background:var(--card);margin:-2px -16px 3px;padding:6px 16px 8px;z-index:5}
 .sheetactions{position:sticky;bottom:-32px;background:var(--card);margin:8px -16px -32px;padding:12px 16px 32px;
   box-shadow:0 -8px 16px rgba(0,0,0,.3)}
@@ -274,7 +281,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v18</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v19</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -645,6 +652,44 @@ let attending={marrowfest:false};
 let reviewFilter="follow"; // everyone | follow | close
 let searchQ="";
 let sortMode="proximity"; // proximity | close | interacted
+let catFilter="all"; // category filter for Discover/Events
+// category taxonomy + emoji
+const CATS=[["all","🌐","All"],["food","🍽️","Food"],["music","🎵","Music"],["nightlife","🍸","Nightlife"],
+  ["sports","🏀","Sports"],["shopping","🛍️","Shopping"],["local","📍","Local finds"],
+  ["events","🎟️","Events"],["stay","🏨","Stay"],["services","🛠️","Services"],["outdoors","🌿","Outdoors"]];
+// classify a business by its category text
+function catOf(id){
+  const b=biz[id]; if(!b)return"local";
+  const c=(b.cat||"").toLowerCase();
+  if(/food|restaurant|brunch|caf|vietnam|african|seafood|vendor|noodle|coffee|roaster/.test(c))return"food";
+  if(/music|venue|dj|band/.test(c))return"music";
+  if(/bar|cocktail|night|club/.test(c))return"nightlife";
+  if(/hoop|sport|gym|court/.test(c))return"sports";
+  if(/cloth|brand|access|boutique|shop|thread|merch/.test(c))return"shopping";
+  if(/hotel|airbnb|host|stay|inn/.test(c))return"stay";
+  if(/security|landscap|photo|staff|service/.test(c))return"services";
+  if(/kayak|outdoor|rental|paddle|park/.test(c))return"outdoors";
+  if(/gallery|art|attraction/.test(c))return"local";
+  return"local";
+}
+// classify an event
+function catOfEvent(id){
+  const e=events[id];if(!e)return"events";
+  const t=((e.n||"")+" "+(e.d||"")).toLowerCase();
+  if(/festival|music|sxsw|concert|dj|band/.test(t))return"music";
+  if(/hoop|run|game|sport|ball/.test(t))return"sports";
+  if(/market|farmer|maker/.test(t))return"shopping";
+  if(/gallery|art|craft/.test(t))return"local";
+  if(/paddle|kayak|marsh|outdoor|lake/.test(t))return"outdoors";
+  return"events";
+}
+function catMatchBiz(id){return catFilter==="all"||catOf(id)===catFilter;}
+function catMatchEvent(id){return catFilter==="all"||catOfEvent(id)===catFilter||(catFilter==="events");}
+function catbar(){
+  return `<div class="catbar">${CATS.map(([k,e,l])=>
+    `<span class="catchip ${catFilter===k?'on':''}" ${da('setCat',k)}>${e} ${l}</span>`).join("")}</div>`;
+}
+function setCat(c){catFilter=c;render();}
 // demo "interaction score" per entity (higher = more you've interacted)
 const INTERACT={mama:98,coral:91,marrowfest:95,ansel:80,roast:76,foundry:70,market:66,
   gallery_night:60,paddle:58,hoops:55,cofield:72,heights:50,kayak:64,gallery:48,
@@ -736,6 +781,7 @@ ACTIONS={
   menuSignout:()=>{closeSheet();toast("👋 Signed out (demo)");},
   menuItem:(label)=>{closeSheet();toast(label+" (demo)");},
   mapOpen:(type,id)=>{open(type,id);},
+  setCat:(c)=>setCat(c),
   markAttending:(id)=>markAttending(id),
   toast:(m)=>toast(m),
   confirmAtt:(id,aud)=>confirmAtt(id,aud),
@@ -811,14 +857,19 @@ function bizTile(id){const b=biz[id];
     </div></div>`;}
 
 function renderDiscover(){
-  const allBiz=Object.keys(biz);const allEv=Object.keys(events);
-  const fBiz=allBiz.filter(id=>matchQ(biz[id].n,biz[id].cat+" "+biz[id].hood));
-  const fEv=allEv.filter(id=>matchQ(events[id].n,events[id].loc));
+  const allBiz=Object.keys(biz).filter(id=>matchQ(biz[id].n,biz[id].cat+" "+biz[id].hood)&&catMatchBiz(id));
+  const allEv=Object.keys(events).filter(id=>matchQ(events[id].n,events[id].loc)&&catMatchEvent(id));
   let body;
   if(searchQ){
     body=`<div class="sect">Results for "${searchQ}"</div>
-      <div class="grid">${fEv.map(e=>eventTile(e)).join("")}${fBiz.map(b=>bizTile(b)).join("")}</div>
-      ${(!fEv.length&&!fBiz.length)?'<div class="empty">Nothing matched. Try a place, food, or event name.</div>':''}`;
+      <div class="grid">${allEv.map(e=>eventTile(e)).join("")}${allBiz.map(b=>bizTile(b)).join("")}</div>
+      ${(!allEv.length&&!allBiz.length)?'<div class="empty">Nothing matched. Try a place, food, or event name.</div>':''}`;
+  }else if(catFilter!=="all"){
+    // filtered view: one combined grid
+    const bz=sortIds(allBiz), ev=allEv;
+    body=`<div class="sect">${(CATS.find(c=>c[0]===catFilter)||[])[2]||''} in Austin</div>
+      <div class="grid">${ev.map(e=>eventTile(e)).join("")}${bz.map(b=>bizTile(b)).join("")}</div>
+      ${(!bz.length&&!ev.length)?'<div class="empty">Nothing in this category yet.</div>':''}`;
   }else{
     const bizSorted=sortIds(["mama","coral","ansel","roast","suya","foundry","inn","heights"]);
     const evSorted=sortIds(["market","gallery_night","paddle","hoops"]);
@@ -832,7 +883,8 @@ function renderDiscover(){
   setView(`<div class="h1">Discover</div>
   <div class="sub">Austin at a glance — filtered through your people.</div>
   ${searchbar("Search events, food, places…")}
-  ${searchQ?'':sortbar()}
+  ${catbar()}
+  ${(searchQ||catFilter!=="all")?'':sortbar()}
   ${body}`);
 }
 function onSearch(v){searchQ=v;render();}
@@ -847,13 +899,16 @@ function eventRow(id){const e=events[id];return `<div class="eco" ${da('open','e
 /* ============ EVENTS LIST ============ */
 function renderEvents(){
   const all=Object.keys(events);
-  const f=all.filter(id=>matchQ(events[id].n,events[id].loc));
+  const f=all.filter(id=>matchQ(events[id].n,events[id].loc)&&catMatchEvent(id));
+  const showHero=(catFilter==="all"||catMatchEvent("marrowfest"))&&!searchQ&&f.includes("marrowfest");
+  const rest=f.filter(id=>!(showHero&&id==="marrowfest"));
   setView(`<div class="h1">Events</div>
   <div class="sub">Every event is a hub — tap to see its whole ecosystem.</div>
   ${searchbar("Search events…")}
-  ${eventTile("marrowfest",1)}
-  <div class="grid">${f.filter(id=>id!=="marrowfest").map(e=>eventTile(e)).join("")}</div>
-  ${!f.length?'<div class="empty">No events matched.</div>':''}`);
+  ${catbar()}
+  ${showHero?eventTile("marrowfest",1):''}
+  <div class="grid">${rest.map(e=>eventTile(e)).join("")}</div>
+  ${!f.length?'<div class="empty">No events in this category.</div>':''}`);
 }
 
 /* ============ EVENT DETAIL (the hero) ============ */
