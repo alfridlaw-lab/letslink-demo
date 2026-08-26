@@ -298,7 +298,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v21</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v22</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -824,6 +824,7 @@ ACTIONS={
   mapOpen:(type,id)=>{open(type,id);},
   setCat:(c)=>setCat(c),
   setBoardFilter:(f)=>{boardFilter=f;render();},
+  setMapSort:(m)=>setMapSort(m),
   openPost:(pid)=>{stack.push({type:"post",id:pid});render();scrollTop();},
   reachOut:(pid)=>{const p=board.find(x=>x.id===pid);closeSheet();toast(p&&p.kind==="request"?"📩 Offer sent to "+postByName(p):"📩 Inquiry sent — they'll get back to you");},
   contactSheet:(pid)=>openSheet(sheetContact(pid)),
@@ -1262,24 +1263,39 @@ function renderFollowing(){
 }
 
 /* ============ MAP (stylized) ============ */
+let mapSort="proximity"; // proximity | close | interacted (for the in-view list)
 function renderMap(){
-  const hoods=["Downtown","East Austin","South Congress","Rainey Street","Red River District","Clarksville","South Austin","Lady Bird Lake"];
-  let hoodHtml;
-  if(searchQ){
-    const bHits=Object.keys(biz).filter(k=>matchQ(biz[k].n,biz[k].cat+" "+biz[k].hood));
-    const eHits=Object.keys(events).filter(k=>matchQ(events[k].n,events[k].loc));
-    hoodHtml=`<div class="sect">Results for "${searchQ}"</div>
-      <div class="grid">${eHits.map(e=>eventTile(e)).join("")}${bHits.map(b=>bizTile(b)).join("")}</div>
-      ${(!bHits.length&&!eHits.length)?'<div class="empty">No places matched.</div>':''}`;
-  }else{
-    hoodHtml=hoods.map(h=>{const bs=Object.keys(biz).filter(k=>biz[k].hood.includes(h.replace("The ","")));
-      return bs.length?`<div class="sect">${h}</div><div class="grid">${bs.map(k=>bizTile(k)).join("")}</div>`:'';}).join("");
-  }
-  setView(`<div class="h1">Map</div><div class="sub">Austin, TX · live map · tap a pin to open it.</div>
+  setView(`<div class="h1">Map</div><div class="sub">Austin, TX · live map · the list below shows only what's in view.</div>
   ${searchbar("Search this map…")}
   <div class="card"><div id="leafmap" style="height:300px;width:100%"></div></div>
-  ${hoodHtml}`);
+  <div class="sortbar" style="margin-top:12px">
+    <span class="sortchip ${mapSort==='proximity'?'on':''}" ${da('setMapSort','proximity')}>📍 Distance</span>
+    <span class="sortchip ${mapSort==='close'?'on':''}" ${da('setMapSort','close')}>⭐ Close friends</span>
+    <span class="sortchip ${mapSort==='interacted'?'on':''}" ${da('setMapSort','interacted')}>🔥 Most interacted</span>
+  </div>
+  <div id="inview"><div class="empty">Loading map…</div></div>`);
   initMap();
+}
+function setMapSort(m){mapSort=m;updateInView();}
+// which pins fall inside the current map viewport
+function updateInView(){
+  const el=document.getElementById("inview");if(!el)return;
+  if(!_leaflet){el.innerHTML='';return;}
+  let b; try{b=_leaflet.getBounds();}catch(e){return;}
+  const bizIds=Object.keys(biz).filter(k=>geo(k)&&matchQ(biz[k].n,biz[k].cat+" "+biz[k].hood)&&b.contains(geo(k)));
+  const evIds=Object.keys(events).filter(k=>geo(k)&&matchQ(events[k].n,events[k].loc)&&b.contains(geo(k)));
+  const bz=sortListBy(bizIds), ev=sortListBy(evIds);
+  const total=bz.length+ev.length;
+  el.innerHTML=`<div class="sect">In view · ${total} place${total===1?'':'s'}</div>
+    ${total?`<div class="grid">${ev.map(eventTile).join("")}${bz.map(bizTile).join("")}</div>`
+      :'<div class="empty">Nothing in this area — zoom out or pan to see more.</div>'}`;
+}
+function sortListBy(ids){
+  const arr=[...ids];
+  if(mapSort==="proximity")arr.sort((a,b)=>(DIST[a]||99)-(DIST[b]||99));
+  else if(mapSort==="interacted")arr.sort((a,b)=>(INTERACT[b]||0)-(INTERACT[a]||0));
+  else if(mapSort==="close")arr.sort((a,b)=>closeScore(b)-closeScore(a)||(DIST[a]||99)-(DIST[b]||99));
+  return arr;
 }
 
 let _leaflet=null;
@@ -1308,7 +1324,9 @@ function initMap(){
       const mk=L.marker(g).addTo(map);
       mk.bindPopup(`<b>🎟️ ${e.n}</b><br>${e.date}<br>${miles(id)}<br><a href="#" onclick="ACTIONS.mapOpen('event','${id}');return false">Open ›</a>`);});
     if(bounds.length>1){try{map.fitBounds(bounds,{padding:[30,30],maxZoom:14});}catch(e){}}
-    setTimeout(()=>{try{map.invalidateSize();}catch(e){}},150);
+    // update the in-view list whenever the map moves or zooms
+    map.on("moveend zoomend",updateInView);
+    setTimeout(()=>{try{map.invalidateSize();}catch(e){}updateInView();},150);
   },60);
 }
 
