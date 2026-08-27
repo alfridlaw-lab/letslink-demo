@@ -392,6 +392,13 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .tmtag{position:absolute;bottom:8px;left:8px;background:rgba(255,106,61,.92);color:#fff;
   font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:20px}
 .tmtile{cursor:pointer}
+/* map location controls */
+.loconav{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.locbtn{flex:0 0 auto;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.maprecenter{position:absolute;bottom:12px;right:12px;z-index:500;width:40px;height:40px;border-radius:50%;
+  border:none;background:#fff;color:#111;font-size:18px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.4);
+  display:flex;align-items:center;justify-content:center}
 .sheetbox h3{position:sticky;top:-18px;background:var(--card);margin:-2px -16px 3px;padding:6px 16px 8px;z-index:5}
 .sheetactions{position:sticky;bottom:-32px;background:var(--card);margin:8px -16px -32px;padding:12px 16px 32px;
   box-shadow:0 -8px 16px rgba(0,0,0,.3)}
@@ -400,7 +407,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v42</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v43</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -1005,6 +1012,8 @@ ACTIONS={
   openTicket:(url)=>{try{window.open(url,"_blank");}catch(e){location.href=url;}},
   openTM:(id)=>{stack.push({type:"tmevent",id});render();scrollTop();},
   tmAttend:(id)=>tmAttend(id),
+  centerMe:()=>centerMe(),
+  citySearch:()=>citySearch(),
   onPeopleSearch:(v)=>{peopleQ=v;render();},
   peopleClear:()=>{peopleQ="";render();},
   showFollowers:()=>{stack.push({type:"list",id:"followers"});render();scrollTop();},
@@ -1131,8 +1140,8 @@ function renderDiscover(){
       <div class="grid">${ev.map(e=>eventTile(e)).join("")}${bz.map(b=>bizTile(b)).join("")}</div>
       ${(!bz.length&&!ev.length)?'<div class="empty">Nothing in this category yet.</div>':''}`;
   }else{
-    const bizSorted=sortIds(["mama","coral","ansel","roast","suya","foundry","inn","heights"]);
-    const evSorted=sortIds(["market","gallery_night","paddle","hoops"]);
+    const bizSorted=sortIds(["mama","coral","ansel","roast"]);
+    const evSorted=sortIds(["market","paddle"]);
     body=`
     ${eventTile("marrowfest",1)}
     <div class="sect">🍽️ Places for you</div>
@@ -1623,6 +1632,7 @@ function renderPeopleList(which){
 
 /* ============ MAP ============ */
 let mapSort="proximity"; // proximity | close | interacted (for the in-view list)
+let _youMarker=null;
 function mapControls(){
   return `<div id="mapctrls">${catbar()}
   <div class="sortbar" style="margin-top:2px">
@@ -1632,14 +1642,47 @@ function mapControls(){
   </div></div>`;
 }
 function renderMap(){
-  setView(`<div class="h1">Map</div><div class="sub">Austin, TX · live map · the list below shows only what's in view.</div>
-  ${searchbar("Search this map…")}
-  <div class="card"><div id="leafmap" style="height:300px;width:100%"></div></div>
+  setView(`<div class="h1">Map</div><div class="sub">Live map · search a city or center on you · the list shows what's in view.</div>
+  <div class="loconav">
+    <div class="searchwrap" style="flex:1;margin:0"><span class="si">🏙️</span>
+      <input class="search" id="citybox" placeholder="Search a city or place…" onkeydown="if(event.key==='Enter'){ACTIONS.citySearch()}">
+    </div>
+    <button class="locbtn" ${da('centerMe')} title="Center on my location">📍</button>
+  </div>
+  ${searchbar("Filter what's in view…")}
+  <div class="card" style="position:relative"><div id="leafmap" style="height:300px;width:100%"></div>
+    <button class="maprecenter" ${da('centerMe')} title="My location">📍</button></div>
   <div style="margin-top:12px">${mapControls()}</div>
   <div id="inview"><div class="empty">Loading map…</div></div>`);
   initMap();
 }
 function setMapSort(m){mapSort=m;refreshMapControls();updateInView();}
+// center the map on the user's real device location
+function centerMe(){
+  if(!_leaflet)return;
+  if(!navigator.geolocation){toast("Location not supported");_leaflet.setView(GEO._me,14);return;}
+  toast("📍 Finding you…");
+  navigator.geolocation.getCurrentPosition(
+    pos=>{const ll=[pos.coords.latitude,pos.coords.longitude];GEO._me=ll;
+      _leaflet.setView(ll,14);
+      if(_youMarker){try{_youMarker.setLatLng(ll);}catch(e){}}
+      fetchOSM();fetchTM();updateInView();toast("📍 Centered on you");},
+    err=>{toast("Couldn’t get location — allow it in settings");},
+    {enableHighAccuracy:true,timeout:8000});
+}
+// free geocoding via OSM Nominatim — jump the map to any city/place
+function citySearch(){
+  const box=document.getElementById("citybox");if(!box)return;
+  const q=box.value.trim();if(!q)return;
+  toast("🔍 Searching “"+q+"”…");
+  fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q="+encodeURIComponent(q))
+    .then(r=>r.json()).then(d=>{
+      if(!d||!d.length){toast("No match for “"+q+"”");return;}
+      const ll=[+d[0].lat,+d[0].lon];
+      if(_leaflet){_leaflet.setView(ll,13);fetchOSM();fetchTM();setTimeout(updateInView,200);}
+      toast("📍 "+(d[0].display_name||q).split(",")[0]);
+    }).catch(()=>toast("Search failed — try again"));
+}
 // re-render the map controls in place so active states (sort + category) update visually
 function refreshMapControls(){const el=document.getElementById("mapctrls");if(el)el.outerHTML=mapControls();}
 // which pins fall inside the current map viewport (respects category filter + search)
@@ -1733,6 +1776,14 @@ function drawTM(){
   });
   tmLayer.addTo(_leaflet);
 }
+// real distance (miles) from user location to a lat/lng
+function distMiles(lat,lng){
+  const R=3958.8,toR=Math.PI/180;
+  const c=GEO._me;const dLat=(lat-c[0])*toR,dLng=(lng-c[1])*toR;
+  const a=Math.sin(dLat/2)**2+Math.cos(c[0]*toR)*Math.cos(lat*toR)*Math.sin(dLng/2)**2;
+  const d=2*R*Math.asin(Math.sqrt(a));
+  return d<10?d.toFixed(1):Math.round(d);
+}
 // deterministic “which of my friends are going” for a live event (demo social layer over real data)
 function tmFriends(id){
   const f=follows[me]||[];if(!f.length)return[];
@@ -1751,7 +1802,7 @@ function tmTile(e){
       ${going?'<span class="tmtag" style="background:var(--brand);color:#05141a">✓ Going</span>':(fa.length?`<span class="stack">${fa.slice(0,3).map(u=>av(u,22)).join("")}</span>`:'<span class="tmtag">Ticketmaster</span>')}</div>
     <div class="cap"><div class="capttl" style="font-size:13px">${e.n}</div>
     <div class="capline">${fa.length?`<span style="color:var(--brand)">${fa.map(u=>users[u].name.split(" ")[0]).join(", ")} going</span>`:(e.venue||'Venue TBA')}</div>
-    <div class="caploc">📅 ${e.date}</div></div></div>`;
+    <div class="caploc">📅 ${e.date} · 📍 ${distMiles(e.lat,e.lng)} mi</div></div></div>`;
 }
 let tmIndex={};
 function renderTMEvent(id){
@@ -1870,7 +1921,7 @@ function initMap(){
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
       maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
     // you-are-here
-    L.circleMarker(GEO._me,{radius:7,color:"#00c2a8",fillColor:"#00c2a8",fillOpacity:1,weight:2})
+    _youMarker=L.circleMarker(GEO._me,{radius:7,color:"#00c2a8",fillColor:"#00c2a8",fillOpacity:1,weight:2})
       .addTo(map).bindPopup("📍 You are here");
     // filter by search
     const bizIds=Object.keys(biz).filter(k=>geo(k)&&matchQ(biz[k].n,biz[k].cat+" "+biz[k].hood));
