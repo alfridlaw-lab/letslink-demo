@@ -399,7 +399,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v40</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v41</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -1002,6 +1002,8 @@ ACTIONS={
   setBoardFilter:(f)=>{boardFilter=f;render();},
   setMapSort:(m)=>setMapSort(m),
   openTicket:(url)=>{try{window.open(url,"_blank");}catch(e){location.href=url;}},
+  openTM:(id)=>{stack.push({type:"tmevent",id});render();scrollTop();},
+  tmAttend:(id)=>tmAttend(id),
   onPeopleSearch:(v)=>{peopleQ=v;render();},
   peopleClear:()=>{peopleQ="";render();},
   showFollowers:()=>{stack.push({type:"list",id:"followers"});render();scrollTop();},
@@ -1059,6 +1061,7 @@ function _render(){
     if(top.type==="thread")return renderThread(top.id);
     if(top.type==="interactions")return renderInteractions();
     if(top.type==="itype")return renderIType(top.id);
+    if(top.type==="tmevent")return renderTMEvent(top.id);
   }
   if(tab==="discover")return renderDiscover();
   if(tab==="board")return renderBoard();
@@ -1729,15 +1732,60 @@ function drawTM(){
   });
   tmLayer.addTo(_leaflet);
 }
+// deterministic “which of my friends are going” for a live event (demo social layer over real data)
+function tmFriends(id){
+  const f=follows[me]||[];if(!f.length)return[];
+  let h=0;for(let i=0;i<id.length;i++)h=(h*31+id.charCodeAt(i))>>>0;
+  if(h%3===0)return[]; // ~1/3 of events have no friends going
+  const n=(h%2)+1; // 1-2 friends
+  return f.slice(h%f.length).concat(f).slice(0,n);
+}
 function tmTile(e){
-  return `<div class="tile tmtile" ${da('openTicket',e.url)}>
+  tmIndex[e.id]=e; // keep a lookup for the detail view
+  const fa=tmFriends(e.id);const going=attending[e.id];
+  return `<div class="tile tmtile" ${da('openTM',e.id)}>
     <div class="tileimg" style="${e.img?`background-image:url('${e.img}');background-size:cover;background-position:center`:'background:linear-gradient(135deg,#ff6a3d,#7c5cff)'}">
       <span class="scrim"></span><span class="badge">🎟️ ${e.cat}</span>
       ${e.price?`<span class="rate" style="color:#fff">${e.price}</span>`:''}
-      <span class="tmtag">Ticketmaster</span></div>
+      ${going?'<span class="tmtag" style="background:var(--brand);color:#05141a">✓ Going</span>':(fa.length?`<span class="stack">${fa.slice(0,3).map(u=>av(u,22)).join("")}</span>`:'<span class="tmtag">Ticketmaster</span>')}</div>
     <div class="cap"><div class="capttl" style="font-size:13px">${e.n}</div>
-    <div class="capline">${e.venue||'Venue TBA'}</div>
-    <div class="caploc">📅 ${e.date} · tap for tickets</div></div></div>`;
+    <div class="capline">${fa.length?`<span style="color:var(--brand)">${fa.map(u=>users[u].name.split(" ")[0]).join(", ")} going</span>`:(e.venue||'Venue TBA')}</div>
+    <div class="caploc">📅 ${e.date}</div></div></div>`;
+}
+let tmIndex={};
+function renderTMEvent(id){
+  const e=tmIndex[id];
+  if(!e){setView(`<button class="backbtn" ${da('back')}>‹ Back</button><div class="empty">Event no longer in view — head back to the map.</div>`);return;}
+  const fa=tmFriends(id);const going=attending[id];
+  setView(`<button class="backbtn" ${da('back')}>‹ Back</button>
+  <div class="card"><div class="banner" style="${e.img?`background-image:url('${e.img}');background-size:cover;background-position:center`:'background:linear-gradient(135deg,#ff6a3d,#7c5cff)'};height:170px"><span class="scrim"></span><span class="tag" style="position:relative;z-index:2">🎟️ ${e.cat}</span><span class="tmtag" style="position:absolute;bottom:10px;right:10px;z-index:2">Ticketmaster</span></div>
+  <div class="pad">
+    <div class="title" style="font-size:20px">${e.n}</div>
+    <p class="meta">📅 ${e.date}${e.price?' · <b style="color:var(--brand)">'+e.price+'</b>':''}</p>
+    <p class="meta">📍 ${e.venue||'Venue TBA'}</p>
+    ${fa.length?`<div class="social" style="margin-top:10px">${fa.map(u=>av(u)).join("")}<span class="who"><b>${fa.map(u=>users[u].name.split(" ")[0]).join(", ")}</b> ${fa.length>1?'are':'is'} going</span></div>`:'<p class="meta" style="margin-top:10px;color:var(--dim)">None of your people are going yet — be the first.</p>'}
+    <button class="btn ${going?'g':'gold'}" style="margin-top:12px" ${da('tmAttend',id)}>${going?'✓ You are going — tap to remove':'＋ Mark attending'}</button>
+    <button class="btn p" style="margin-top:8px" ${da('openTicket',e.url)}>🎟️ Get tickets on Ticketmaster</button>
+  </div></div>
+  <div class="sect">💬 Comments</div>
+  <div class="cbox">
+    <input class="finput" id="cmt_${id}" style="margin:0" placeholder="Add a comment…" onkeydown="if(event.key==='Enter'){ACTIONS.addComment('${id}')}">
+    <button class="sendbtn" style="width:38px;height:38px;font-size:16px" ${da('addComment',id)}>↑</button>
+  </div>
+  ${(comments[id]&&comments[id].length)?comments[id].map(c=>`
+    <div class="cmt"><div class="cmttop">${users[c.by]?av(c.by,28):`<div class="pbadge" style="width:28px;height:28px;font-size:13px">👤</div>`}
+      <span class="cmtnm">${users[c.by]?users[c.by].name:c.by}</span><span class="cmtt">${c.t}</span></div>
+      <div class="cmttx">${c.text}</div></div>`).join("")
+    :'<div class="empty" style="padding:14px">No comments yet — start the conversation.</div>'}
+  <div style="height:10px"></div>`);
+}
+function tmAttend(id){
+  const e=tmIndex[id];
+  if(attending[id]){attending[id]=false;toast("Removed from your plans");}
+  else{attending[id]=true;
+    myInteractions.unshift({kind:"attend",icon:"🎟️",text:"You’re attending "+(e?e.n:"an event"),sub:e?(e.venue+" · "+e.date):"",t:"now"});
+    toast("🎉 You’re going — shared with your followers");}
+  renderTMEvent(id);
 }
 
 /* ============ LIVE OSM / OVERPASS IMPORT (real businesses in view) ============ */
