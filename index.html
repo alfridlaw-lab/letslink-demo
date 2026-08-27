@@ -388,6 +388,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
   font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px}
 .osmnote{font-size:12px;color:var(--dim);line-height:1.45;margin:-4px 2px 12px;font-style:italic}
 /* Ticketmaster event tiles */
+.tmbanner{position:absolute !important;bottom:10px;right:10px;left:auto !important;z-index:2}
 .tmtag{position:absolute;bottom:8px;left:8px;background:rgba(255,106,61,.92);color:#fff;
   font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:20px}
 .tmtile{cursor:pointer}
@@ -399,7 +400,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v41</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v42</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -1758,7 +1759,7 @@ function renderTMEvent(id){
   if(!e){setView(`<button class="backbtn" ${da('back')}>‹ Back</button><div class="empty">Event no longer in view — head back to the map.</div>`);return;}
   const fa=tmFriends(id);const going=attending[id];
   setView(`<button class="backbtn" ${da('back')}>‹ Back</button>
-  <div class="card"><div class="banner" style="${e.img?`background-image:url('${e.img}');background-size:cover;background-position:center`:'background:linear-gradient(135deg,#ff6a3d,#7c5cff)'};height:170px"><span class="scrim"></span><span class="tag" style="position:relative;z-index:2">🎟️ ${e.cat}</span><span class="tmtag" style="position:absolute;bottom:10px;right:10px;z-index:2">Ticketmaster</span></div>
+  <div class="card"><div class="banner" style="${e.img?`background-image:url('${e.img}');background-size:cover;background-position:center`:'background:linear-gradient(135deg,#ff6a3d,#7c5cff)'};height:170px"><span class="scrim"></span><span class="tag" style="position:relative;z-index:2">🎟️ ${e.cat}</span><span class="tmtag tmbanner">Ticketmaster</span></div>
   <div class="pad">
     <div class="title" style="font-size:20px">${e.n}</div>
     <p class="meta">📅 ${e.date}${e.price?' · <b style="color:var(--brand)">'+e.price+'</b>':''}</p>
