@@ -387,6 +387,10 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .claimtag{position:absolute;bottom:8px;right:8px;background:rgba(0,194,168,.9);color:#05141a;
   font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px}
 .osmnote{font-size:12px;color:var(--dim);line-height:1.45;margin:-4px 2px 12px;font-style:italic}
+/* Ticketmaster event tiles */
+.tmtag{position:absolute;bottom:8px;left:8px;background:rgba(255,106,61,.92);color:#fff;
+  font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:20px}
+.tmtile{cursor:pointer}
 .sheetbox h3{position:sticky;top:-18px;background:var(--card);margin:-2px -16px 3px;padding:6px 16px 8px;z-index:5}
 .sheetactions{position:sticky;bottom:-32px;background:var(--card);margin:8px -16px -32px;padding:12px 16px 32px;
   box-shadow:0 -8px 16px rgba(0,0,0,.3)}
@@ -395,7 +399,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v38</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v39</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -1654,6 +1658,18 @@ function updateInView(){
   html+= seededTotal
     ? `<div class="grid">${ev.map(eventTile).join("")}${bz.map(bizTile).join("")}</div>`
     : '<div class="empty" style="padding:14px">No featured spots in this view — these are our example listings.</div>';
+  // REAL TICKETED EVENTS (Ticketmaster) — with photos
+  const tmIn=tmEvents.filter(e=>{
+    if(!b.contains([e.lat,e.lng]))return false;
+    if(catFilter!=="all"&&e.catKey!==catFilter&&catFilter!=="events")return false;
+    if(searchQ&&!(e.n+" "+e.venue+" "+e.cat).toLowerCase().includes(searchQ.toLowerCase()))return false;
+    return true;
+  });
+  html+=`<div class="sect">🎟️ Live events near here${tmFetching?' <span style="color:var(--dim);font-weight:400">· loading…</span>':' · '+tmIn.length}</div>`;
+  html+=`<p class="osmnote">Real ticketed events from Ticketmaster — tap any to grab tickets.</p>`;
+  html+= tmIn.length
+    ? `<div class="grid">${tmIn.map(tmTile).join("")}</div>`
+    : (tmFetching?'':'<div class="empty" style="padding:14px">No ticketed events found in this view.</div>');
   html+=`<div class="sect">📍 In this area · real places${osmFetching?' <span style="color:var(--dim);font-weight:400">· loading…</span>':' · '+osmIn.length}</div>`;
   html+=`<p class="osmnote">Live from OpenStreetMap — a preview of the full repository. Any of these could become a real Let’s Link listing with reviews, bookings & friend recs.</p>`;
   html+= osmIn.length
@@ -1667,6 +1683,60 @@ function sortListBy(ids){
   else if(mapSort==="interacted")arr.sort((a,b)=>(INTERACT[b]||0)-(INTERACT[a]||0));
   else if(mapSort==="close")arr.sort((a,b)=>closeScore(b)-closeScore(a)||(DIST[a]||99)-(DIST[b]||99));
   return arr;
+}
+
+/* ============ LIVE TICKETMASTER DISCOVERY (real ticketed events in view) ============ */
+const TM_KEY="ZAAsf4aYi9EUVRtfUx6SouOX282bButi";
+let tmEvents=[]; // [{id,n,date,venue,cat,catKey,img,url,price,lat,lng}]
+let tmLayer=null, tmFetching=false, tmTimer=null;
+function tmCatKey(seg){seg=(seg||"").toLowerCase();
+  if(/music|concert/.test(seg))return"music";
+  if(/sport/.test(seg))return"sports";
+  if(/arts|theatre|theater|film/.test(seg))return"local";
+  return"events";}
+function fetchTM(){
+  if(!_leaflet)return;
+  let c;try{c=_leaflet.getCenter();}catch(e){return;}
+  const lat=c.lat.toFixed(4),lng=c.lng.toFixed(4);
+  // radius scales with zoom (rough)
+  const z=_leaflet.getZoom(); const radius=z>=14?15:z>=12?30:60;
+  tmFetching=true;updateInView();
+  const url=`https://app.ticketmaster.com/discovery/v2/events.json?apikey=${TM_KEY}&latlong=${lat},${lng}&radius=${radius}&unit=miles&size=40&sort=date,asc`;
+  fetch(url).then(r=>r.json()).then(d=>{
+    const ev=(d._embedded&&d._embedded.events)||[];
+    tmEvents=ev.map(e=>{
+      const v=(e._embedded&&e._embedded.venues&&e._embedded.venues[0])||{};
+      const loc=v.location||{};
+      const img=(e.images||[]).sort((a,b)=>(b.width||0)-(a.width||0))[0]||{};
+      const seg=((e.classifications||[{}])[0].segment||{}).name||"";
+      const pr=(e.priceRanges&&e.priceRanges[0]);
+      return {id:"tm_"+e.id,n:e.name,date:(e.dates&&e.dates.start&&e.dates.start.localDate)||"TBD",
+        venue:v.name||"",cat:seg||"Event",catKey:tmCatKey(seg),img:img.url||"",url:e.url||"",
+        price:pr?`$${Math.round(pr.min)}+`:"",lat:loc.latitude?+loc.latitude:null,lng:loc.longitude?+loc.longitude:null};
+    }).filter(e=>e.lat&&e.lng);
+    tmFetching=false;drawTM();updateInView();
+  }).catch(()=>{tmFetching=false;updateInView();});
+}
+function drawTM(){
+  if(!_leaflet)return;
+  if(tmLayer){try{_leaflet.removeLayer(tmLayer);}catch(e){}}
+  tmLayer=L.layerGroup();
+  tmEvents.forEach(e=>{
+    const mk=L.circleMarker([e.lat,e.lng],{radius:6,color:"#ff6a3d",fillColor:"#ff6a3d",fillOpacity:.9,weight:1});
+    mk.bindPopup(`<b>🎟️ ${e.n}</b><br>${e.venue}<br>${e.date}${e.price?" · "+e.price:""}<br><i style="color:#888">Live from Ticketmaster</i>`);
+    tmLayer.addLayer(mk);
+  });
+  tmLayer.addTo(_leaflet);
+}
+function tmTile(e){
+  return `<div class="tile tmtile" onclick="window.open('${e.url}','_blank')">
+    <div class="tileimg" style="${e.img?`background-image:url('${e.img}');background-size:cover;background-position:center`:'background:linear-gradient(135deg,#ff6a3d,#7c5cff)'}">
+      <span class="scrim"></span><span class="badge">🎟️ ${e.cat}</span>
+      ${e.price?`<span class="rate" style="color:#fff">${e.price}</span>`:''}
+      <span class="tmtag">Ticketmaster</span></div>
+    <div class="cap"><div class="capttl" style="font-size:13px">${e.n}</div>
+    <div class="capline">${e.venue||'Venue TBA'}</div>
+    <div class="caploc">📅 ${e.date} · tap for tickets</div></div></div>`;
 }
 
 /* ============ LIVE OSM / OVERPASS IMPORT (real businesses in view) ============ */
@@ -1764,8 +1834,10 @@ function initMap(){
       mk.bindPopup(`<b>🎟️ ${e.n}</b><br>${e.date}<br>${miles(id)}<br><a href="#" onclick="ACTIONS.mapOpen('event','${id}');return false">Open ›</a>`);});
     if(bounds.length>1){try{map.fitBounds(bounds,{padding:[30,30],maxZoom:14});}catch(e){}}
     // update the in-view list + debounced OSM fetch whenever the map moves or zooms
-    map.on("moveend zoomend",()=>{updateInView();clearTimeout(osmTimer);osmTimer=setTimeout(fetchOSM,600);});
-    setTimeout(()=>{try{map.invalidateSize();}catch(e){}updateInView();fetchOSM();},150);
+    map.on("moveend zoomend",()=>{updateInView();
+      clearTimeout(osmTimer);osmTimer=setTimeout(fetchOSM,600);
+      clearTimeout(tmTimer);tmTimer=setTimeout(fetchTM,600);});
+    setTimeout(()=>{try{map.invalidateSize();}catch(e){}updateInView();fetchOSM();fetchTM();},150);
   },60);
 }
 
