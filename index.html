@@ -378,6 +378,10 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .ils{font-size:12px;color:var(--dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ilw{font-size:11px;color:var(--dim);flex:0 0 auto}
 .chipwrap{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 4px}
+/* OSM real-place tiles + note */
+.osmtile{opacity:.92}
+.osmtile .tileimg{height:78px}
+.osmnote{font-size:12px;color:var(--dim);line-height:1.45;margin:-4px 2px 12px;font-style:italic}
 .sheetbox h3{position:sticky;top:-18px;background:var(--card);margin:-2px -16px 3px;padding:6px 16px 8px;z-index:5}
 .sheetactions{position:sticky;bottom:-32px;background:var(--card);margin:8px -16px -32px;padding:12px 16px 32px;
   box-shadow:0 -8px 16px rgba(0,0,0,.3)}
@@ -386,7 +390,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v36</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v37</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -1629,13 +1633,28 @@ function updateInView(){
   const el=document.getElementById("inview");if(!el)return;
   if(!_leaflet){el.innerHTML='';return;}
   let b; try{b=_leaflet.getBounds();}catch(e){return;}
+  // SEEDED (our examples) — always float to the top
   const bizIds=Object.keys(biz).filter(k=>geo(k)&&matchQ(biz[k].n,biz[k].cat+" "+biz[k].hood)&&catMatchBiz(k)&&b.contains(geo(k)));
   const evIds=Object.keys(events).filter(k=>geo(k)&&matchQ(events[k].n,events[k].loc)&&catMatchEvent(k)&&b.contains(geo(k)));
   const bz=sortListBy(bizIds), ev=sortListBy(evIds);
-  const total=bz.length+ev.length;
-  el.innerHTML=`<div class="sect">In view · ${total} place${total===1?'':'s'}</div>
-    ${total?`<div class="grid">${ev.map(eventTile).join("")}${bz.map(bizTile).join("")}</div>`
-      :'<div class="empty">Nothing in this area — zoom out, pan, or clear the category filter.</div>'}`;
+  const seededTotal=bz.length+ev.length;
+  // REAL (OSM-pulled) — fall underneath as repository representation
+  const osmIn=osmPlaces.filter(p=>{
+    if(!b.contains([p.lat,p.lng]))return false;
+    if(catFilter!=="all"&&p.catKey!==catFilter)return false;
+    if(searchQ&&!(p.n+" "+p.cat).toLowerCase().includes(searchQ.toLowerCase()))return false;
+    return true;
+  });
+  let html=`<div class="sect">⭐ Featured on Let’s Link · ${seededTotal}</div>`;
+  html+= seededTotal
+    ? `<div class="grid">${ev.map(eventTile).join("")}${bz.map(bizTile).join("")}</div>`
+    : '<div class="empty" style="padding:14px">No featured spots in this view — these are our example listings.</div>';
+  html+=`<div class="sect">📍 In this area · real places${osmFetching?' <span style="color:var(--dim);font-weight:400">· loading…</span>':' · '+osmIn.length}</div>`;
+  html+=`<p class="osmnote">Live from OpenStreetMap — a preview of the full repository. Any of these could become a real Let’s Link listing with reviews, bookings & friend recs.</p>`;
+  html+= osmIn.length
+    ? `<div class="grid">${osmIn.map(osmTile).join("")}</div>`
+    : (osmFetching?'':(_leaflet&&_leaflet.getZoom()<13?'<div class="empty" style="padding:14px">Zoom in to pull real places in this area.</div>':'<div class="empty" style="padding:14px">No extra places found here.</div>'));
+  el.innerHTML=html;
 }
 function sortListBy(ids){
   const arr=[...ids];
@@ -1643,6 +1662,61 @@ function sortListBy(ids){
   else if(mapSort==="interacted")arr.sort((a,b)=>(INTERACT[b]||0)-(INTERACT[a]||0));
   else if(mapSort==="close")arr.sort((a,b)=>closeScore(b)-closeScore(a)||(DIST[a]||99)-(DIST[b]||99));
   return arr;
+}
+
+/* ============ LIVE OSM / OVERPASS IMPORT (real businesses in view) ============ */
+let osmPlaces=[]; // [{id,n,cat,catKey,lat,lng,ic}]
+let osmLayer=null, osmFetching=false, osmTimer=null;
+const OSM_ICON={food:"🍽️",cafe:"☕",bar:"🍸",shop:"🛍️",arts:"🎨",hotel:"🏨",outdoor:"🌿",place:"📍"};
+function osmCat(tags){
+  const a=tags.amenity||"",s=tags.shop||"",t=tags.tourism||"",l=tags.leisure||"";
+  if(/cafe|coffee/.test(a))return["cafe","Café","food"];
+  if(/restaurant|fast_food|food_court|ice_cream/.test(a))return["food","Restaurant","food"];
+  if(/bar|pub|nightclub|biergarten/.test(a))return["bar","Bar / nightlife","nightlife"];
+  if(s)return["shop",s.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()),"shopping"];
+  if(/hotel|hostel|guest_house|motel/.test(t))return["hotel","Stay","stay"];
+  if(/gallery|museum|artwork|attraction|theatre/.test(t)||/arts_centre/.test(a))return["arts","Arts & culture","local"];
+  if(l||/park|garden/.test(l))return["outdoor","Outdoors","outdoors"];
+  return["place","Local spot","local"];
+}
+function fetchOSM(){
+  if(!_leaflet)return;
+  let b;try{b=_leaflet.getBounds();}catch(e){return;}
+  if(_leaflet.getZoom()<13){osmPlaces=[];drawOSM();updateInView();return;} // too zoomed out = skip (huge queries)
+  const s=b.getSouth().toFixed(4),w=b.getWest().toFixed(4),n=b.getNorth().toFixed(4),e=b.getEast().toFixed(4);
+  const q=`[out:json][timeout:12];(node["amenity"~"restaurant|cafe|bar|pub|fast_food|nightclub"](${s},${w},${n},${e});node["shop"](${s},${w},${n},${e});node["tourism"~"hotel|gallery|museum|attraction"](${s},${w},${n},${e}););out body 60;`;
+  osmFetching=true;updateInView();
+  fetch("https://overpass-api.de/api/interpreter",{method:"POST",body:q})
+    .then(r=>r.json()).then(d=>{
+      const seen={};osmPlaces=[];
+      (d.elements||[]).forEach(el=>{
+        if(!el.tags||!el.tags.name||!el.lat)return;
+        const[key,label,fk]=osmCat(el.tags);
+        const id="osm_"+el.id;if(seen[el.tags.name])return;seen[el.tags.name]=1;
+        osmPlaces.push({id,n:el.tags.name,cat:label,catKey:fk,ic:OSM_ICON[key]||"📍",lat:el.lat,lng:el.lon});
+      });
+      osmFetching=false;drawOSM();updateInView();
+    }).catch(()=>{osmFetching=false;updateInView();});
+}
+function drawOSM(){
+  if(!_leaflet)return;
+  if(osmLayer){try{_leaflet.removeLayer(osmLayer);}catch(e){}}
+  osmLayer=L.layerGroup();
+  osmPlaces.forEach(p=>{
+    const mk=L.circleMarker([p.lat,p.lng],{radius:5,color:"#7c8598",fillColor:"#7c8598",fillOpacity:.8,weight:1});
+    mk.bindPopup(`<b>${p.ic} ${p.n}</b><br>${p.cat}<br><i style="color:#888">Un-reviewed — be the first</i>`);
+    osmLayer.addLayer(mk);
+  });
+  osmLayer.addTo(_leaflet);
+}
+function osmTile(p){
+  return `<div class="tile osmtile">
+    <div class="tileimg" style="background:linear-gradient(135deg,#2a3140,#1f2430)">
+      <span class="scrim"></span><span class="badge">${p.ic} ${p.cat.split(' ')[0]}</span>
+      <span class="rate" style="color:var(--dim)">new</span></div>
+    <div class="cap"><div class="capttl" style="font-size:13px">${p.n}</div>
+    <div class="capline">Pulled from OpenStreetMap</div>
+    <div class="caploc" style="color:var(--dim)">Un-reviewed · tap to be first</div></div></div>`;
 }
 
 let _leaflet=null;
@@ -1671,9 +1745,9 @@ function initMap(){
       const mk=L.marker(g).addTo(map);
       mk.bindPopup(`<b>🎟️ ${e.n}</b><br>${e.date}<br>${miles(id)}<br><a href="#" onclick="ACTIONS.mapOpen('event','${id}');return false">Open ›</a>`);});
     if(bounds.length>1){try{map.fitBounds(bounds,{padding:[30,30],maxZoom:14});}catch(e){}}
-    // update the in-view list whenever the map moves or zooms
-    map.on("moveend zoomend",updateInView);
-    setTimeout(()=>{try{map.invalidateSize();}catch(e){}updateInView();},150);
+    // update the in-view list + debounced OSM fetch whenever the map moves or zooms
+    map.on("moveend zoomend",()=>{updateInView();clearTimeout(osmTimer);osmTimer=setTimeout(fetchOSM,600);});
+    setTimeout(()=>{try{map.invalidateSize();}catch(e){}updateInView();fetchOSM();},150);
   },60);
 }
 
