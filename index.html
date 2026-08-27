@@ -107,6 +107,16 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
   border:1px solid var(--line);background:var(--card2);color:var(--brand);font-size:13px;
   font-weight:800;cursor:pointer;letter-spacing:.2px}
 .seemore:active{background:var(--card)}
+/* Explore list ⇄ map toggle (Zillow-style) */
+.vtoggle{display:flex;gap:6px;background:var(--card2);border:1px solid var(--line);
+  border-radius:12px;padding:4px;margin:2px 2px 12px}
+.vtog{flex:1;padding:9px;border-radius:9px;border:0;background:transparent;color:var(--sub);
+  font-size:13.5px;font-weight:700;cursor:pointer}
+.vtog.on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#05141a}
+/* Real vs Demo group headers on the map view */
+.sectgroup{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;
+  color:#2ec7a0;margin:16px 2px 2px;padding-top:8px;border-top:1px solid var(--line)}
+.sectgroup.demo{color:#7c5cff}
 /* event mode toggle */
 .modebar{display:flex;gap:8px;margin:4px 2px 6px}
 .modebtn{flex:1;padding:12px;border-radius:12px;border:1px solid var(--line);
@@ -340,35 +350,6 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
   display:inline-block;background:rgba(124,92,255,.12);border:1px solid var(--line);
   border-radius:16px;padding:5px 11px}
 .boostrow:hover{background:rgba(124,92,255,.2)}
-/* floating messenger bubble + window */
-#fabwrap{position:fixed;bottom:92px;left:50%;transform:translateX(calc(215px - 100%));
-  width:0;z-index:45;pointer-events:none}
-@media(max-width:460px){#fabwrap{left:auto;right:14px;transform:none}}
-#fab{pointer-events:auto;position:absolute;bottom:0;right:0;width:50px;height:50px;border-radius:50%;
-  border:none;font-size:21px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4);
-  background:linear-gradient(135deg,var(--brand),var(--brand2));color:#05141a;
-  display:flex;align-items:center;justify-content:center;
-  transition:opacity .25s, transform .25s}
-#fab.idle{opacity:.55;transform:scale(.9)}
-#fab:active{transform:scale(.94)}
-#fab.open{background:var(--card2);color:var(--ink);border:1px solid var(--line)}
-#fabdot{position:absolute;top:2px;right:2px;width:11px;height:11px;border-radius:50%;
-  background:var(--danger);border:2px solid var(--bg)}
-#fab.open #fabdot{display:none}
-#fabwin{pointer-events:auto;position:absolute;bottom:62px;right:0;width:300px;max-width:82vw;
-  background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.5);
-  overflow:hidden;opacity:0;transform:translateY(12px) scale(.97);transform-origin:bottom right;
-  transition:.18s;visibility:hidden}
-#fabwin.show{opacity:1;transform:translateY(0) scale(1);visibility:visible}
-.fabhead{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-bottom:1px solid var(--line)}
-.fabhead b{font-size:15px}
-.fabseeall{font-size:12px;color:var(--brand);cursor:pointer;font-weight:600}
-.fablist{max-height:320px;overflow-y:auto}
-.fablist::-webkit-scrollbar{width:0}
-.fabrow{display:flex;align-items:center;gap:9px;padding:11px 13px;cursor:pointer;border-bottom:1px solid var(--line)}
-.fabrow:hover{background:var(--card2)}
-.fabnm{font-weight:600;font-size:13.5px}
-.fabprev{font-size:12px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* verified badge */
 .vbadge{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
   border-radius:50%;background:linear-gradient(135deg,#3ba7ff,#00c2a8);color:#fff;font-size:10px;
@@ -420,7 +401,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v44</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v45</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -432,11 +413,6 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 </div>
 <div id="toast"></div>
 <div id="sheet"><div class="sheetbox" id="sheetbox"></div></div>
-<!-- floating messenger -->
-<div id="fabwrap">
-  <div id="fabwin"></div>
-  <button id="fab" data-act="toggleFab">💬<span id="fabdot"></span></button>
-</div>
 
 <script>
 /* ============ GLOBAL ERROR CATCHER (shows errors on-screen instead of blank) ============ */
@@ -947,8 +923,8 @@ function catbar(){
     `<span class="catchip ${catFilter===k?'on':''}" ${da('setCat',k)}>${e} ${l}</span>`).join("")}</div>`;
 }
 function setCat(c){catFilter=c;
-  // on the map, update controls + in-view list in place (don't rebuild the map / lose the view)
-  if(tab==="map"&&!stack.length&&_leaflet){refreshMapControls();updateInView();return;}
+  // in Explore's map view, update controls + in-view list in place (don't rebuild the map / lose the view)
+  if(tab==="explore"&&exploreView==="map"&&!stack.length&&_leaflet){refreshMapControls();updateInView();return;}
   render();}
 // demo "interaction score" per entity (higher = more you've interacted)
 const INTERACT={mama:98,coral:91,marrowfest:95,ansel:80,roast:76,foundry:70,market:66,
@@ -1015,8 +991,8 @@ function da(act){const args=[].slice.call(arguments,1).map(a=>String(a).replace(
   return `data-act="${act}" data-args="${args}"`;}
 
 /* ============ NAV ============ */
-let tab="discover";
-const TABS=[["discover","🧭","Discover"],["board","📋","Board"],["map","📍","Map"],["following","img:img/link-icon.png","Link"],["profile","👤","You"]];
+let tab="explore";
+const TABS=[["explore","🧭","Explore"],["board","📋","Board"],["messages","💬","Messages"],["following","img:img/link-icon.png","Link"],["profile","👤","You"]];
 function nav(){setNav(TABS.map(([id,i,l])=>{
   const icon=i.indexOf("img:")===0
     ? `<span class="i navimg" style="background-image:url('${i.slice(4)}')"></span>`
@@ -1061,7 +1037,7 @@ ACTIONS={
   peopleClear:()=>{peopleQ="";render();},
   showFollowers:()=>{stack.push({type:"list",id:"followers"});render();scrollTop();},
   showFollowing:()=>{stack.push({type:"list",id:"following"});render();scrollTop();},
-  openInbox:()=>{stack.push({type:"inbox",id:"inbox"});render();scrollTop();},
+  openInbox:()=>{tab="messages";stack=[];render();scrollTop();},
   openThread:(uid)=>{stack.push({type:"thread",id:uid});render();scrollTop();},
   sendMsg:(uid)=>sendMsg(uid),
   userMenu:(uid)=>openSheet(sheetUserMenu(uid)),
@@ -1071,15 +1047,14 @@ ACTIONS={
   submitReport:(uid,reason)=>{closeSheet();toast("🚩 Report submitted — our team will review");},
   boost:(type,id,who)=>{const k=type+":"+id;boosts[k]=(boosts[k]||0)+1;render();toast("🚀 Boosted — shared with your followers");},
   showBlocked:()=>openSheet(sheetBlocked()),
-  toggleFab:()=>toggleFab(),
   verifyInfo:()=>openSheet(sheetVerifyInfo()),
   addComment:(eid)=>addComment(eid),
   showInteractions:()=>{stack.push({type:"interactions",id:"me"});render();scrollTop();},
   showIType:(kind)=>{stack.push({type:"itype",id:kind});render();scrollTop();},
   applyVerify:()=>openSheet(sheetApplyVerify()),
   submitVerify:()=>{closeSheet();toast("🛡️ Verification submitted — review takes 2–3 days");},
-  fabOpenThread:(uid)=>{closeFab();stack=[{type:"thread",id:uid}];tab="profile";render();scrollTop();},
-  fabInbox:()=>{closeFab();stack=[{type:"inbox",id:"inbox"}];tab="profile";render();scrollTop();},
+  fabOpenThread:(uid)=>{tab="messages";stack=[{type:"thread",id:uid}];render();scrollTop();},
+  fabInbox:()=>{tab="messages";stack=[];render();scrollTop();},
   openPost:(pid)=>{stack.push({type:"post",id:pid});render();scrollTop();},
   reachOut:(pid)=>reachOut(pid),
   contactSheet:(pid)=>openSheet(sheetContact(pid)),
@@ -1101,7 +1076,7 @@ ACTIONS={
   submitCreate:(kind)=>submitCreate(kind),
 };
 
-function render(){ _render(); try{renderFab();}catch(e){} }
+function render(){ _render(); }
 function _render(){
   nav();
   if(stack.length){const top=stack[stack.length-1];
@@ -1116,9 +1091,9 @@ function _render(){
     if(top.type==="itype")return renderIType(top.id);
     if(top.type==="tmevent")return renderTMEvent(top.id);
   }
-  if(tab==="discover")return renderDiscover();
+  if(tab==="explore")return renderExplore();
   if(tab==="board")return renderBoard();
-  if(tab==="map")return renderMap();
+  if(tab==="messages")return renderInbox();
   if(tab==="following")return renderFollowing();
   if(tab==="profile")return renderProfile();
 }
@@ -1169,7 +1144,23 @@ function bizTile(id){const b=biz[id];
       <div class="caploc">📍 ${b.hood} · ${miles(id)} away</div>
     </div></div>`;}
 
-function renderDiscover(){
+/* ============ EXPLORE (Zillow-style: one surface, list ⇄ map, same data) ============ */
+// exploreView: "list" (feed, friend-filtered) or "map" (full map + in-view list)
+let exploreView="list";
+function setExploreView(v){exploreView=v;render();scrollTop();}
+function exploreToggle(){
+  return `<div class="vtoggle">
+    <button class="vtog ${exploreView==='list'?'on':''}" ${da('setExploreView','list')}>≣ List</button>
+    <button class="vtog ${exploreView==='map'?'on':''}" ${da('setExploreView','map')}>🗺️ Map</button>
+  </div>`;
+}
+function renderExplore(){
+  if(exploreView==="map")return renderExploreMap();
+  return renderExploreList();
+}
+// LIST VIEW — the soul of Let's Link: your people, your interests, sorted by distance.
+// Every tile is either REAL (pulled from OSM/Ticketmaster) or DEMO (seeded). No fake "live" genre.
+function renderExploreList(){
   const allBiz=Object.keys(biz).filter(id=>matchQ(biz[id].n,biz[id].cat+" "+biz[id].hood)&&catMatchBiz(id));
   const allEv=Object.keys(events).filter(id=>matchQ(events[id].n,events[id].loc)&&catMatchEvent(id));
   let body;
@@ -1177,28 +1168,26 @@ function renderDiscover(){
     const bz=sortIds(allBiz), ev=sortIds(allEv);
     body=`<div class="sect">Results for "${searchQ}"</div>
       <div class="grid">${ev.map(e=>eventTile(e)).join("")}${bz.map(b=>bizTile(b)).join("")}</div>
-      ${(!ev.length&&!bz.length)?'<div class="empty">Nothing matched. Try a place, food, or event name.</div>':''}`;
+      ${(!ev.length&&!bz.length)?'<div class="empty">Nothing matched. Try a place, food, or event name. Flip to Map to pull real places &amp; events in any area.</div>':''}`;
   }else if(catFilter!=="all"){
-    // filtered view: one combined grid — sort applies here too
     const bz=sortIds(allBiz), ev=sortIds(allEv);
-    body=`<div class="sect">${(CATS.find(c=>c[0]===catFilter)||[])[2]||''} in Austin</div>
+    body=`<div class="sect">${(CATS.find(c=>c[0]===catFilter)||[])[2]||''} near you</div>
       <div class="grid">${ev.map(e=>eventTile(e)).join("")}${bz.map(b=>bizTile(b)).join("")}</div>
       ${(!bz.length&&!ev.length)?'<div class="empty">Nothing in this category yet.</div>':''}`;
   }else{
     const bizSorted=sortIds(["mama","coral","ansel","roast"]);
-    const evSorted=sortIds(["market","paddle"]);
-    const liveSorted=sortIds(["live_hoops","live_kojo","live_tacos","live_bball","live_jazz","live_bbq"]);
+    const evSorted=sortIds(["market","paddle","live_hoops","live_kojo","live_tacos","live_bball","live_jazz","live_bbq"]);
     body=`
     ${eventTile("marrowfest",1)}
-    <div class="sect">🔴 Live events for you <span style="color:var(--dim);font-weight:400;font-size:12px">· sports · music · food</span></div>
-    <div class="grid">${liveSorted.map(e=>eventTile(e)).join("")}</div>
+    <div class="sect">🎟️ Events for you <span style="color:var(--dim);font-weight:400;font-size:12px">· sports · music · food</span></div>
+    <div class="grid">${evSorted.map(e=>eventTile(e)).join("")}</div>
     <div class="sect">🍽️ Places for you</div>
     <div class="grid">${bizSorted.map(b=>bizTile(b)).join("")}</div>
-    <div class="sect">📅 Happening soon</div>
-    <div class="grid">${evSorted.map(e=>eventTile(e)).join("")}</div>`;
+    <p class="osmnote">These are demo listings. Flip to 🗺️ Map to pull <b>real</b> places &amp; ticketed events in any area.</p>`;
   }
-  setView(`<div class="h1">Discover</div>
-  <div class="sub">Austin at a glance — filtered through your people.</div>
+  setView(`<div class="h1">Explore</div>
+  <div class="sub">Everything around you — filtered through your people.</div>
+  ${exploreToggle()}
   ${searchbar("Search events, food, places…")}
   ${catbar()}
   ${sortbar()}
@@ -1617,7 +1606,9 @@ function renderIType(kind){
 /* ============ INBOX + CHAT THREAD ============ */
 function renderInbox(){
   const ids=Object.keys(threads);
-  setView(`<button class="backbtn" ${da('back')}>‹ Back</button>
+  // when opened as its own bottom tab (no stack), skip the back button
+  const backBtn=stack.length?`<button class="backbtn" ${da('back')}>‹ Back</button>`:'';
+  setView(`${backBtn}
   <div class="h1">Messages</div>
   <div class="sub">Chat with people & businesses — right inside the app.</div>
   ${peopleSearchbarMsg()}
@@ -1689,8 +1680,10 @@ function mapControls(){
     <span class="sortchip ${mapSort==='interacted'?'on':''}" ${da('setMapSort','interacted')}>🔥 Most interacted</span>
   </div></div>`;
 }
-function renderMap(){
-  setView(`<div class="h1">Map</div><div class="sub">Live map · search a city or center on you · the list shows what's in view.</div>
+// MAP VIEW — Zillow-style: full map on top, in-view list underneath, same filters/sort as list view.
+function renderExploreMap(){
+  setView(`<div class="h1">Explore</div><div class="sub">Search a city or center on you — the list shows what's actually in view.</div>
+  ${exploreToggle()}
   <div class="loconav">
     <div class="searchwrap" style="flex:1;margin:0"><span class="si">🏙️</span>
       <input class="search" id="citybox" placeholder="Search a city or place…" onkeydown="if(event.key==='Enter'){ACTIONS.citySearch()}">
@@ -1738,25 +1731,19 @@ function updateInView(){
   const el=document.getElementById("inview");if(!el)return;
   if(!_leaflet){el.innerHTML='';return;}
   let b; try{b=_leaflet.getBounds();}catch(e){return;}
-  // SEEDED (our examples) — always float to the top. Split: DEMO tiles / LIVE events / BUSINESSES.
-  const liveIds=Object.keys(events).filter(k=>events[k].live&&geo(k)&&matchQ(events[k].n,events[k].loc)&&catMatchEvent(k)&&b.contains(geo(k)));
-  const demoEvIds=Object.keys(events).filter(k=>!events[k].live&&geo(k)&&matchQ(events[k].n,events[k].loc)&&catMatchEvent(k)&&b.contains(geo(k)));
+  // ===== REAL vs DEMO. True's framing: "real" = pulled from APIs (Ticketmaster/OSM); "demo" = our seeds. =====
+  // Seeded events + businesses are ALL demo (placeholders until real data + real users fill in).
+  const demoEvIds=Object.keys(events).filter(k=>geo(k)&&matchQ(events[k].n,events[k].loc)&&catMatchEvent(k)&&b.contains(geo(k)));
   const bizIds=Object.keys(biz).filter(k=>geo(k)&&matchQ(biz[k].n,biz[k].cat+" "+biz[k].hood)&&catMatchBiz(k)&&b.contains(geo(k)));
   // sorted by distance (or active map sort) by default
-  const demoSorted=sortListBy(demoEvIds), liveSorted=sortListBy(liveIds), bzSorted=sortListBy(bizIds);
-  const seededTotal=demoSorted.length+liveSorted.length+bzSorted.length;
-  // REAL (OSM-pulled) — fall underneath as repository representation
+  const demoSorted=sortListBy(demoEvIds), bzSorted=sortListBy(bizIds);
+  // REAL (OSM-pulled) — real businesses/places in view
   const osmIn=osmPlaces.filter(p=>{
     if(!b.contains([p.lat,p.lng]))return false;
     if(catFilter!=="all"&&p.catKey!==catFilter)return false;
     if(searchQ&&!(p.n+" "+p.cat).toLowerCase().includes(searchQ.toLowerCase()))return false;
     return true;
   });
-  let html='';
-  html+=mapSection("demo","🖼️ Demo tiles",demoSorted,4,id=>eventTile(id),"example listings");
-  html+=mapSection("live","🔴 Live events near here",liveSorted,6,id=>eventTile(id),"live events");
-  html+=mapSection("biz","🏪 Businesses in view",bzSorted,6,id=>bizTile(id),"businesses");
-  if(!seededTotal)html+='<div class="empty" style="padding:14px">No featured spots in this view — these are our example listings.</div>';
   // REAL TICKETED EVENTS (Ticketmaster) — with photos
   const tmIn=tmEvents.filter(e=>{
     if(!b.contains([e.lat,e.lng]))return false;
@@ -1764,16 +1751,27 @@ function updateInView(){
     if(searchQ&&!(e.n+" "+e.venue+" "+e.cat).toLowerCase().includes(searchQ.toLowerCase()))return false;
     return true;
   });
+  let html='';
+  // ---- REAL FIRST (this is the actual product data) ----
+  html+=`<div class="sectgroup">✅ Real — live from APIs</div>`;
   html+=`<div class="sect">🎟️ Ticketed events near here${tmFetching?' <span style="color:var(--dim);font-weight:400">· loading…</span>':' · '+tmIn.length}</div>`;
   html+=`<p class="osmnote">Real ticketed events from Ticketmaster — tap any to grab tickets.</p>`;
   html+= tmIn.length
     ? `<div class="grid">${tmIn.map(tmTile).join("")}</div>`
     : (tmFetching?'':'<div class="empty" style="padding:14px">No ticketed events found in this view.</div>');
-  html+=`<div class="sect">📍 In this area · real places${osmFetching?' <span style="color:var(--dim);font-weight:400">· loading…</span>':' · '+osmIn.length}</div>`;
+  html+=`<div class="sect">📍 Real places in this area${osmFetching?' <span style="color:var(--dim);font-weight:400">· loading…</span>':' · '+osmIn.length}</div>`;
   html+=`<p class="osmnote">Live from OpenStreetMap — a preview of the full repository. Any of these could become a real Let’s Link listing with reviews, bookings & friend recs.</p>`;
   html+= osmIn.length
     ? `<div class="grid">${osmIn.map(osmTile).join("")}</div>`
     : (osmFetching?'':(_leaflet&&_leaflet.getZoom()<13?'<div class="empty" style="padding:14px">Zoom in to pull real places in this area.</div>':'<div class="empty" style="padding:14px">No extra places found here.</div>'));
+  // ---- DEMO UNDERNEATH (seeded placeholders — what a filled-out area will feel like) ----
+  const demoTotal=demoSorted.length+bzSorted.length;
+  if(demoTotal){
+    html+=`<div class="sectgroup demo">🧪 Demo — seeded examples</div>`;
+    html+=`<p class="osmnote">Placeholders showing how a fully-populated area feels once real listings + your network fill in.</p>`;
+    html+=mapSection("demo","🎟️ Demo events",demoSorted,4,id=>eventTile(id),"demo events");
+    html+=mapSection("biz","🏪 Demo businesses",bzSorted,6,id=>bizTile(id),"demo businesses");
+  }
   el.innerHTML=html;
 }
 function sortListBy(ids){
@@ -1784,7 +1782,7 @@ function sortListBy(ids){
   return arr;
 }
 // which map sections are expanded (show all vs. capped)
-let mapExpand={demo:false,live:false,biz:false};
+let mapExpand={demo:false,biz:false};
 function toggleMapSect(key){mapExpand[key]=!mapExpand[key];updateInView();}
 // render a capped map section with a "see more / see less" toggle. cap = default visible count.
 function mapSection(key,title,ids,cap,tileFn,noun){
@@ -2214,31 +2212,6 @@ function sheetContact(pid){
   <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button>`;
 }
 /* ============ FLOATING MESSENGER ============ */
-let fabOpen=false;
-function toggleFab(){fabOpen=!fabOpen;renderFab();}
-function closeFab(){fabOpen=false;renderFab();}
-function renderFab(){
-  const win=document.getElementById("fabwin");const fab=document.getElementById("fab");
-  if(!win||!fab)return;
-  fab.classList.toggle("open",fabOpen);
-  fab.innerHTML=fabOpen?"✕":'💬';
-  win.classList.toggle("show",fabOpen);
-  if(!fabOpen){win.innerHTML="";return;}
-  const ids=Object.keys(threads);
-  win.innerHTML=`
-    <div class="fabhead"><b>Messages</b><span class="fabseeall" data-act="fabInbox">See all ›</span></div>
-    <div class="fablist">
-    ${ids.length?ids.map(uid=>{
-      const nm=users[uid]?users[uid].name:(biz[uid]?biz[uid].n:uid);
-      return `<div class="fabrow" data-act="fabOpenThread" data-args="${uid}">
-        ${users[uid]?av(uid,34):`<div class="pbadge" style="width:34px;height:34px;font-size:16px">${(biz[uid]&&biz[uid].ic)||'🏢'}</div>`}
-        <div style="margin-left:2px;min-width:0;flex:1">
-          <div class="fabnm">${nm}</div>
-          <div class="fabprev">${threadPreview(uid)}</div>
-        </div></div>`;}).join("")
-      :'<div class="empty" style="padding:16px">No messages yet.</div>'}
-    </div>`;
-}
 function reachOut(pid){
   const p=board.find(x=>x.id===pid);if(!p){closeSheet();return;}
   const who=p.by; // author of the post (a user id)
@@ -2384,15 +2357,6 @@ function submitCreate(kind){
 /* ============ BOOT ============ */
 setMe("dee_eats"); // Keith Clements is the fixed user
 render();
-// bubble fades to unobtrusive while scrolling, returns to full when you stop (never blocks reading)
-(function(){
-  let t=null;
-  window.addEventListener("scroll",()=>{
-    const fab=document.getElementById("fab");if(!fab||fabOpen)return;
-    fab.classList.add("idle");
-    clearTimeout(t);t=setTimeout(()=>fab.classList.remove("idle"),650);
-  },{passive:true});
-})();
 </script>
 </body>
 </html>
