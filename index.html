@@ -103,6 +103,10 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .sortchip{white-space:nowrap;background:var(--card2);border:1px solid var(--line);
   border-radius:20px;padding:7px 13px;font-size:12.5px;color:var(--sub);cursor:pointer;flex:0 0 auto}
 .sortchip.on{background:var(--brand);color:#05141a;border-color:var(--brand);font-weight:700}
+.seemore{display:block;width:100%;margin:10px 0 4px;padding:11px;border-radius:12px;
+  border:1px solid var(--line);background:var(--card2);color:var(--brand);font-size:13px;
+  font-weight:800;cursor:pointer;letter-spacing:.2px}
+.seemore:active{background:var(--card)}
 /* event mode toggle */
 .modebar{display:flex;gap:8px;margin:4px 2px 6px}
 .modebtn{flex:1;padding:12px;border-radius:12px;border:1px solid var(--line);
@@ -150,6 +154,15 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .tileimg .dist{position:absolute !important;bottom:7px;left:7px;background:rgba(0,0,0,.62);
   border-radius:14px;padding:3px 8px;font-size:10px;font-weight:700;backdrop-filter:blur(4px);
   white-space:nowrap;line-height:1.3;z-index:3}
+.tileimg .demotag{position:absolute !important;bottom:7px;right:7px;background:rgba(124,92,255,.92);
+  color:#fff;border-radius:6px;padding:2px 7px;font-size:9px;font-weight:800;letter-spacing:.6px;
+  text-transform:uppercase;z-index:4;line-height:1.4}
+.tileimg .livetag{position:absolute !important;top:7px;right:7px;background:#ff3b3b;
+  color:#fff;border-radius:14px;padding:3px 8px;font-size:10px;font-weight:800;z-index:4;
+  line-height:1.3;display:flex;align-items:center;gap:4px}
+.tileimg .livetag i{width:6px;height:6px;border-radius:50%;background:#fff;display:inline-block;
+  animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
 .tileimg .stack{position:absolute !important;bottom:7px;right:7px;display:flex;z-index:3}
 .tileimg .stack .avatar{margin-left:-8px;border:2px solid rgba(0,0,0,.3)}
 .tileimg .stack .avatar:first-child{margin-left:0}
@@ -407,7 +420,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v43</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v44</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -559,12 +572,32 @@ const events={
   paddle:{n:"Lady Bird Sunset Paddle",host:"kayak",date:"Fridays · 6:30 PM",loc:"Lady Bird Lake launch",
     d:"Golden-hour guided paddle under the downtown skyline. Beginner-friendly, bats at dusk.",att:["ruthie_roams","sam_hostwell","sunny_flats"],
     eco:{"🏨 Add-ons":[["inn","Package deal",1],["hostwell","Guest add-on",1],["grace_lens","Photo add-on",1]]}},
+  // ===== LIVE EVENT TILES — tuned to True's interests: sports, music, food =====
+  live_hoops:{n:"Austin FC vs. LAFC",live:1,cat:"sports",host:"marcus_vale",date:"Tonight · 7:30 PM",loc:"Q2 Stadium · North Austin",
+    d:"MLS matchday under the lights. Verde faithful, tifo drop, and a block party outside the gates.",att:["coach_bo","marcus_vale","sunny_flats"],
+    eco:{"🍔 Food":[["suya","Tailgate cart",1],["mama","Pre-match plates",1]]}},
+  live_kojo:{n:"Kojo Beats — Live at The Foundry",live:1,cat:"music",host:"kojo_beats",partner:"foundry",date:"Tonight · 9:00 PM",loc:"The Foundry · Red River District",
+    d:"Late-night headline set from Austin's own. Doors 8, opener at 8:30, noodles after at Ansel.",att:["priya_night","harlow_lena","dee_eats"],
+    eco:{"🎤 Performers":[["kojo_beats","Headline set",1]],"🍔 After":[["ansel","Late-night tent",1]]}},
+  live_tacos:{n:"East Austin Taco Crawl",live:1,cat:"food",host:"dee_eats",date:"Sat · 12–4 PM",loc:"East Austin · 6 stops",
+    d:"Six carts, one wristband. Al pastor to birria, guided by the people who actually eat here.",att:["dee_eats","marcus_vale","priya_night"],
+    eco:{"🍔 Food":[["suya","Skewer stop",1],["mama","Jollof finale",1],["ansel","Cooldown pho",1]]}},
+  live_bball:{n:"East Side Pro-Am Finals",live:1,cat:"sports",host:"coach_bo",date:"Sun · 5:00 PM",loc:"Givens Park · East Austin",
+    d:"Championship night for the summer pro-am. Halftime youth clinic, DJ courtside, food trucks lined up.",att:["coach_bo","sunny_flats","marcus_vale"],
+    eco:{"🍔 Food":[["suya","Courtside",1],["mama","Post-game plates",1]]}},
+  live_jazz:{n:"Rainey Street Jazz Nights",live:1,cat:"music",host:"harlow_lena",partner:"heights",date:"Fri · 8:00 PM",loc:"Skyline Rooftop · Downtown",
+    d:"Rooftop quartet, smoked-rosemary margs, skyline behind the horns. Golden-hour into midnight.",att:["harlow_lena","priya_night","grace_lens"],
+    eco:{"🍸 Bar":[["heights","Rooftop",1]],"🎤 Music":[["kojo_beats","Sit-in set",1]]}},
+  live_bbq:{n:"Smokehouse Throwdown",live:1,cat:"food",host:"marcus_vale",date:"Sun · 11 AM–3 PM",loc:"Mueller Lake Park",
+    d:"Austin's pitmasters go head-to-head. Brisket, ribs, sides, and a people's-choice ballot with your plate.",att:["dee_eats","sunny_flats","marcus_vale"],
+    eco:{"🍔 Food":[["mama","Suya sidebar",1],["coral","Gulf shack",1]]}},
 };
 
 /* ============ DISTANCE + IMAGERY ============ */
 // deterministic "miles away" per entity (demo), plus a gradient poster per category
 const DIST={
   marrowfest:1.2,hoops:3.4,market:0.8,gallery_night:2.1,paddle:1.5,
+  live_hoops:2.2,live_kojo:1.9,live_tacos:2.6,live_bball:3.5,live_jazz:2.7,live_bbq:4.1,
   coral:1.3,ansel:2.4,cofield:0.9,mama:3.1,roast:1.8,foundry:2.0,heights:2.7,
   kayak:1.4,gallery:2.3,green:1.1,security:2.0,snap:2.8,inn:1.2,hostwell:1.6,suya:3.0,thread:2.6
 };
@@ -581,6 +614,8 @@ const GEO={
   thread:[30.2480,-97.7500],
   marrowfest:[30.2620,-97.7420],hoops:[30.2720,-97.7080],market:[30.2980,-97.7040],
   gallery_night:[30.2665,-97.7190],paddle:[30.2450,-97.7470],
+  live_hoops:[30.3877,-97.7194],live_kojo:[30.2690,-97.7365],live_tacos:[30.2660,-97.7200],
+  live_bball:[30.2720,-97.7080],live_jazz:[30.2685,-97.7440],live_bbq:[30.2980,-97.7040],
 };
 function geo(id){return GEO[id]||null;}
 const POSTER={
@@ -601,6 +636,12 @@ const POSTER={
 const PHOTO={
   marrowfest:"1501281668745-f7f57925c3b4", // concert crowd
   hoops:"1546519638-68e109498ffc", // basketball
+  live_hoops:"1522778119026-d647f0596c20", // soccer stadium
+  live_kojo:"1493225457124-a3eb161ffa5f", // concert stage
+  live_tacos:"1565299624946-b28f40a0ae38", // tacos
+  live_bball:"1546519638-68e109498ffc", // basketball
+  live_jazz:"1415201364774-f6f0bb35f28f", // jazz / live music
+  live_bbq:"1544025162-d76694265947", // bbq food
   market:"1488459716781-31db52582fe9", // farmers market
   gallery_night:"1531058020387-3be344556be6", // gallery
   paddle:"1544551763-46a013bb70d5", // kayak
@@ -912,7 +953,8 @@ function setCat(c){catFilter=c;
 // demo "interaction score" per entity (higher = more you've interacted)
 const INTERACT={mama:98,coral:91,marrowfest:95,ansel:80,roast:76,foundry:70,market:66,
   gallery_night:60,paddle:58,hoops:55,cofield:72,heights:50,kayak:64,gallery:48,
-  green:30,security:40,snap:35,inn:62,hostwell:45,suya:88,thread:52};
+  green:30,security:40,snap:35,inn:62,hostwell:45,suya:88,thread:52,
+  live_hoops:90,live_kojo:93,live_tacos:85,live_bball:78,live_jazz:74,live_bbq:82};
 const CLOSE={dee_eats:["marcus_vale","priya_night"],priya_night:["kojo_beats","marcus_vale"],
   ruthie_roams:["sam_hostwell","grace_lens"],sunny_flats:["coach_bo","grace_lens"]};
 // events/biz "close-friend" score = how many of your close friends touched it
@@ -1009,6 +1051,7 @@ ACTIONS={
   setCat:(c)=>setCat(c),
   setBoardFilter:(f)=>{boardFilter=f;render();},
   setMapSort:(m)=>setMapSort(m),
+  toggleMapSect:(k)=>toggleMapSect(k),
   openTicket:(url)=>{try{window.open(url,"_blank");}catch(e){location.href=url;}},
   openTM:(id)=>{stack.push({type:"tmevent",id});render();scrollTop();},
   tmAttend:(id)=>tmAttend(id),
@@ -1099,9 +1142,10 @@ function eventTile(id,big){const e=events[id];const fa=friendsAttending(id);
   return `<div class="tile ${big?'big':''}" ${da('open','event',id)}>
     <div class="tileimg" style="${imgStyle(photoUrl(id,big?800:400,big?400:280),grad)}">
       <span class="scrim"></span>
-      <span class="badge">🎟️ Event</span>
+      <span class="badge">${e.live?'🔴 Live event':'🎟️ Event'}</span>
       <span class="dist">📍 ${miles(id)}</span>
-      ${fa.length?`<span class="stack">${fa.slice(0,3).map(u=>av(u,22)).join("")}</span>`:''}
+      ${e.live?'<span class="livetag"><i></i>LIVE</span>':''}
+      <span class="demotag">Demo</span>
     </div>
     <div class="cap">
       <div class="capttl">${e.hero?'🎪 ':''}${e.n}${e.verified?' '+vbadge():''}</div>
@@ -1117,6 +1161,7 @@ function bizTile(id){const b=biz[id];
       <span class="badge">${b.ic} ${b.cat.split(' ')[0]}</span>
       <span class="dist">📍 ${miles(id)}</span>
       <span class="rate">★ ${b.r}</span>
+      <span class="demotag">Demo</span>
     </div>
     <div class="cap">
       <div class="capttl">${b.n}${b.verified?' '+vbadge():''}</div>
@@ -1142,8 +1187,11 @@ function renderDiscover(){
   }else{
     const bizSorted=sortIds(["mama","coral","ansel","roast"]);
     const evSorted=sortIds(["market","paddle"]);
+    const liveSorted=sortIds(["live_hoops","live_kojo","live_tacos","live_bball","live_jazz","live_bbq"]);
     body=`
     ${eventTile("marrowfest",1)}
+    <div class="sect">🔴 Live events for you <span style="color:var(--dim);font-weight:400;font-size:12px">· sports · music · food</span></div>
+    <div class="grid">${liveSorted.map(e=>eventTile(e)).join("")}</div>
     <div class="sect">🍽️ Places for you</div>
     <div class="grid">${bizSorted.map(b=>bizTile(b)).join("")}</div>
     <div class="sect">📅 Happening soon</div>
@@ -1690,11 +1738,13 @@ function updateInView(){
   const el=document.getElementById("inview");if(!el)return;
   if(!_leaflet){el.innerHTML='';return;}
   let b; try{b=_leaflet.getBounds();}catch(e){return;}
-  // SEEDED (our examples) — always float to the top
+  // SEEDED (our examples) — always float to the top. Split: DEMO tiles / LIVE events / BUSINESSES.
+  const liveIds=Object.keys(events).filter(k=>events[k].live&&geo(k)&&matchQ(events[k].n,events[k].loc)&&catMatchEvent(k)&&b.contains(geo(k)));
+  const demoEvIds=Object.keys(events).filter(k=>!events[k].live&&geo(k)&&matchQ(events[k].n,events[k].loc)&&catMatchEvent(k)&&b.contains(geo(k)));
   const bizIds=Object.keys(biz).filter(k=>geo(k)&&matchQ(biz[k].n,biz[k].cat+" "+biz[k].hood)&&catMatchBiz(k)&&b.contains(geo(k)));
-  const evIds=Object.keys(events).filter(k=>geo(k)&&matchQ(events[k].n,events[k].loc)&&catMatchEvent(k)&&b.contains(geo(k)));
-  const bz=sortListBy(bizIds), ev=sortListBy(evIds);
-  const seededTotal=bz.length+ev.length;
+  // sorted by distance (or active map sort) by default
+  const demoSorted=sortListBy(demoEvIds), liveSorted=sortListBy(liveIds), bzSorted=sortListBy(bizIds);
+  const seededTotal=demoSorted.length+liveSorted.length+bzSorted.length;
   // REAL (OSM-pulled) — fall underneath as repository representation
   const osmIn=osmPlaces.filter(p=>{
     if(!b.contains([p.lat,p.lng]))return false;
@@ -1702,10 +1752,11 @@ function updateInView(){
     if(searchQ&&!(p.n+" "+p.cat).toLowerCase().includes(searchQ.toLowerCase()))return false;
     return true;
   });
-  let html=`<div class="sect">⭐ Featured on Let’s Link · ${seededTotal}</div>`;
-  html+= seededTotal
-    ? `<div class="grid">${ev.map(eventTile).join("")}${bz.map(bizTile).join("")}</div>`
-    : '<div class="empty" style="padding:14px">No featured spots in this view — these are our example listings.</div>';
+  let html='';
+  html+=mapSection("demo","🖼️ Demo tiles",demoSorted,4,id=>eventTile(id),"example listings");
+  html+=mapSection("live","🔴 Live events near here",liveSorted,6,id=>eventTile(id),"live events");
+  html+=mapSection("biz","🏪 Businesses in view",bzSorted,6,id=>bizTile(id),"businesses");
+  if(!seededTotal)html+='<div class="empty" style="padding:14px">No featured spots in this view — these are our example listings.</div>';
   // REAL TICKETED EVENTS (Ticketmaster) — with photos
   const tmIn=tmEvents.filter(e=>{
     if(!b.contains([e.lat,e.lng]))return false;
@@ -1713,7 +1764,7 @@ function updateInView(){
     if(searchQ&&!(e.n+" "+e.venue+" "+e.cat).toLowerCase().includes(searchQ.toLowerCase()))return false;
     return true;
   });
-  html+=`<div class="sect">🎟️ Live events near here${tmFetching?' <span style="color:var(--dim);font-weight:400">· loading…</span>':' · '+tmIn.length}</div>`;
+  html+=`<div class="sect">🎟️ Ticketed events near here${tmFetching?' <span style="color:var(--dim);font-weight:400">· loading…</span>':' · '+tmIn.length}</div>`;
   html+=`<p class="osmnote">Real ticketed events from Ticketmaster — tap any to grab tickets.</p>`;
   html+= tmIn.length
     ? `<div class="grid">${tmIn.map(tmTile).join("")}</div>`
@@ -1731,6 +1782,23 @@ function sortListBy(ids){
   else if(mapSort==="interacted")arr.sort((a,b)=>(INTERACT[b]||0)-(INTERACT[a]||0));
   else if(mapSort==="close")arr.sort((a,b)=>closeScore(b)-closeScore(a)||(DIST[a]||99)-(DIST[b]||99));
   return arr;
+}
+// which map sections are expanded (show all vs. capped)
+let mapExpand={demo:false,live:false,biz:false};
+function toggleMapSect(key){mapExpand[key]=!mapExpand[key];updateInView();}
+// render a capped map section with a "see more / see less" toggle. cap = default visible count.
+function mapSection(key,title,ids,cap,tileFn,noun){
+  if(!ids.length)return `<div class="sect">${title} · 0</div>
+    <div class="empty" style="padding:14px">No ${noun} in this view.</div>`;
+  const expanded=mapExpand[key];
+  const shown=expanded?ids:ids.slice(0,cap);
+  const extra=ids.length-cap;
+  let h=`<div class="sect">${title} · ${ids.length}</div>`;
+  h+=`<div class="grid">${shown.map(tileFn).join("")}</div>`;
+  if(extra>0){
+    h+=`<button class="seemore" ${da('toggleMapSect',key)}>${expanded?'⌃ See less':'⌄ See more ('+extra+')'}</button>`;
+  }
+  return h;
 }
 
 /* ============ LIVE TICKETMASTER DISCOVERY (real ticketed events in view) ============ */
