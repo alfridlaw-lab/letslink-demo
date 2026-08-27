@@ -61,8 +61,11 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .btn.p{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#05141a}
 .btn.g{background:var(--card2);color:var(--ink);border:1px solid var(--line)}
 .btn.gold{background:linear-gradient(90deg,#ff6a3d,var(--gold));color:#2a1600}
-.sect{font-size:13px;font-weight:800;color:var(--sub);text-transform:uppercase;
-  letter-spacing:.6px;margin:20px 2px 10px;display:flex;align-items:center;gap:7px}
+.sect{font-size:13.5px;font-weight:800;color:var(--ink);letter-spacing:.3px;
+  margin:24px 0 12px;display:flex;align-items:center;gap:8px;padding-bottom:9px;
+  border-bottom:1px solid var(--line);position:relative}
+.sect::before{content:"";position:absolute;bottom:-1px;left:0;width:34px;height:2px;
+  background:linear-gradient(90deg,var(--brand),var(--brand2));border-radius:2px}
 .eco{display:flex;align-items:center;gap:11px;padding:11px 12px;background:var(--card);
   border:1px solid var(--line);border-radius:13px;margin-bottom:8px;cursor:pointer}
 .eco .ic{width:38px;height:38px;border-radius:10px;background:var(--card2);
@@ -359,6 +362,21 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
   font-weight:900;vertical-align:middle;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .vrow{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#3ba7ff;font-weight:600;
   background:rgba(59,167,255,.12);border:1px solid var(--line);border-radius:14px;padding:4px 10px;margin:6px 0 2px;cursor:pointer}
+/* event comments */
+.cbox{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.cmt{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-bottom:8px}
+.cmttop{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.cmtnm{font-weight:600;font-size:13px}
+.cmtt{margin-left:auto;font-size:11px;color:var(--dim)}
+.cmttx{font-size:13.5px;color:var(--sub);line-height:1.45}
+/* interactions log */
+.ilog{display:flex;align-items:center;gap:12px;padding:12px 13px;background:var(--card);
+  border:1px solid var(--line);border-radius:13px;margin-bottom:8px;cursor:pointer}
+.ilico{width:38px;height:38px;border-radius:11px;background:var(--card2);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto}
+.ilt{font-weight:600;font-size:13.5px}
+.ils{font-size:12px;color:var(--dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ilw{font-size:11px;color:var(--dim);flex:0 0 auto}
 .sheetbox h3{position:sticky;top:-18px;background:var(--card);margin:-2px -16px 3px;padding:6px 16px 8px;z-index:5}
 .sheetactions{position:sticky;bottom:-32px;background:var(--card);margin:8px -16px -32px;padding:12px 16px 32px;
   box-shadow:0 -8px 16px rgba(0,0,0,.3)}
@@ -367,7 +385,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v33</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v34</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -792,6 +810,23 @@ delete threads.dee_eats_note;
 let activeThread=null;
 let blocked={}; // uid -> 1 if blocked
 let boosts={}; // "type:id" -> count of boosts by the user
+// comments per event id -> [{by, text, t}]
+let comments={
+  marrowfest:[
+    {by:"priya_night",text:"Kojo’s sunset set is gonna be unreal 🔥",t:"2d"},
+    {by:"marcus_vale",text:"Gates open at 2 — come early, lines get deep.",t:"1d"},
+    {by:"harlow_lena",text:"Limited merch drop at the ATX Thread booth, don’t sleep.",t:"5h"}],
+  market:[{by:"sunny_flats",text:"They added a kids’ craft table this week!",t:"3d"}],
+};
+// interactions log for the current user (You tab)
+let myInteractions=[
+  {kind:"review",icon:"⭐",text:"You reviewed Mama Okafor’s",sub:"“Best jollof in Austin.”",ref:["biz","mama"],t:"2h"},
+  {kind:"boost",icon:"🚀",text:"You boosted Coral & Cornbread",sub:"Shared with your followers",ref:["biz","coral"],t:"5h"},
+  {kind:"attend",icon:"🎟️",text:"You’re attending SXSW",sub:"Downtown Austin · Mar 13–22",ref:["event","marrowfest"],t:"1d"},
+  {kind:"comment",icon:"💬",text:"You commented on Mueller Farmers Market",sub:"“Can’t wait, bringing the kids.”",ref:["event","market"],t:"1d"},
+  {kind:"like",icon:"❤️",text:"You liked Priya’s review of The Foundry",sub:"“The room where the scene happens.”",ref:["biz","foundry"],t:"2d"},
+  {kind:"follow",icon:"➕",text:"You followed Markeith Bonner",sub:"",ref:["user","marcus_vale"],t:"3d"},
+];
 function threadPreview(uid){const t=threads[uid];if(!t||!t.length)return"";const last=t[t.length-1];
   return (last.from==="me"?"You: ":"")+last.text;}
 function unreadCount(){return 0;} // demo: all read
@@ -968,6 +1003,8 @@ ACTIONS={
   showBlocked:()=>openSheet(sheetBlocked()),
   toggleFab:()=>toggleFab(),
   verifyInfo:()=>openSheet(sheetVerifyInfo()),
+  addComment:(eid)=>addComment(eid),
+  showInteractions:()=>{stack.push({type:"interactions",id:"me"});render();scrollTop();},
   applyVerify:()=>openSheet(sheetApplyVerify()),
   submitVerify:()=>{closeSheet();toast("🛡️ Verification submitted — review takes 2–3 days");},
   fabOpenThread:(uid)=>{closeFab();stack=[{type:"thread",id:uid}];tab="profile";render();scrollTop();},
@@ -1004,6 +1041,7 @@ function _render(){
     if(top.type==="list")return renderPeopleList(top.id);
     if(top.type==="inbox")return renderInbox();
     if(top.type==="thread")return renderThread(top.id);
+    if(top.type==="interactions")return renderInteractions();
   }
   if(tab==="discover")return renderDiscover();
   if(tab==="board")return renderBoard();
@@ -1235,9 +1273,29 @@ function renderEvent(id){
   </div></div>
   ${modeBar}
   ${eco}
+  <div class="sect">💬 Comments</div>
+  <div class="cbox">
+    <input class="finput" id="cmt_${id}" style="margin:0" placeholder="Add a comment…" onkeydown="if(event.key==='Enter'){ACTIONS.addComment('${id}')}">
+    <button class="sendbtn" style="width:38px;height:38px;font-size:16px" ${da('addComment',id)}>↑</button>
+  </div>
+  ${(comments[id]&&comments[id].length)?comments[id].map(c=>`
+    <div class="cmt"><div class="cmttop">${users[c.by]?av(c.by,28):`<div class="pbadge" style="width:28px;height:28px;font-size:13px">👤</div>`}
+      <span class="cmtnm">${users[c.by]?users[c.by].name:c.by}${(users[c.by]&&users[c.by].star)?' ⭐':''}</span>
+      <span class="cmtt">${c.t}</span></div>
+      <div class="cmttx">${c.text}</div></div>`).join("")
+    :'<div class="empty" style="padding:14px">No comments yet — start the conversation.</div>'}
   <div style="height:10px"></div>`);
 }
 function setEventMode(m){eventMode=m;render();}
+function addComment(eid){
+  const box=document.getElementById("cmt_"+eid);if(!box)return;
+  const txt=box.value.trim();if(!txt)return;
+  if(!comments[eid])comments[eid]=[];
+  comments[eid].push({by:me,text:txt,t:"now"});
+  myInteractions.unshift({kind:"comment",icon:"💬",text:"You commented on "+events[eid].n,sub:"“"+txt+"”",ref:["event",eid],t:"now"});
+  renderEvent(eid);
+  setTimeout(()=>{const b=document.getElementById("cmt_"+eid);if(b)b.focus();},50);
+}
 
 function markAttending(id){
   if(attending[id]){openSheet(sheetManage(id));return;}
@@ -1445,6 +1503,27 @@ function renderFollowing(){
 function peopleSearchbar(){return `<div class="searchwrap"><span class="si">🔍</span>
   <input class="search" placeholder="Search people by name…" value="${peopleQ.replace(/"/g,'&quot;')}" oninput="ACTIONS.onPeopleSearch(this.value)">
   ${peopleQ?`<span class="sx" ${da('peopleClear')}>✕</span>`:''}</div>`;}
+/* ============ INTERACTIONS / INSIGHTS ============ */
+function renderInteractions(){
+  const counts={};myInteractions.forEach(i=>counts[i.kind]=(counts[i.kind]||0)+1);
+  setView(`<button class="backbtn" ${da('back')}>‹ Back</button>
+  <div class="h1">Your activity</div>
+  <div class="sub">Everything you’ve done — boosts, reviews, comments, likes & more.</div>
+  <div class="statrow">
+    <div class="stat"><b>${counts.review||0}</b><span>Reviews</span></div>
+    <div class="stat"><b>${counts.boost||0}</b><span>Boosts</span></div>
+    <div class="stat"><b>${counts.comment||0}</b><span>Comments</span></div>
+    <div class="stat"><b>${counts.like||0}</b><span>Likes</span></div>
+  </div>
+  <div class="sect">Recent activity</div>
+  ${myInteractions.map(i=>`<div class="ilog" ${i.ref?da('open',i.ref[0],i.ref[1]):''}>
+    <div class="ilico">${i.icon}</div>
+    <div style="flex:1;min-width:0"><div class="ilt">${i.text}</div>
+    ${i.sub?`<div class="ils">${i.sub}</div>`:''}</div>
+    <div class="ilw">${i.t}</div></div>`).join("")}
+  <div style="height:10px"></div>`);
+}
+
 /* ============ INBOX + CHAT THREAD ============ */
 function renderInbox(){
   const ids=Object.keys(threads);
@@ -1631,6 +1710,12 @@ function renderProfile(){
     <button class="btn g" style="margin-top:8px" ${da('applyVerify')}>🛡️ Apply for verification</button>
     `:''}
   </div>
+  <div class="sect">📊 Insights & activity</div>
+  <div class="ilog" ${da('showInteractions')}>
+    <div class="ilico">📈</div>
+    <div style="flex:1"><div class="ilt">Your activity</div>
+    <div class="ils">Boosts, reviews, comments, likes — everything you’ve done</div></div>
+    <div class="go">›</div></div>
   <div class="sect">Create & promote</div>
   <div class="createrow">
     <div class="createbtn" ${da('createEvent')}><div class="ci">🎉</div><div class="ct">Create event</div><div class="cs">Tag your whole ecosystem</div></div>
