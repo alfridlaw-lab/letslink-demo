@@ -379,8 +379,13 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .ilw{font-size:11px;color:var(--dim);flex:0 0 auto}
 .chipwrap{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 4px}
 /* OSM real-place tiles + note */
-.osmtile{opacity:.92}
-.osmtile .tileimg{height:78px}
+.osmtile .tileimg{height:88px;position:relative;background:#1a1f2a}
+.osmtile .osmimg{position:absolute;inset:0;background-size:cover;background-position:center;
+  filter:grayscale(1) brightness(.8);z-index:0}
+.osmtile .osmgray{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.45));z-index:1}
+.osmtile .badge,.osmtile .claimtag{z-index:2}
+.claimtag{position:absolute;bottom:8px;right:8px;background:rgba(0,194,168,.9);color:#05141a;
+  font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px}
 .osmnote{font-size:12px;color:var(--dim);line-height:1.45;margin:-4px 2px 12px;font-style:italic}
 .sheetbox h3{position:sticky;top:-18px;background:var(--card);margin:-2px -16px 3px;padding:6px 16px 8px;z-index:5}
 .sheetactions{position:sticky;bottom:-32px;background:var(--card);margin:8px -16px -32px;padding:12px 16px 32px;
@@ -390,7 +395,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v37</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v38</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -1709,14 +1714,27 @@ function drawOSM(){
   });
   osmLayer.addTo(_leaflet);
 }
+// grayed-out category stock photos (Unsplash) — signal “add your real photo”
+const CATSTOCK={
+  food:"1517248135467-4c7edcad34c4",cafe:"1495474472287-4d71bcdd2085",
+  bar:"1514933651103-005eec06c04b",shop:"1441986300917-64674bd600d8",
+  arts:"1531058020387-3be344556be6",hotel:"1566073771259-6a8506099945",
+  outdoor:"1441974231531-c6227db76b6e",place:"1477959858617-67f85cf4f1df"};
+function osmStock(p){
+  const key=Object.keys(OSM_ICON).find(k=>OSM_ICON[k]===p.ic)||"place";
+  const ph=CATSTOCK[key]||CATSTOCK.place;
+  return `https://images.unsplash.com/photo-${ph}?w=300&h=180&fit=crop`;
+}
 function osmTile(p){
   return `<div class="tile osmtile">
-    <div class="tileimg" style="background:linear-gradient(135deg,#2a3140,#1f2430)">
-      <span class="scrim"></span><span class="badge">${p.ic} ${p.cat.split(' ')[0]}</span>
-      <span class="rate" style="color:var(--dim)">new</span></div>
+    <div class="tileimg">
+      <span class="osmimg" style="background-image:url('${osmStock(p)}')"></span>
+      <span class="osmgray"></span>
+      <span class="badge">${p.ic} ${p.cat.split(' ')[0]}</span>
+      <span class="claimtag">📷 Add photo</span></div>
     <div class="cap"><div class="capttl" style="font-size:13px">${p.n}</div>
-    <div class="capline">Pulled from OpenStreetMap</div>
-    <div class="caploc" style="color:var(--dim)">Un-reviewed · tap to be first</div></div></div>`;
+    <div class="capline">Pulled from OpenStreetMap · stock image</div>
+    <div class="caploc" style="color:var(--dim)">Unclaimed · tap to claim & add real photos</div></div></div>`;
 }
 
 let _leaflet=null;
