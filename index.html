@@ -401,7 +401,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v45</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v46</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -1028,6 +1028,7 @@ ACTIONS={
   setBoardFilter:(f)=>{boardFilter=f;render();},
   setMapSort:(m)=>setMapSort(m),
   toggleMapSect:(k)=>toggleMapSect(k),
+  setExploreView:(v)=>setExploreView(v),
   openTicket:(url)=>{try{window.open(url,"_blank");}catch(e){location.href=url;}},
   openTM:(id)=>{stack.push({type:"tmevent",id});render();scrollTop();},
   tmAttend:(id)=>tmAttend(id),
@@ -1158,6 +1159,45 @@ function renderExplore(){
   if(exploreView==="map")return renderExploreMap();
   return renderExploreList();
 }
+// ===== REAL events in the LIST view (map-independent) =====
+// Pull real Ticketmaster events around the user's home location so the list shows actual data, not just demo.
+let listTM=[]; let listTMFetching=false; let listTMDone=false;
+function fetchListTM(){
+  if(listTMFetching)return; listTMFetching=true;
+  const c=GEO._me; const radius=30;
+  const url=`https://app.ticketmaster.com/discovery/v2/events.json?apikey=${TM_KEY}&latlong=${c[0].toFixed(4)},${c[1].toFixed(4)}&radius=${radius}&unit=miles&size=40&sort=date,asc`;
+  fetch(url).then(r=>r.json()).then(d=>{
+    const ev=(d._embedded&&d._embedded.events)||[];
+    listTM=ev.map(e=>{
+      const v=(e._embedded&&e._embedded.venues&&e._embedded.venues[0])||{};
+      const loc=v.location||{};
+      const img=(e.images||[]).sort((a,b)=>(b.width||0)-(a.width||0))[0]||{};
+      const seg=((e.classifications||[{}])[0].segment||{}).name||"";
+      const pr=(e.priceRanges&&e.priceRanges[0]);
+      return {id:"tm_"+e.id,n:e.name,date:(e.dates&&e.dates.start&&e.dates.start.localDate)||"TBD",
+        venue:v.name||"",cat:seg||"Event",catKey:tmCatKey(seg),img:img.url||"",url:e.url||"",
+        price:pr?`$${Math.round(pr.min)}+`:"",lat:loc.latitude?+loc.latitude:null,lng:loc.longitude?+loc.longitude:null};
+    }).filter(e=>e.lat&&e.lng);
+    listTMFetching=false;listTMDone=true;
+    // re-render if user is still on the Explore list view
+    if(tab==="explore"&&exploreView==="list"&&!stack.length)renderExploreList();
+  }).catch(()=>{listTMFetching=false;listTMDone=true;
+    if(tab==="explore"&&exploreView==="list"&&!stack.length)renderExploreList();});
+}
+// respects the active category filter + sorts real events by real distance
+function realEventsBlock(){
+  if(!listTMDone&&!listTM.length){fetchListTM();
+    return `<div class="sect">✅ Real events near you <span style="color:var(--dim);font-weight:400;font-size:12px">· loading…</span></div>`;}
+  let ev=listTM.filter(e=>{
+    if(catFilter!=="all"&&catFilter!=="events"&&e.catKey!==catFilter)return false;
+    return true;
+  });
+  ev.sort((a,b)=>distMiles(a.lat,a.lng)-distMiles(b.lat,b.lng));
+  ev=ev.slice(0,6);
+  if(!ev.length)return "";
+  return `<div class="sect">✅ Real events near you <span style="color:var(--dim);font-weight:400;font-size:11px">· live from Ticketmaster</span></div>
+    <div class="grid">${ev.map(e=>tmTile(e)).join("")}</div>`;
+}
 // LIST VIEW — the soul of Let's Link: your people, your interests, sorted by distance.
 // Every tile is either REAL (pulled from OSM/Ticketmaster) or DEMO (seeded). No fake "live" genre.
 function renderExploreList(){
@@ -1179,11 +1219,12 @@ function renderExploreList(){
     const evSorted=sortIds(["market","paddle","live_hoops","live_kojo","live_tacos","live_bball","live_jazz","live_bbq"]);
     body=`
     ${eventTile("marrowfest",1)}
-    <div class="sect">🎟️ Events for you <span style="color:var(--dim);font-weight:400;font-size:12px">· sports · music · food</span></div>
+    ${realEventsBlock()}
+    <div class="sect">🎟️ Events for you</div>
     <div class="grid">${evSorted.map(e=>eventTile(e)).join("")}</div>
     <div class="sect">🍽️ Places for you</div>
     <div class="grid">${bizSorted.map(b=>bizTile(b)).join("")}</div>
-    <p class="osmnote">These are demo listings. Flip to 🗺️ Map to pull <b>real</b> places &amp; ticketed events in any area.</p>`;
+    <p class="osmnote">Demo listings above are placeholders. Real ticketed events load at the top; flip to 🗺️ Map to explore any area.</p>`;
   }
   setView(`<div class="h1">Explore</div>
   <div class="sub">Everything around you — filtered through your people.</div>
