@@ -126,6 +126,13 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .locbar .locset{border:0;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;
   background:linear-gradient(90deg,var(--brand),var(--brand2));color:#05141a}
 .locbar .locset.ghost{background:transparent;border:1px solid var(--line);color:var(--sub)}
+/* tappable address row (opens device maps app) */
+.addrrow{display:flex;align-items:center;gap:8px;text-decoration:none;background:var(--card2);
+  border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0 4px}
+.addrrow:active{background:var(--card)}
+.addrrow .addrpin{font-size:15px}
+.addrrow .addrtxt{flex:1;min-width:0;font-size:13px;color:var(--ink);line-height:1.35}
+.addrrow .addrgo{font-size:12px;font-weight:700;color:var(--brand);white-space:nowrap}
 /* event mode toggle */
 .modebar{display:flex;gap:8px;margin:4px 2px 6px}
 .modebtn{flex:1;padding:12px;border-radius:12px;border:1px solid var(--line);
@@ -410,7 +417,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v47</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v48</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -587,6 +594,37 @@ const DIST={
   kayak:1.4,gallery:2.3,green:1.1,security:2.0,snap:2.8,inn:1.2,hostwell:1.6,suya:3.0,thread:2.6
 };
 function miles(id){const d=DIST[id];return d?`${d} mi`:"nearby";}
+// demo street addresses per business/event (plausible Austin addresses for the detail view)
+const ADDR={
+  coral:"88 Rainey St, Austin, TX 78701",ansel:"2110 E 6th St, Austin, TX 78702",
+  cofield:"1201 W Lynn St, Austin, TX 78703",mama:"1906 E 12th St, Austin, TX 78702",
+  roast:"979 Springdale Rd, Austin, TX 78702",foundry:"612 Red River St, Austin, TX 78701",
+  heights:"310 Congress Ave, Austin, TX 78701",kayak:"1600 Scenic Dr, Austin, TX 78703",
+  gallery:"2200 E Cesar Chavez St, Austin, TX 78702",green:"4501 S Congress Ave, Austin, TX 78745",
+  security:"200 W 6th St, Austin, TX 78701",snap:"1401 S Congress Ave, Austin, TX 78704",
+  inn:"1010 S Congress Ave, Austin, TX 78704",hostwell:"1300 E 4th St, Austin, TX 78702",
+  suya:"East Austin (mobile cart) · Austin, TX",thread:"1211 S Congress Ave, Austin, TX 78704",
+  marrowfest:"Downtown Austin · multi-venue, Austin, TX",hoops:"3811 E 12th St (Givens Park), Austin, TX",
+  market:"4550 Mueller Blvd (Mueller Lake Park), Austin, TX",gallery_night:"E Austin gallery row, Austin, TX",
+  paddle:"1600 Scenic Dr (Lady Bird Lake), Austin, TX",
+  live_hoops:"10414 McKalla Pl (Q2 Stadium), Austin, TX",live_kojo:"612 Red River St (The Foundry), Austin, TX",
+  live_tacos:"E 6th St corridor, Austin, TX",live_bball:"3811 E 12th St (Givens Park), Austin, TX",
+  live_jazz:"310 Congress Ave (Skyline Rooftop), Austin, TX",live_bbq:"4550 Mueller Blvd (Mueller Lake Park), Austin, TX",
+};
+// Build a maps URL the device routes to its default maps app.
+// geo: scheme opens Apple Maps on iOS / default map app on Android; label + coords drop an accurate pin.
+function mapsHref(label,lat,lng){
+  const q=encodeURIComponent(label||"");
+  if(lat!=null&&lng!=null)return `https://maps.apple.com/?ll=${lat},${lng}&q=${q}`;
+  return `https://maps.apple.com/?q=${q}`;
+}
+// a tappable address row that opens the device's maps app in a new tab
+function addrRow(label,lat,lng){
+  if(!label)return "";
+  const href=mapsHref(label,lat,lng);
+  return `<a class="addrrow" href="${href.replace(/"/g,'&quot;')}" target="_blank" rel="noopener noreferrer">
+    <span class="addrpin">📍</span><span class="addrtxt">${label}</span><span class="addrgo">Open in Maps ›</span></a>`;
+}
 // real Austin coordinates per business/event (approx, by neighborhood) for the live map
 const GEO={
   // downtown ~30.2672,-97.7431 ; you-are-here center
@@ -1187,7 +1225,7 @@ function fetchListTM(){
       const seg=((e.classifications||[{}])[0].segment||{}).name||"";
       const pr=(e.priceRanges&&e.priceRanges[0]);
       return {id:"tm_"+e.id,n:e.name,date:(e.dates&&e.dates.start&&e.dates.start.localDate)||"TBD",
-        venue:v.name||"",cat:seg||"Event",catKey:tmCatKey(seg),img:img.url||"",url:e.url||"",
+        venue:v.name||"",addr:tmAddr(v),cat:seg||"Event",catKey:tmCatKey(seg),img:img.url||"",url:e.url||"",
         price:pr?`$${Math.round(pr.min)}+`:"",lat:loc.latitude?+loc.latitude:null,lng:loc.longitude?+loc.longitude:null};
     }).filter(e=>e.lat&&e.lng);
     listTMFetching=false;listTMDone=true;
@@ -1380,7 +1418,8 @@ function renderPost(pid){
     <div class="title" style="font-size:19px;margin:12px 0 6px">${p.title}</div>
     <p class="meta" style="color:var(--sub);line-height:1.55;margin:0 0 12px">${p.body}</p>
     <div class="bkfield"><div class="bl">When</div><div class="bv">${p.when}</div></div>
-    <div class="bkfield"><div class="bl">Where</div><div class="bv">📍 ${p.loc}</div></div>
+    <div class="bkfield"><div class="bl">Where</div><div class="bv">📍 ${p.loc} · <b style="color:var(--brand)">${postMiles(p)} mi</b></div></div>
+    ${addrRow((p.bizref&&ADDR[p.bizref])||p.loc+", Austin, TX",postGeo(p)[0],postGeo(p)[1])}
     ${linkedBiz?`<div class="bkfield" ${da('open','biz',p.bizref)} style="cursor:pointer"><div class="bl">Linked business</div><div class="bv" style="color:var(--brand)">${linkedBiz.ic} ${linkedBiz.n} ›</div></div>`:''}
     <button class="btn p" style="margin-top:14px" ${da('contactSheet',p.id)}>${p.kind==="request"?'🙋 Offer your service':'📩 Reach out'}</button>
     ${linkedBiz?`<button class="btn g" style="margin-top:8px" ${da('open','biz',p.bizref)}>View business profile</button>`:''}
@@ -1440,6 +1479,7 @@ function renderEvent(id){
     <div class="title" style="font-size:20px">${e.hero?'🎪 ':''}${e.n}${e.verified?' '+vbadge():''}</div>
     ${e.verified?`<div class="vrow" ${da('verifyInfo')}><span class="vbadge" style="position:static;display:inline-flex">✔</span> Verified event · organizer & permits confirmed</div>`:''}
     <p class="meta">${e.date}</p><p class="meta">📍 ${e.loc} · <b style="color:var(--brand)">${miles(id)} away</b></p>
+    ${addrRow(ADDR[id]||e.loc+", Austin, TX",(GEO[id]||[])[0],(GEO[id]||[])[1])}
     <div class="row" style="margin:9px 0" ${da('open','user',e.host)} >
       ${users[e.host]?av(e.host):'<span class="ic" style="width:26px;height:26px;font-size:14px">🏢</span>'}
       <span class="meta">Hosted by <b style="color:var(--ink)">${host.name}</b></span></div>
@@ -1489,6 +1529,7 @@ function renderBiz(id){
     <div class="title" style="font-size:20px">${b.n}${b.verified?' '+vbadge():''}</div>
     ${b.verified?`<div class="vrow" ${da('verifyInfo')}><span class="vbadge" style="position:static;display:inline-flex">✔</span> Verified business · credentials confirmed</div>`:''}
     <p class="meta">📍 ${b.hood} · <b style="color:var(--brand)">${miles(id)} away</b> · ${b.r?`<span class="stars">${stars(b.r)} ${b.r}</span>`:'<span style="color:var(--dim)">New · no reviews yet</span>'}</p>
+    ${addrRow(ADDR[id]||b.hood+", Austin, TX",(GEO[id]||[])[0],(GEO[id]||[])[1])}
     <p class="meta" style="margin:7px 0 12px;color:var(--sub)">${b.d}</p>
     <div class="feebox">
       <div class="feerow"><span class="feeamt">${bookInfo(id).fee}</span><span class="feeunit">${bookInfo(id).unit}</span>
@@ -1917,6 +1958,15 @@ function tmCatKey(seg){seg=(seg||"").toLowerCase();
   if(/sport/.test(seg))return"sports";
   if(/arts|theatre|theater|film/.test(seg))return"local";
   return"events";}
+// assemble a human-readable street address from a Ticketmaster venue object
+function tmAddr(v){
+  if(!v)return"";
+  const line=(v.address&&(v.address.line1||v.address.line2))||"";
+  const city=(v.city&&v.city.name)||"";
+  const state=(v.state&&(v.state.stateCode||v.state.name))||"";
+  const parts=[line,city,state].filter(Boolean);
+  return parts.length?parts.join(", "):(v.name||"");
+}
 function fetchTM(){
   if(!_leaflet)return;
   let c;try{c=_leaflet.getCenter();}catch(e){return;}
@@ -1934,7 +1984,7 @@ function fetchTM(){
       const seg=((e.classifications||[{}])[0].segment||{}).name||"";
       const pr=(e.priceRanges&&e.priceRanges[0]);
       return {id:"tm_"+e.id,n:e.name,date:(e.dates&&e.dates.start&&e.dates.start.localDate)||"TBD",
-        venue:v.name||"",cat:seg||"Event",catKey:tmCatKey(seg),img:img.url||"",url:e.url||"",
+        venue:v.name||"",addr:tmAddr(v),cat:seg||"Event",catKey:tmCatKey(seg),img:img.url||"",url:e.url||"",
         price:pr?`$${Math.round(pr.min)}+`:"",lat:loc.latitude?+loc.latitude:null,lng:loc.longitude?+loc.longitude:null};
     }).filter(e=>e.lat&&e.lng);
     tmFetching=false;drawTM();updateInView();
@@ -1990,6 +2040,7 @@ function renderTMEvent(id){
     <div class="title" style="font-size:20px">${e.n}</div>
     <p class="meta">📅 ${e.date}${e.price?' · <b style="color:var(--brand)">'+e.price+'</b>':''}</p>
     <p class="meta">📍 ${e.venue||'Venue TBA'}</p>
+    ${addrRow(e.addr||e.venue||'Venue',e.lat,e.lng)}
     ${fa.length?`<div class="social" style="margin-top:10px">${fa.map(u=>av(u)).join("")}<span class="who"><b>${fa.map(u=>users[u].name.split(" ")[0]).join(", ")}</b> ${fa.length>1?'are':'is'} going</span></div>`:'<p class="meta" style="margin-top:10px;color:var(--dim)">None of your people are going yet — be the first.</p>'}
     <button class="btn ${going?'g':'gold'}" style="margin-top:12px" ${da('tmAttend',id)}>${going?'✓ You are going — tap to remove':'＋ Mark attending'}</button>
     ${e.url?`<a class="btn p" style="margin-top:8px;text-align:center;text-decoration:none;display:block" href="${e.url.replace(/"/g,'&quot;')}" target="_blank" rel="noopener noreferrer">🎟️ Get tickets on Ticketmaster</a>`:'<p class="meta" style="margin-top:8px;color:var(--dim)">Ticket link unavailable for this event.</p>'}
