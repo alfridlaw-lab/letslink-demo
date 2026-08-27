@@ -117,6 +117,15 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .sectgroup{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;
   color:#2ec7a0;margin:16px 2px 2px;padding-top:8px;border-top:1px solid var(--line)}
 .sectgroup.demo{color:#7c5cff}
+/* shared "set your location" bar (Explore + Board) */
+.locbar{display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--line);
+  border-radius:12px;padding:8px 10px;margin:2px 2px 12px;flex-wrap:wrap}
+.locbar .locpin{font-size:14px}
+.locbar .loctxt{font-size:13px;color:var(--sub);flex:1;min-width:120px}
+.locbar .loctxt b{color:var(--ink)}
+.locbar .locset{border:0;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;
+  background:linear-gradient(90deg,var(--brand),var(--brand2));color:#05141a}
+.locbar .locset.ghost{background:transparent;border:1px solid var(--line);color:var(--sub)}
 /* event mode toggle */
 .modebar{display:flex;gap:8px;margin:4px 2px 6px}
 .modebtn{flex:1;padding:12px;border-radius:12px;border:1px solid var(--line);
@@ -401,7 +410,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v46</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v47</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -1029,6 +1038,9 @@ ACTIONS={
   setMapSort:(m)=>setMapSort(m),
   toggleMapSect:(k)=>toggleMapSect(k),
   setExploreView:(v)=>setExploreView(v),
+  useMyLocation:()=>useMyLocation(),
+  promptCity:()=>promptCity(),
+  setBoardSort:(m)=>setBoardSort(m),
   openTicket:(url)=>{try{window.open(url,"_blank");}catch(e){location.href=url;}},
   openTM:(id)=>{stack.push({type:"tmevent",id});render();scrollTop();},
   tmAttend:(id)=>tmAttend(id),
@@ -1229,6 +1241,7 @@ function renderExploreList(){
   setView(`<div class="h1">Explore</div>
   <div class="sub">Everything around you — filtered through your people.</div>
   ${exploreToggle()}
+  ${locBar()}
   ${searchbar("Search events, food, places…")}
   ${catbar()}
   ${sortbar()}
@@ -1255,14 +1268,24 @@ function postAvatar(p){
   if(users[p.by])return av(p.by,38);
   return `<div class="pbadge">🏢</div>`;
 }
+// resolve a board post's coordinates from its linked business or author, so we can show real distance
+function postGeo(p){
+  if(p.bizref&&GEO[p.bizref])return GEO[p.bizref];
+  if(GEO[p.by])return GEO[p.by];
+  // fall back to a deterministic nearby point so every post has a stable distance
+  let h=0;const s=p.id||p.title||"";for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;
+  const c=GEO._me;return [c[0]+((h%80)-40)/1000, c[1]+(((h>>3)%80)-40)/1000];
+}
+function postMiles(p){const g=postGeo(p);return distMiles(g[0],g[1]);}
 function postCard(p){
   const kindLabel=p.kind==="offer"?'<span class="ktag offer">✅ Available</span>':'<span class="ktag req">🙋 Looking for</span>';
   const catMeta=CATS.find(c=>c[0]===p.cat)||["","🌐",""];
+  const mi=postMiles(p);
   return `<div class="bcard" ${da('openPost',p.id)}>
     <div class="bctop">${postAvatar(p)}
       <div style="flex:1;min-width:0">
         <div class="bcby">${postByName(p)}${(users[p.by]&&users[p.by].star)?' ⭐':''}</div>
-        <div class="bcmeta">${catMeta[1]} ${catMeta[2]} · 📍 ${p.loc}</div>
+        <div class="bcmeta">${catMeta[1]} ${catMeta[2]} · 📍 ${p.loc} · <b style="color:var(--brand)">${mi} mi</b></div>
       </div>${kindLabel}
     </div>
     <div class="bctitle">${p.title}</div>
@@ -1271,6 +1294,44 @@ function postCard(p){
       <span class="bccta">${p.kind==="request"?'Offer your service ›':'Reach out ›'}</span></div>
   </div>`;
 }
+let boardSort="nearest"; // nearest | recent
+function setBoardSort(m){boardSort=m;render();}
+// ===== SHARED LOCATION CONTROL (works on Explore list + Board, independent of the Leaflet map) =====
+let locLabel="Austin, TX"; // human-readable label for the currently set location
+// a compact "set your location" bar used across tabs
+function locBar(){
+  return `<div class="locbar">
+    <span class="locpin">📍</span>
+    <span class="loctxt">Near <b>${locLabel}</b></span>
+    <button class="locset" ${da('useMyLocation')}>Use my location</button>
+    <button class="locset ghost" ${da('promptCity')}>Change</button>
+  </div>`;
+}
+// set location from the device GPS, then re-anchor distances everywhere
+function useMyLocation(){
+  if(!navigator.geolocation){toast("Location not supported on this device");return;}
+  toast("📍 Finding you…");
+  navigator.geolocation.getCurrentPosition(
+    pos=>{GEO._me=[pos.coords.latitude,pos.coords.longitude];locLabel="your location";
+      listTMDone=false;listTM=[]; // refetch real events around the new point
+      toast("📍 Set to your location");render();},
+    err=>{toast("Couldn’t get location — allow it in settings");},
+    {enableHighAccuracy:true,timeout:8000});
+}
+// change location by typing a city/place (free OSM geocoding)
+function promptCity(){
+  const q=window.prompt("Set your location — city or place:",locLabel);
+  if(!q||!q.trim())return;
+  toast("🔍 Searching “"+q.trim()+"”…");
+  fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q="+encodeURIComponent(q.trim()))
+    .then(r=>r.json()).then(d=>{
+      if(!d||!d.length){toast("No match for “"+q.trim()+"”");return;}
+      GEO._me=[+d[0].lat,+d[0].lon];
+      locLabel=(d[0].display_name||q).split(",").slice(0,2).join(",");
+      listTMDone=false;listTM=[]; // refetch real events around the new point
+      toast("📍 "+locLabel);render();
+    }).catch(()=>toast("Search failed — try again"));
+}
 function renderBoard(){
   let posts=board.filter(p=>{
     if(boardFilter!=="all"&&p.kind!==boardFilter)return false;
@@ -1278,14 +1339,21 @@ function renderBoard(){
     if(searchQ&&!(p.title+" "+p.body+" "+p.loc+" "+postByName(p)).toLowerCase().includes(searchQ.toLowerCase()))return false;
     return true;
   });
+  // sort by distance to your set location by default
+  if(boardSort==="nearest")posts=posts.slice().sort((a,b)=>parseFloat(postMiles(a))-parseFloat(postMiles(b)));
   const offers=posts.filter(p=>p.kind==="offer").length, reqs=posts.filter(p=>p.kind==="request").length;
   setView(`<div class="h1">Board</div>
   <div class="sub">Businesses post availability · planners post needs · connect directly.</div>
+  ${locBar()}
   ${searchbar("Search the board…")}
   <div class="sortbar">
     <span class="sortchip ${boardFilter==='all'?'on':''}" ${da('setBoardFilter','all')}>All (${board.length})</span>
     <span class="sortchip ${boardFilter==='offer'?'on':''}" ${da('setBoardFilter','offer')}>✅ Available</span>
     <span class="sortchip ${boardFilter==='request'?'on':''}" ${da('setBoardFilter','request')}>🙋 Requests</span>
+  </div>
+  <div class="sortbar">
+    <span class="sortchip ${boardSort==='nearest'?'on':''}" ${da('setBoardSort','nearest')}>📍 Nearest to you</span>
+    <span class="sortchip ${boardSort==='recent'?'on':''}" ${da('setBoardSort','recent')}>🕒 Most recent</span>
   </div>
   ${catbar()}
   <div class="createrow" style="margin-bottom:12px">
@@ -1924,7 +1992,7 @@ function renderTMEvent(id){
     <p class="meta">📍 ${e.venue||'Venue TBA'}</p>
     ${fa.length?`<div class="social" style="margin-top:10px">${fa.map(u=>av(u)).join("")}<span class="who"><b>${fa.map(u=>users[u].name.split(" ")[0]).join(", ")}</b> ${fa.length>1?'are':'is'} going</span></div>`:'<p class="meta" style="margin-top:10px;color:var(--dim)">None of your people are going yet — be the first.</p>'}
     <button class="btn ${going?'g':'gold'}" style="margin-top:12px" ${da('tmAttend',id)}>${going?'✓ You are going — tap to remove':'＋ Mark attending'}</button>
-    <button class="btn p" style="margin-top:8px" ${da('openTicket',e.url)}>🎟️ Get tickets on Ticketmaster</button>
+    ${e.url?`<a class="btn p" style="margin-top:8px;text-align:center;text-decoration:none;display:block" href="${e.url.replace(/"/g,'&quot;')}" target="_blank" rel="noopener noreferrer">🎟️ Get tickets on Ticketmaster</a>`:'<p class="meta" style="margin-top:8px;color:var(--dim)">Ticket link unavailable for this event.</p>'}
   </div></div>
   <div class="sect">💬 Comments</div>
   <div class="cbox">
