@@ -399,7 +399,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v39</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v40</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -1001,6 +1001,7 @@ ACTIONS={
   setCat:(c)=>setCat(c),
   setBoardFilter:(f)=>{boardFilter=f;render();},
   setMapSort:(m)=>setMapSort(m),
+  openTicket:(url)=>{try{window.open(url,"_blank");}catch(e){location.href=url;}},
   onPeopleSearch:(v)=>{peopleQ=v;render();},
   peopleClear:()=>{peopleQ="";render();},
   showFollowers:()=>{stack.push({type:"list",id:"followers"});render();scrollTop();},
@@ -1729,7 +1730,7 @@ function drawTM(){
   tmLayer.addTo(_leaflet);
 }
 function tmTile(e){
-  return `<div class="tile tmtile" onclick="window.open('${e.url}','_blank')">
+  return `<div class="tile tmtile" ${da('openTicket',e.url)}>
     <div class="tileimg" style="${e.img?`background-image:url('${e.img}');background-size:cover;background-position:center`:'background:linear-gradient(135deg,#ff6a3d,#7c5cff)'}">
       <span class="scrim"></span><span class="badge">🎟️ ${e.cat}</span>
       ${e.price?`<span class="rate" style="color:#fff">${e.price}</span>`:''}
