@@ -374,9 +374,10 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
   border:1px solid var(--line);border-radius:13px;margin-bottom:8px;cursor:pointer}
 .ilico{width:38px;height:38px;border-radius:11px;background:var(--card2);border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto}
-.ilt{font-weight:600;font-size:13.5px}
+.ilt{font-weight:600;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ils{font-size:12px;color:var(--dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ilw{font-size:11px;color:var(--dim);flex:0 0 auto}
+.chipwrap{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 4px}
 .sheetbox h3{position:sticky;top:-18px;background:var(--card);margin:-2px -16px 3px;padding:6px 16px 8px;z-index:5}
 .sheetactions{position:sticky;bottom:-32px;background:var(--card);margin:8px -16px -32px;padding:12px 16px 32px;
   box-shadow:0 -8px 16px rgba(0,0,0,.3)}
@@ -385,7 +386,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v34</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v35</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -1005,6 +1006,7 @@ ACTIONS={
   verifyInfo:()=>openSheet(sheetVerifyInfo()),
   addComment:(eid)=>addComment(eid),
   showInteractions:()=>{stack.push({type:"interactions",id:"me"});render();scrollTop();},
+  showIType:(kind)=>{stack.push({type:"itype",id:kind});render();scrollTop();},
   applyVerify:()=>openSheet(sheetApplyVerify()),
   submitVerify:()=>{closeSheet();toast("🛡️ Verification submitted — review takes 2–3 days");},
   fabOpenThread:(uid)=>{closeFab();stack=[{type:"thread",id:uid}];tab="profile";render();scrollTop();},
@@ -1042,6 +1044,7 @@ function _render(){
     if(top.type==="inbox")return renderInbox();
     if(top.type==="thread")return renderThread(top.id);
     if(top.type==="interactions")return renderInteractions();
+    if(top.type==="itype")return renderIType(top.id);
   }
   if(tab==="discover")return renderDiscover();
   if(tab==="board")return renderBoard();
@@ -1504,23 +1507,35 @@ function peopleSearchbar(){return `<div class="searchwrap"><span class="si">🔍
   <input class="search" placeholder="Search people by name…" value="${peopleQ.replace(/"/g,'&quot;')}" oninput="ACTIONS.onPeopleSearch(this.value)">
   ${peopleQ?`<span class="sx" ${da('peopleClear')}>✕</span>`:''}</div>`;}
 /* ============ INTERACTIONS / INSIGHTS ============ */
+const ITYPES=[["review","⭐","Reviews"],["boost","🚀","Boosts"],["comment","💬","Comments"],["like","❤️","Likes"],["attend","🎟️","RSVPs"],["follow","➕","Follows"]];
 function renderInteractions(){
   const counts={};myInteractions.forEach(i=>counts[i.kind]=(counts[i.kind]||0)+1);
   setView(`<button class="backbtn" ${da('back')}>‹ Back</button>
   <div class="h1">Your activity</div>
-  <div class="sub">Everything you’ve done — boosts, reviews, comments, likes & more.</div>
+  <div class="sub">Tap a category to see just those, or browse everything below.</div>
   <div class="statrow">
-    <div class="stat"><b>${counts.review||0}</b><span>Reviews</span></div>
-    <div class="stat"><b>${counts.boost||0}</b><span>Boosts</span></div>
-    <div class="stat"><b>${counts.comment||0}</b><span>Comments</span></div>
-    <div class="stat"><b>${counts.like||0}</b><span>Likes</span></div>
+    <div class="stat" ${da('showIType','review')}><b>${counts.review||0}</b><span>Reviews</span></div>
+    <div class="stat" ${da('showIType','boost')}><b>${counts.boost||0}</b><span>Boosts</span></div>
+    <div class="stat" ${da('showIType','comment')}><b>${counts.comment||0}</b><span>Comments</span></div>
+    <div class="stat" ${da('showIType','like')}><b>${counts.like||0}</b><span>Likes</span></div>
   </div>
+  <div class="chipwrap">${ITYPES.map(([k,e,l])=>`<span class="catchip" ${da('showIType',k)}>${e} ${l}</span>`).join("")}</div>
   <div class="sect">Recent activity</div>
-  ${myInteractions.map(i=>`<div class="ilog" ${i.ref?da('open',i.ref[0],i.ref[1]):''}>
+  ${myInteractions.map(ilogRow).join("")}
+  <div style="height:10px"></div>`);
+}
+function ilogRow(i){return `<div class="ilog" ${i.ref?da('open',i.ref[0],i.ref[1]):''}>
     <div class="ilico">${i.icon}</div>
     <div style="flex:1;min-width:0"><div class="ilt">${i.text}</div>
     ${i.sub?`<div class="ils">${i.sub}</div>`:''}</div>
-    <div class="ilw">${i.t}</div></div>`).join("")}
+    <div class="ilw">${i.t}</div></div>`;}
+function renderIType(kind){
+  const meta=ITYPES.find(t=>t[0]===kind)||[kind,"📌",kind];
+  const items=myInteractions.filter(i=>i.kind===kind);
+  setView(`<button class="backbtn" ${da('back')}>‹ Back</button>
+  <div class="h1">${meta[1]} ${meta[2]}</div>
+  <div class="sub">${items.length} ${meta[2].toLowerCase()}</div>
+  ${items.length?items.map(ilogRow).join(""):'<div class="empty">Nothing here yet.</div>'}
   <div style="height:10px"></div>`);
 }
 
