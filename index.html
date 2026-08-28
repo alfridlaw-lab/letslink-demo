@@ -418,7 +418,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v57</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v58</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -1260,6 +1260,8 @@ ACTIONS={
   pickTagBiz:(bizId)=>pickTagBiz(bizId),
   openLocPicker:()=>{openSheet(sheetLocPicker(locPickKind));initLocMap();},
   locNameInput:(v)=>{pendingLoc=pendingLoc||{};pendingLoc.label=v;},
+  locSearchInput:(v)=>locSearchInput(v),
+  pickGeoResult:(i)=>pickGeoResult(i),
   linkBizLoc:(id)=>{const g=GEO[id]||[];pendingLoc={label:ADDR[id]||(biz[id]?biz[id].n:id),lat:g[0],lng:g[1],linkedId:id};toast("🔗 Linked "+(biz[id]?biz[id].n:id)+"'s location");openSheet(sheetLocPicker(locPickKind));initLocMap();},
   saveLocPick:()=>{const nm=fval("loc_name");if(nm)pendingLoc=Object.assign(pendingLoc||{},{label:nm});if(!pendingLoc||(!pendingLoc.label&&pendingLoc.lat==null)){toast("Name a place or drop a pin first");return;}openSheet(sheetCreate(locPickKind));const s=document.getElementById("locsummary");},
   backToCreate:()=>{openSheet(sheetCreate(locPickKind));},
@@ -2795,7 +2797,8 @@ function sheetLocPicker(kind){
   const located=Object.keys(biz).filter(id=>GEO[id]).slice(0,20);
   return `<h3>📍 Set location</h3>
   <p class="meta" style="margin:0 0 8px;line-height:1.5">Name a place / address, drop a pin on the map, or link an existing business's location.</p>
-  <input class="finput" id="loc_name" placeholder="Place name or address (e.g. Q2 Stadium, or 88 Rainey St)" value="${pendingLoc&&pendingLoc.label?pendingLoc.label.replace(/"/g,'&quot;'):''}" oninput="ACTIONS.locNameInput(this.value)">
+  <input class="finput" id="loc_name" autocomplete="off" placeholder="Search a place or address (e.g. Q2 Stadium, or 88 Rainey St)" value="${pendingLoc&&pendingLoc.label?pendingLoc.label.replace(/"/g,'&quot;'):''}" oninput="ACTIONS.locSearchInput(this.value)">
+  <div id="loc_results"></div>
   <div class="card" style="position:relative;margin:8px 0"><div id="locmap" style="height:220px;width:100%;border-radius:12px;overflow:hidden"></div>
     <div style="position:absolute;top:8px;left:8px;z-index:500;background:rgba(0,0,0,.6);color:#fff;padding:4px 9px;border-radius:8px;font-size:11px">Tap the map to drop a pin</div>
   </div>
@@ -2810,6 +2813,40 @@ function sheetLocPicker(kind){
   <div class="sheetactions">
   <button class="btn p" ${da('saveLocPick')}>Use this location</button>
   <button class="btn g" style="margin-top:8px" ${da('backToCreate')}>Cancel</button></div>`;
+}
+// ===== live address type-ahead (free OSM Nominatim geocoding) =====
+let locSearchTimer=null, locSearchSeq=0;
+function locSearchInput(v){
+  pendingLoc=pendingLoc||{};pendingLoc.label=v;
+  const q=v.trim();
+  const box=document.getElementById("loc_results");
+  if(locSearchTimer)clearTimeout(locSearchTimer);
+  if(q.length<3){if(box)box.innerHTML="";return;}
+  const seq=++locSearchSeq;
+  if(box)box.innerHTML=`<div class="meta" style="color:var(--dim);padding:4px 2px">Searching…</div>`;
+  locSearchTimer=setTimeout(()=>{
+    fetch("https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&q="+encodeURIComponent(q))
+      .then(r=>r.json()).then(d=>{
+        if(seq!==locSearchSeq)return; // stale response
+        const el=document.getElementById("loc_results");if(!el)return;
+        if(!d||!d.length){el.innerHTML=`<div class="meta" style="color:var(--dim);padding:4px 2px">No matches — or just drop a pin below.</div>`;return;}
+        el.innerHTML=d.map((r,i)=>{
+          const label=(r.display_name||"").split(",").slice(0,3).join(",");
+          window.__locHits=window.__locHits||{};window.__locHits[i]={lat:+r.lat,lng:+r.lon,label};
+          return `<div class="mopt" ${da('pickGeoResult',i)}><span style="font-size:16px">📍</span>
+            <span style="margin-left:8px;flex:1;min-width:0">${label}</span><span class="mg">›</span></div>`;
+        }).join("");
+      }).catch(()=>{const el=document.getElementById("loc_results");if(el&&seq===locSearchSeq)el.innerHTML=`<div class="meta" style="color:var(--dim);padding:4px 2px">Search unavailable — drop a pin instead.</div>`;});
+  },350);
+}
+function pickGeoResult(i){
+  const hit=(window.__locHits||{})[i];if(!hit)return;
+  pendingLoc={label:hit.label,lat:hit.lat,lng:hit.lng};
+  const nm=document.getElementById("loc_name");if(nm)nm.value=hit.label;
+  const box=document.getElementById("loc_results");if(box)box.innerHTML="";
+  const c=document.getElementById("loc_coords");if(c)c.textContent=`📍 ${hit.lat.toFixed(5)}, ${hit.lng.toFixed(5)}`;
+  if(locPickMap){try{locPickMap.setView([hit.lat,hit.lng],15);if(locPickMarker)locPickMarker.setLatLng([hit.lat,hit.lng]);else locPickMarker=L.marker([hit.lat,hit.lng]).addTo(locPickMap);}catch(e){}}
+  toast("📍 "+hit.label.split(",")[0]);
 }
 function initLocMap(){
   if(typeof L==="undefined")return;
@@ -3032,13 +3069,35 @@ function onboardSubmit(){
 }
 
 /* ============ BOOT ============ */
-if(loadState()&&me&&users[me]){
-  const u=users[me];const mn=$("#meName");if(mn)mn.textContent=(u.name||"You").split(" ")[0];
-  const a=$("#meAv");if(a){a.textContent=(u.name||"?")[0].toUpperCase();a.style.background=u.c||"#7c5cff";}
-  render();
-}else{
-  me=null;render(); // no saved account → onboarding
+function bootRender(){
+  if(loadState()&&me&&users[me]){
+    const u=users[me];const mn=$("#meName");if(mn)mn.textContent=(u.name||"You").split(" ")[0];
+    const a=$("#meAv");if(a){a.textContent=(u.name||"?")[0].toUpperCase();a.style.background=u.c||"#7c5cff";}
+    render();
+  }else{
+    me=null;render(); // no saved account → onboarding
+  }
 }
+// Center on the user's REAL location at launch (fallback = last-known / Austin seed center).
+// Persist their location so returning users skip the prompt.
+(function launchLocate(){
+  // restore a previously granted location so the first paint is already local
+  try{const saved=JSON.parse(localStorage.getItem("ll_myloc")||"null");
+    if(saved&&saved.length===2){GEO._me=saved;locLabel="your location";}}catch(e){}
+  bootRender();
+  if(!navigator.geolocation)return;
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      const ll=[pos.coords.latitude,pos.coords.longitude];
+      GEO._me=ll;locLabel="your location";
+      try{localStorage.setItem("ll_myloc",JSON.stringify(ll));}catch(e){}
+      listTMDone=false;listTM=[]; // refetch real events around the user
+      if(_leaflet){try{_leaflet.setView(ll,13);if(_youMarker)_youMarker.setLatLng(ll);fetchOSM();fetchTM();}catch(e){}}
+      render();
+    },
+    err=>{/* denied/unavailable → keep saved or Austin fallback, no nag */},
+    {enableHighAccuracy:true,timeout:9000,maximumAge:300000});
+})();
 </script>
 </body>
 </html>
