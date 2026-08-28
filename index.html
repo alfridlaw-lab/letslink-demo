@@ -418,7 +418,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v59</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v60</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -888,7 +888,74 @@ const boardSeed=[
   {id:"p16",kind:"offer",by:"cofield",bizref:"cofield",cat:"food",title:"Catering trays available for office lunches",
     body:"Cofield Table now doing drop-off catering — brunch spreads, sandwich trays, salads. Perfect for meetings and team lunches. Order 48h ahead.",when:"Weekdays",loc:"Clarksville + delivery"},
 ];
-let board=boardSeed.slice();
+// ===== REAL-STYLE LOCAL SERVICE BUSINESSES (Board marketplace) =====
+// A believable spread of hireable local services so the Board feels alive.
+// (Fiverr has no public API + can't be called from browser JS — these stand in for that marketplace.)
+Object.assign(biz,{
+  svc_photo:{n:"Kessler Frame Studio",cat:"Photography",hood:"East Austin",d:"Weddings, brand shoots, events. 48-hr gallery turnaround.",r:4.8,cta:"Book a shoot",ic:"📸",svc:1,
+    rev:[["harlow_lena","Shot our launch — the reels went viral. Pro from start to finish.",5]]},
+  svc_dj:{n:"DJ Cinco",cat:"DJ / entertainment",hood:"Downtown",d:"Open-format DJ. Weddings, corporate, rooftops. Own rig + lights.",r:4.9,cta:"Check a date",ic:"🎧",svc:1,
+    rev:[["marcus_vale","Read the room all night, floor never emptied. Booked him twice since.",5]]},
+  svc_clean:{n:"BrightNest Cleaning",cat:"Cleaning service",hood:"South Austin",d:"Home + short-term-rental turnovers. Eco products, insured crew.",r:4.7,cta:"Get a quote",ic:"🧹",svc:1,
+    rev:[["sam_hostwell","My whole rental portfolio runs on them. Never a missed turnover.",5]]},
+  svc_handy:{n:"Lone Star Handyman Co.",cat:"Handyman / repairs",hood:"North Austin",d:"Mounts, drywall, fixtures, honey-do lists. Same-week slots.",r:4.6,cta:"Request work",ic:"🔧",svc:1,
+    rev:[["sunny_flats","Fixed six things in one visit, fair price, cleaned up after. Rare.",5]]},
+  svc_video:{n:"Reelworks ATX",cat:"Videography",hood:"East Austin",d:"Same-day recap reels, promos, event films. Fast turnaround.",r:4.8,cta:"Book coverage",ic:"🎥",svc:1,
+    rev:[["harlow_lena","Same-day recap had 40k views by morning. Absurd turnaround.",5]]},
+  svc_cater:{n:"Skillet & Spoon Catering",cat:"Catering",hood:"Clarksville",d:"Drop-off + full-service. Office lunches to 200-plate weddings.",r:4.7,cta:"Plan a menu",ic:"🍽️",svc:1,
+    rev:[["marcus_vale","Fed 180 people and everyone asked who catered. That's the flex.",5]]},
+  svc_barber:{n:"Fade District Barbers",cat:"Barber / grooming",hood:"East Austin",d:"Cuts, line-ups, beard work. On-site for events + weddings.",r:4.9,cta:"Book a chair",ic:"💈",svc:1,
+    rev:[["kojo_beats","On-site cuts for the whole groom's party. Everyone looked crisp.",5]]},
+  svc_move:{n:"Capitol Movers",cat:"Moving & hauling",hood:"South Austin",d:"Local moves, single-item hauls, event load-in/out. Licensed.",r:4.5,cta:"Get an estimate",ic:"📦",svc:1,
+    rev:[["tati_makes","Moved my whole booth setup across town without a scratch.",5]]},
+  svc_paint:{n:"FaceCraft Party Art",cat:"Face painting / kids",hood:"Clarksville",d:"Face paint, balloon art, glitter bars for kids' parties.",r:4.8,cta:"Book a party",ic:"🎨",svc:1,
+    rev:[["sunny_flats","40 kids, zero meltdowns, every face a masterpiece. Hero.",5]]},
+  svc_florist:{n:"Wildflower & Co.",cat:"Florist / event decor",hood:"South Congress",d:"Bouquets, arches, event installs. Locally grown stems.",r:4.9,cta:"Request arrangement",ic:"💐",svc:1,
+    rev:[["harlow_lena","The arch was the backdrop of every single photo. Stunning.",5]]},
+});
+// give the service businesses real Austin-ish coordinates so they show on the Board map
+Object.assign(GEO,{
+  svc_photo:[30.2668,-97.7205],svc_dj:[30.2665,-97.7420],svc_clean:[30.2380,-97.7700],
+  svc_handy:[30.3600,-97.7200],svc_video:[30.2690,-97.7160],svc_cater:[30.2870,-97.7620],
+  svc_barber:[30.2640,-97.7180],svc_move:[30.2350,-97.7680],svc_paint:[30.2850,-97.7640],svc_florist:[30.2470,-97.7500],
+});
+Object.assign(DIST,{
+  svc_photo:1.7,svc_dj:1.9,svc_clean:3.8,svc_handy:5.2,svc_video:2.5,
+  svc_cater:2.9,svc_barber:2.2,svc_move:4.0,svc_paint:2.8,svc_florist:2.6,
+});
+Object.assign(booking,{
+  svc_photo:{fee:"$350",unit:"/event",deposit:"25% deposit",min:"2-wk advance",criteria:["Shot list shared in advance","50% due at booking"]},
+  svc_dj:{fee:"$600",unit:"/night",deposit:"$150 deposit",min:"3-wk advance",criteria:["4-hour minimum","Power + covered space required"]},
+  svc_clean:{fee:"$120",unit:"/visit",deposit:"—",min:"48-hr notice",criteria:["Access instructions required"]},
+  svc_handy:{fee:"$75",unit:"/hr",deposit:"—",min:"1-hr minimum",criteria:["Materials billed separately"]},
+  svc_video:{fee:"$500",unit:"/event",deposit:"30% deposit",min:"1-wk advance",criteria:["Delivery within 72h unless rush"]},
+  svc_cater:{fee:"$18",unit:"/plate",deposit:"40% deposit",min:"25-plate minimum",criteria:["Final count 72h ahead"]},
+  svc_barber:{fee:"$45",unit:"/cut",deposit:"—",min:"—",criteria:["On-site travel fee outside downtown"]},
+  svc_move:{fee:"$130",unit:"/hr",deposit:"—",min:"2-hr minimum",criteria:["Stairs/elevator noted at booking"]},
+  svc_paint:{fee:"$200",unit:"/3 hrs",deposit:"$50 deposit",min:"—",criteria:["Family-friendly designs only"]},
+  svc_florist:{fee:"$250",unit:"/event",deposit:"50% deposit",min:"1-wk advance",criteria:["Seasonal stem availability"]},
+});
+Object.assign(ADDR,{
+  svc_photo:"1900 E 6th St, Austin, TX 78702",svc_dj:"501 Congress Ave, Austin, TX 78701",
+  svc_clean:"4200 S Congress Ave, Austin, TX 78745",svc_handy:"9500 N Lamar Blvd, Austin, TX 78753",
+  svc_video:"2400 E Cesar Chavez St, Austin, TX 78702",svc_cater:"1100 W Lynn St, Austin, TX 78703",
+  svc_barber:"1720 E 12th St, Austin, TX 78702",svc_move:"4600 S 1st St, Austin, TX 78745",
+  svc_paint:"1000 W 6th St, Austin, TX 78703",svc_florist:"1300 S Congress Ave, Austin, TX 78704",
+});
+// service-business board posts (offers)
+const svcBoardPosts=[
+  {id:"s1",kind:"offer",bizref:"svc_photo",cat:"services",title:"Event + brand photographer booking fall dates",body:"Kessler Frame Studio — weddings, launches, headshots. 48-hr gallery turnaround, candid style. Package deals for repeat clients.",when:"Booking Oct–Dec",loc:"East Austin + metro"},
+  {id:"s2",kind:"offer",bizref:"svc_dj",cat:"music",title:"Open-format DJ — weddings, corporate, rooftops",body:"DJ Cinco. Own rig + lights, read-the-room sets, 4-hr minimum. Just closed a Foundry night. Let's lock your date.",when:"Booking Oct–Jan",loc:"Downtown + surrounding"},
+  {id:"s3",kind:"offer",bizref:"svc_clean",cat:"services",title:"Home + rental-turnover cleaning, insured crew",body:"BrightNest Cleaning. Eco products, same-week slots, short-term-rental turnovers a specialty. Free walkthrough quote.",when:"Booking now",loc:"South Austin + metro"},
+  {id:"s4",kind:"offer",bizref:"svc_handy",cat:"services",title:"Handyman — mounts, drywall, fixtures, repairs",body:"Lone Star Handyman Co. Knock out your whole to-do list in one visit. $75/hr, 1-hr minimum, materials at cost.",when:"Same-week slots",loc:"North Austin + metro"},
+  {id:"s5",kind:"offer",bizref:"svc_cater",cat:"food",title:"Catering — office lunches to 200-plate weddings",body:"Skillet & Spoon. Drop-off or full service, $18/plate, 25-plate min. Menus built around your crowd + budget.",when:"Booking now",loc:"Clarksville + delivery"},
+  {id:"s6",kind:"offer",bizref:"svc_barber",cat:"services",title:"On-site barbers for weddings + events",body:"Fade District. Bring the chair to your groom's party or corporate event. Cuts, line-ups, beard work. Everyone looks crisp.",when:"Booking weekends",loc:"East Austin + on-site"},
+  {id:"s7",kind:"offer",bizref:"svc_florist",cat:"services",title:"Florist — bouquets, arches, event installs",body:"Wildflower & Co. Locally grown stems, custom arches + centerpieces. The backdrop your photos deserve.",when:"1-wk advance",loc:"South Congress + metro"},
+  {id:"s8",kind:"offer",bizref:"svc_video",cat:"services",title:"Same-day recap reels + event films",body:"Reelworks ATX. Promo clips, launch films, 72-hr delivery (rush available). Your night, cut to move.",when:"Booking now",loc:"East Austin + metro"},
+  {id:"s9",kind:"offer",bizref:"svc_move",cat:"services",title:"Movers + event load-in / load-out crew",body:"Capitol Movers. Local moves, single-item hauls, festival load-in. Licensed + insured, 2-hr minimum.",when:"Booking now",loc:"South Austin + metro"},
+  {id:"s10",kind:"offer",bizref:"svc_paint",cat:"local",title:"Face painting + balloon art for kids' parties",body:"FaceCraft Party Art. Face paint, balloons, glitter bars. Family-friendly, references on request. 3-hr packages.",when:"Booking weekends",loc:"Clarksville + metro"},
+];
+let board=boardSeed.concat(svcBoardPosts);
 let boardFilter="all"; // all | offer | request
 let peopleQ=""; // user search query on Following tab
 // who follows a given user (reverse graph)
@@ -1258,6 +1325,10 @@ ACTIONS={
   linkSocials:()=>openSheet(sheetSocials()),
   saveSocial:(k)=>saveSocial(k),
   removeSocial:(k)=>removeSocial(k),
+  inviteFriends:()=>openSheet(sheetInvite(null)),
+  doShare:()=>doShare(),
+  inviteOne:(h)=>inviteOne(h),
+  syncContacts:()=>syncContacts(),
   tagBizSheet:(eid)=>openSheet(sheetTagBiz(eid)),
   setTagSect:(s)=>setTagSect(s),
   pickTagBiz:(bizId)=>pickTagBiz(bizId),
@@ -1273,6 +1344,10 @@ ACTIONS={
   mapOpen:(type,id)=>{open(type,id);},
   setCat:(c)=>setCat(c),
   setBoardFilter:(f)=>{boardFilter=f;render();},
+  setBoardView:(v)=>setBoardView(v),
+  boardCenterMe:()=>boardCenterMe(),
+  boardCitySearch:()=>boardCitySearch(),
+  mapOpenPost:(pid)=>{open("post",pid);},
   setMapSort:(m)=>setMapSort(m),
   toggleMapSect:(k)=>toggleMapSect(k),
   setExploreView:(v)=>setExploreView(v),
@@ -1566,6 +1641,93 @@ function postCard(p){
 }
 let boardSort="nearest"; // nearest | recent
 function setBoardSort(m){boardSort=m;render();}
+let boardView="list"; // list | map
+function setBoardView(v){boardView=v;render();scrollTop();}
+function boardToggle(){
+  return `<div class="vtoggle">
+    <button class="vtog ${boardView==='list'?'on':''}" ${da('setBoardView','list')}>≣ List</button>
+    <button class="vtog ${boardView==='map'?'on':''}" ${da('setBoardView','map')}>🗺️ Map</button>
+  </div>`;
+}
+// geo for a board post: its linked business, else its author, else derived
+function boardPostGeo(p){
+  if(p.bizref&&GEO[p.bizref])return GEO[p.bizref];
+  if(GEO[p.by])return GEO[p.by];
+  return postGeo(p);
+}
+let _boardMap=null;
+function renderBoardMap(){
+  const posts=board.filter(p=>{
+    if(boardFilter!=="all"&&p.kind!==boardFilter)return false;
+    if(catFilter!=="all"&&p.cat!==catFilter)return false;
+    if(searchQ&&!(p.title+" "+p.body+" "+p.loc+" "+postByName(p)).toLowerCase().includes(searchQ.toLowerCase()))return false;
+    return true;
+  });
+  setView(`<div class="h1">Board</div>
+  <div class="sub">Services near you — tap a pin to see who's available in your area.</div>
+  ${boardToggle()}
+  <div class="loconav">
+    <div class="searchwrap" style="flex:1;margin:0"><span class="si">🏙️</span>
+      <input class="search" id="boardcitybox" placeholder="Search a city or place…" onkeydown="if(event.key==='Enter'){ACTIONS.boardCitySearch()}">
+    </div>
+    <button class="locbtn" ${da('boardCenterMe')} title="Center on my location">📍</button>
+  </div>
+  ${searchbar("Filter services in view…")}
+  ${catbar()}
+  <div class="card" style="position:relative"><div id="boardmap" style="height:300px;width:100%"></div>
+    <button class="maprecenter" ${da('boardCenterMe')} title="My location">📍</button></div>
+  <div class="sect">🛠️ ${posts.length} service${posts.length===1?'':'s'} in view</div>
+  <div id="boardinview">${posts.length?posts.map(postCard).join(""):'<div class="empty">No services match — try another filter or pan the map.</div>'}</div>
+  <div style="height:10px"></div>`);
+  initBoardMap();
+}
+function boardCenterMe(){
+  if(!_boardMap){return;}
+  if(!navigator.geolocation){toast("Location not supported");_boardMap.setView(GEO._me,13);return;}
+  toast("📍 Finding you…");
+  navigator.geolocation.getCurrentPosition(
+    pos=>{const ll=[pos.coords.latitude,pos.coords.longitude];GEO._me=ll;
+      try{localStorage.setItem("ll_myloc",JSON.stringify(ll));}catch(e){}
+      _boardMap.setView(ll,13);toast("📍 Centered on you");},
+    err=>{toast("Couldn’t get location — allow it in settings");},
+    {enableHighAccuracy:true,timeout:8000});
+}
+function boardCitySearch(){
+  const box=document.getElementById("boardcitybox");if(!box)return;
+  const q=box.value.trim();if(!q)return;
+  toast("🔍 Searching “"+q+"”…");
+  fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q="+encodeURIComponent(q))
+    .then(r=>r.json()).then(d=>{
+      if(!d||!d.length){toast("No match for “"+q+"”");return;}
+      const ll=[+d[0].lat,+d[0].lon];GEO._me=ll;locLabel=(d[0].display_name||q).split(",").slice(0,2).join(",");
+      if(_boardMap){_boardMap.setView(ll,12);}
+      toast("📍 "+locLabel);
+    }).catch(()=>toast("Search failed — try again"));
+}
+function initBoardMap(){
+  if(typeof L==="undefined")return;
+  if(_boardMap){try{_boardMap.remove();}catch(e){}_boardMap=null;}
+  setTimeout(()=>{
+    const node=document.getElementById("boardmap");if(!node)return;
+    const map=L.map(node,{zoomControl:true,attributionControl:true}).setView(GEO._me,12);
+    _boardMap=map;
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+    L.circleMarker(GEO._me,{radius:7,color:"#00c2a8",fillColor:"#00c2a8",fillOpacity:1,weight:2}).addTo(map).bindPopup("📍 You are here");
+    const posts=board.filter(p=>{
+      if(boardFilter!=="all"&&p.kind!==boardFilter)return false;
+      if(catFilter!=="all"&&p.cat!==catFilter)return false;
+      if(searchQ&&!(p.title+" "+p.body+" "+p.loc+" "+postByName(p)).toLowerCase().includes(searchQ.toLowerCase()))return false;
+      return true;
+    });
+    const bounds=[GEO._me];
+    posts.forEach(p=>{const g=boardPostGeo(p);if(!g)return;bounds.push(g);
+      const ic=p.bizref&&biz[p.bizref]?biz[p.bizref].ic:(p.kind==='offer'?'🛠️':'🙋');
+      const mk=L.marker(g).addTo(map);
+      mk.bindPopup(`<b>${ic} ${p.title}</b><br>${postByName(p)}<br>📍 ${p.loc}<br><a href="#" onclick="ACTIONS.mapOpenPost('${p.id}');return false">Open ›</a>`);});
+    if(bounds.length>1){try{map.fitBounds(bounds,{padding:[30,30],maxZoom:13});}catch(e){}}
+    setTimeout(()=>{try{map.invalidateSize();}catch(e){}},150);
+  },60);
+}
 // ===== SHARED LOCATION CONTROL (works on Explore list + Board, independent of the Leaflet map) =====
 let locLabel="Austin, TX"; // human-readable label for the currently set location
 // a compact "set your location" bar used across tabs
@@ -1603,6 +1765,7 @@ function promptCity(){
     }).catch(()=>toast("Search failed — try again"));
 }
 function renderBoard(){
+  if(boardView==="map")return renderBoardMap();
   let posts=board.filter(p=>{
     if(boardFilter!=="all"&&p.kind!==boardFilter)return false;
     if(catFilter!=="all"&&p.cat!==catFilter)return false;
@@ -1614,6 +1777,7 @@ function renderBoard(){
   const offers=posts.filter(p=>p.kind==="offer").length, reqs=posts.filter(p=>p.kind==="request").length;
   setView(`<div class="h1">Board</div>
   <div class="sub">Businesses post availability · planners post needs · connect directly.</div>
+  ${boardToggle()}
   ${locBar()}
   ${searchbar("Search the board…")}
   <div class="sortbar">
@@ -1846,13 +2010,84 @@ function saveSocial(k){
   socials[me][k]=v;
   saveState();
   toast("✓ "+(SOCIAL_META[k]?SOCIAL_META[k][0]:k)+" linked");
-  openSheet(sheetSocials());
+  // right after linking, nudge them to invite their people from that platform
+  openSheet(sheetInvite(k));
 }
 function removeSocial(k){
   if(socials[me])delete socials[me][k];
   saveState();
   toast("Unlinked");
   openSheet(sheetSocials());
+}
+// ===== INVITE FLOW (spread the app to your people) =====
+const INVITE_URL="https://alfridlaw-lab.github.io/letslink-demo/";
+function inviteText(){
+  const nm=(users[me]&&users[me].name)?users[me].name.split(" ")[0]:"I";
+  return `${nm==='I'?'I':nm+" is"} on Let's Link — discover events, food & services through people you trust. Come link up: ${INVITE_URL}`;
+}
+function doShare(){
+  const data={title:"Let's Link",text:inviteText(),url:INVITE_URL};
+  if(navigator.share){navigator.share(data).then(()=>toast("Thanks for spreading the word!")).catch(()=>{});}
+  else{ // desktop fallback: copy
+    try{navigator.clipboard.writeText(inviteText());toast("🔗 Invite link copied — paste it anywhere");}
+    catch(e){toast("Copy this: "+INVITE_URL);}
+  }
+}
+// suggested people to invite — demo names styled like they came from the linked platform
+const INVITE_SUGGEST={
+  ig:["@jordan.eats","@maya.makes","@theo.shoots","@nina.nights"],
+  x:["@devon_h","@sara_writes","@marcus_atx"],
+  tiktok:["@quickcuts","@austinfoodie","@djravey"],
+  snap:["@bigmike","@lolap","@thekidcam"],
+  fb:["Andre Willis","Priya Nair","Sam Cole","Rae Dunn"],
+  yt:["ATXeats","NightlifeNow","CreatorKade"],
+  twitch:["vibecheck_tv","atx_gamer","soundwave"],
+  sc:["kojobeats","lofi.lena","basslinebo"],
+};
+function sheetInvite(fromPlatform){
+  const label=fromPlatform&&SOCIAL_META[fromPlatform]?SOCIAL_META[fromPlatform][0]:null;
+  const suggest=(fromPlatform&&INVITE_SUGGEST[fromPlatform])||[];
+  return `<h3>🔗 Invite your people</h3>
+  ${label?`<p class="meta" style="margin:0 0 10px;line-height:1.5">Nice — your <b style="color:var(--brand)">${label}</b> is linked. Bring your circle over so your feed fills with people you actually trust.</p>`
+    :`<p class="meta" style="margin:0 0 10px;line-height:1.5">The app gets better with your people on it. Invite friends so discovery runs through folks you trust.</p>`}
+  <button class="btn p" ${da('doShare')}>📤 Share invite link</button>
+  <button class="btn g" style="margin-top:8px" ${da('syncContacts')}>📇 Invite from contacts</button>
+  ${suggest.length?`<div class="fsec" style="margin-top:14px">Suggested from ${label||'your network'}</div>
+    ${suggest.map(h=>`<div class="prow"><div class="prleft"><span class="i" style="font-size:18px">${label&&label[0]==='I'?'📷':'👤'}</span>
+      <div style="margin-left:8px"><div class="nm">${h}</div><div class="ds" style="color:var(--dim)">Not on Let's Link yet</div></div></div>
+      <button class="followbtn on" ${da('inviteOne',h)}>Invite</button></div>`).join("")}`:''}
+  <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Maybe later</button>`;
+}
+function inviteOne(handle){
+  const data={title:"Let's Link",text:`Hey ${handle} — `+inviteText(),url:INVITE_URL};
+  if(navigator.share){navigator.share(data).catch(()=>{});}
+  else{try{navigator.clipboard.writeText(data.text);}catch(e){}}
+  toast("Invite ready for "+handle);
+}
+function syncContacts(){
+  // Contacts Picker API (Android Chrome only); graceful message elsewhere
+  if(navigator.contacts&&navigator.contacts.select){
+    navigator.contacts.select(["name","tel"],{multiple:true})
+      .then(list=>{
+        if(!list||!list.length){toast("No contacts picked");return;}
+        openSheet(sheetContactInvites(list));
+      }).catch(()=>toast("Contacts access canceled"));
+  }else{
+    // fallback: demo suggestions + explain
+    const demo=[{name:"Alex Rivera"},{name:"Bri Chen"},{name:"Coop Daniels"},{name:"Dana Ford"}];
+    openSheet(sheetContactInvites(demo,true));
+  }
+}
+function sheetContactInvites(list,demo){
+  return `<h3>📇 Invite from contacts</h3>
+  ${demo?`<p class="meta" style="margin:0 0 10px;color:var(--gold);line-height:1.5">⚠️ Direct contact access isn't available in this browser (it's Android-Chrome-only, or needs the native app). Showing a sample — in the real app these'd be your actual contacts.</p>`
+    :`<p class="meta" style="margin:0 0 10px">Pick who to invite. We only use this to send invites — nothing's uploaded.</p>`}
+  ${list.map(c=>{const nm=(c.name&&(Array.isArray(c.name)?c.name[0]:c.name))||"Contact";
+    return `<div class="prow"><div class="prleft"><span class="i" style="font-size:18px">👤</span>
+      <div style="margin-left:8px"><div class="nm">${nm}</div><div class="ds" style="color:var(--dim)">From contacts</div></div></div>
+      <button class="followbtn on" ${da('inviteOne',nm)}>Invite</button></div>`;}).join("")}
+  <button class="btn p" style="margin-top:12px" ${da('doShare')}>📤 Or share the link with everyone</button>
+  <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Done</button>`;
 }
 function sheetSignout(){
   return `<h3>👋 Sign out & reset</h3>
@@ -2574,6 +2809,7 @@ function sheetMenu(){
   ${menuOpt('👤','View profile','menuProfile')}
   ${menuOpt('📄','Your listings & activity','menuGoProfile')}
   ${menuOpt('🔗','Link your socials','linkSocials')}
+  ${menuOpt('📤','Invite friends','inviteFriends')}
   ${menuOpt('⚙️','Settings','menuSettings')}
   ${menuOpt('🎨','Customization','menuCustomize')}
   ${menuOpt('🔔','Notifications','menuItem','Notifications')}
