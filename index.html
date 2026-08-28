@@ -418,7 +418,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v55</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v56</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -796,7 +796,22 @@ const socials={
   tati_makes:{ig:"tati.makes",tiktok:"tatimakes",fb:"tatiana.cruz"},
   rob_secures:{ig:"delacroix.security",fb:"delacroix.events",x:"delacroixsec"},
 };
-const SOCIAL_META={ig:["Instagram","📷"],tiktok:["TikTok","🎵"],x:["X / Twitter","𝕏"],fb:["Facebook","👥"],snap:["Snapchat","👻"],sc:["SoundCloud","🎧"],yt:["YouTube","▶️"]};
+// [label, glyph, urlBuilder(handle)] — real profile URLs so links actually open.
+const SOCIAL_META={
+  ig:["Instagram","📷",h=>"https://instagram.com/"+h],
+  x:["X / Twitter","𝕏",h=>"https://x.com/"+h],
+  tiktok:["TikTok","🎵",h=>"https://tiktok.com/@"+h],
+  snap:["Snapchat","👻",h=>"https://snapchat.com/add/"+h],
+  fb:["Facebook","👥",h=>"https://facebook.com/"+h],
+  yt:["YouTube","▶️",h=>"https://youtube.com/@"+h],
+  twitch:["Twitch","🎮",h=>"https://twitch.tv/"+h],
+  sc:["SoundCloud","🎧",h=>"https://soundcloud.com/"+h],
+  yttv:["","",null] // placeholder guard
+};
+delete SOCIAL_META.yttv;
+// canonical ordered platform list for the link-your-socials picker
+const SOCIAL_ORDER=["ig","x","tiktok","snap","fb","yt","twitch","sc"];
+function socialUrl(k,handle){const m=SOCIAL_META[k];if(!m||!m[2])return"#";return m[2](String(handle).replace(/^@+/,""));}
 // privacy per user: public | friends | private. friends = only visible if you follow them (or they follow you / shared)
 const privacy={
   dee_eats:"public",marcus_vale:"public",priya_night:"public",grace_lens:"public",
@@ -921,10 +936,67 @@ function sortedThreads(){return Object.keys(threads).sort((a,b)=>{
   const ta=threads[a],tb=threads[b];return 0;});}
 
 /* ============ STATE ============ */
-let me="dee_eats";
+let me=null; // set at boot: real signed-in account id, or null = show onboarding
 let eventMode="todo"; // todo | hire
 let showEndorsed=false;
 let bizAccount=false; // user toggled into business-account mode
+
+/* ============ PERSISTENCE (per-device, localStorage) ============ */
+// Everything the signed-in user owns is saved locally so it survives reloads and
+// so a friend who opens the link + makes an account keeps THEIR data on THEIR device.
+// (Cross-device sync between different people needs the backend — next phase.)
+const LS_KEY="ll_state_v1";
+function saveState(){
+  try{
+    const data={
+      me,
+      account: me&&users[me]&&users[me].created ? users[me] : null,
+      socials: me?(socials[me]||{}):{},
+      privacy: me?privacy[me]:undefined,
+      bizAccount,
+      createdBiz: createdBiz.slice(),
+      createdEvents: createdEvents.slice(),
+      // only persist user-created biz/events (not the seeds)
+      bizData: createdBiz.reduce((o,id)=>{o[id]=biz[id];return o;},{}),
+      eventData: createdEvents.reduce((o,id)=>{o[id]=events[id];return o;},{}),
+      bookingData: createdBiz.reduce((o,id)=>{if(booking[id])o[id]=booking[id];return o;},{}),
+      distData: [].concat(createdBiz,createdEvents).reduce((o,id)=>{if(DIST[id]!=null)o[id]=DIST[id];return o;},{}),
+      attending,
+      newCount
+    };
+    localStorage.setItem(LS_KEY,JSON.stringify(data));
+  }catch(e){}
+}
+function loadState(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);if(!raw)return false;
+    const d=JSON.parse(raw);if(!d||!d.me)return false;
+    // rehydrate the account into the live users map
+    if(d.account){users[d.me]=d.account;}
+    if(d.socials)socials[d.me]=d.socials;
+    if(d.privacy)privacy[d.me]=d.privacy;
+    if(typeof d.bizAccount==="boolean")bizAccount=d.bizAccount;
+    createdBiz=(d.createdBiz||[]).slice();
+    createdEvents=(d.createdEvents||[]).slice();
+    Object.assign(biz,d.bizData||{});
+    Object.assign(events,d.eventData||{});
+    Object.assign(booking,d.bookingData||{});
+    Object.assign(DIST,d.distData||{});
+    if(d.attending)Object.assign(attending,d.attending);
+    if(typeof d.newCount==="number")newCount=d.newCount;
+    me=d.me;
+    return true;
+  }catch(e){return false;}
+}
+function resetAccount(){
+  try{localStorage.removeItem(LS_KEY);}catch(e){}
+  // wipe this device's created content + identity, back to onboarding
+  createdBiz.forEach(id=>{delete biz[id];delete booking[id];delete DIST[id];});
+  createdEvents.forEach(id=>{delete events[id];delete DIST[id];});
+  if(me&&users[me]&&users[me].created){delete users[me];delete socials[me];delete privacy[me];}
+  createdBiz=[];createdEvents=[];me=null;bizAccount=false;newCount=0;attending={};
+  closeSheet();render();
+}
 // ===== SWIPE-AWAY / HIDDEN TILES =====
 // hideMode: "session" = swiped tiles come back next launch; "permanent" = stay gone until unhidden.
 let hideMode=(function(){try{return localStorage.getItem("ll_hideMode")||"session";}catch(e){return "session";}})();
@@ -1167,7 +1239,22 @@ ACTIONS={
   menuCustomize:()=>openSheet(sheetCustomize()),
   menuSwitch:()=>openSheet(sheetSwitch()),
   menuLogin:()=>{closeSheet();toast("🔑 Login screen (demo)");},
-  menuSignout:()=>{closeSheet();toast("👋 Signed out (demo)");},
+  menuSignout:()=>{openSheet(sheetSignout());},
+  resetAccount:()=>resetAccount(),
+  // onboarding
+  onboardNext:()=>{onboardStep=1;render();scrollTop();},
+  onboardColor:(c)=>{onboardColor=c;render();},
+  onboardPriv:(p)=>{onboardPriv=p;render();},
+  onboardAvPreview:()=>onboardAvPreview(),
+  onboardSubmit:()=>onboardSubmit(),
+  // social linking
+  linkSocials:()=>openSheet(sheetSocials()),
+  saveSocial:(k)=>saveSocial(k),
+  removeSocial:(k)=>removeSocial(k),
+  tagBizSheet:(eid)=>openSheet(sheetTagBiz(eid)),
+  setTagSect:(s)=>setTagSect(s),
+  pickTagBiz:(bizId)=>pickTagBiz(bizId),
+  openSocial:(k,handle)=>{const u=socialUrl(k,handle);try{window.open(u,"_blank");}catch(e){}toast("Opening "+(SOCIAL_META[k]?SOCIAL_META[k][0]:k));},
   menuItem:(label)=>{closeSheet();toast(label+" (demo)");},
   mapOpen:(type,id)=>{open(type,id);},
   setCat:(c)=>setCat(c),
@@ -1260,6 +1347,7 @@ function flipSurvivors(excludeKey,onBeforePlay){
   });
 }
 function _render(){
+  if(!me){renderOnboard();return;} // no account yet → signup flow (nav hidden)
   nav();
   if(stack.length){const top=stack[stack.length-1];
     if(top.type==="biz")return renderBiz(top.id);
@@ -1596,6 +1684,11 @@ function renderEvent(id){
     eco+=kept.map(([ref,role])=>ecoTile(ref,role)).join("")+`</div>`;
   }
   if(!eco)eco=`<div class="empty">Nothing in this view yet.</div>`;
+  // If you host this event, you can tag your businesses into its ecosystem.
+  const iHost=(e.host===me);
+  const tagBar=iHost?`<div class="sect">🔗 Link businesses to this event</div>
+    <p class="osmnote">Tag the vendors, food, staff & services supporting your event — each becomes tappable & bookable.</p>
+    <button class="btn p" style="margin:2px 0 4px" ${da('tagBizSheet',id)}>+ Tag a business</button>`:'';
 
   const modeBar=e.hero?`<div class="modebar">
     <button class="modebtn ${eventMode==='todo'?'on':''}" ${da('setEventMode','todo')}>🎉 What to do</button>
@@ -1619,6 +1712,7 @@ function renderEvent(id){
   </div></div>
   ${modeBar}
   ${eco}
+  ${tagBar}
   <div class="sect">💬 Comments</div>
   <div class="cbox">
     <input class="finput" id="cmt_${id}" style="margin:0" placeholder="Add a comment…" onkeydown="if(event.key==='Enter'){ACTIONS.addComment('${id}')}">
@@ -1697,11 +1791,60 @@ function setFilter(f){reviewFilter=f;render();}
 
 /* ============ USER DETAIL ============ */
 function socialLinks(id){
-  const s=socials[id];if(!s)return'';
-  return `<div class="socialrow">${Object.entries(s).map(([k,handle])=>{
-    const m=SOCIAL_META[k];if(!m)return'';
-    return `<span class="soc" ${da('toast','Opening '+m[0]+': @'+handle+' (demo)')}><span class="sg">${m[1]}</span>@${handle}</span>`;
-  }).join("")}</div>`;
+  const s=socials[id];
+  const isMe=id===me;
+  const entries=s?Object.entries(s).filter(([k,h])=>h&&SOCIAL_META[k]):[];
+  if(!entries.length&&!isMe)return'';
+  const chips=entries.map(([k,handle])=>{
+    const m=SOCIAL_META[k];
+    return `<span class="soc" ${da('openSocial',k,handle)}><span class="sg">${m[1]}</span>@${String(handle).replace(/^@+/,'')}</span>`;
+  }).join("");
+  // on your own profile, always show a manage/link button
+  const manage=isMe?`<span class="soc" ${da('linkSocials')} style="border-style:dashed;color:var(--brand)"><span class="sg">🔗</span>${entries.length?'Manage links':'Link your socials'}</span>`:'';
+  return `<div class="socialrow">${chips}${manage}</div>`;
+}
+// ===== CLICK-TO-LINK SOCIALS (real profile URLs) =====
+function sheetSocials(){
+  const s=socials[me]||{};
+  return `<h3>🔗 Link your socials</h3>
+  <p class="meta" style="margin:0 0 12px;line-height:1.5">Add your handles — they become tappable links that open your real profiles. Tap a platform to add or edit it.</p>
+  ${SOCIAL_ORDER.map(k=>{
+    const m=SOCIAL_META[k];const linked=s[k];
+    return `<div class="prow"><div class="prleft">
+      <span class="i" style="font-size:20px">${m[1]}</span>
+      <div style="margin-left:8px;flex:1;min-width:0">
+        <div class="nm">${m[0]}</div>
+        ${linked?`<div class="ds" style="color:var(--brand)">@${String(linked).replace(/^@+/,'')}</div>`:'<div class="ds" style="color:var(--dim)">Not linked</div>'}
+      </div></div>
+      ${linked
+        ? `<button class="followbtn" ${da('removeSocial',k)}>Remove</button>`
+        : `<button class="followbtn on" ${da('saveSocial',k)}>+ Link</button>`}
+    </div>
+    <input class="finput" id="soc_${k}" placeholder="your ${m[0]} handle" value="${linked?String(linked).replace(/^@+/,'').replace(/"/g,'&quot;'):''}" style="margin-top:4px;margin-bottom:10px">`;
+  }).join("")}
+  <button class="btn p" style="margin-top:6px" ${da('closeSheet')}>Done</button>`;
+}
+function saveSocial(k){
+  const el=document.getElementById("soc_"+k);
+  const v=el?el.value.trim().replace(/^@+/,""):"";
+  if(!v){toast("Enter your handle first");if(el)el.focus();return;}
+  if(!socials[me])socials[me]={};
+  socials[me][k]=v;
+  saveState();
+  toast("✓ "+(SOCIAL_META[k]?SOCIAL_META[k][0]:k)+" linked");
+  openSheet(sheetSocials());
+}
+function removeSocial(k){
+  if(socials[me])delete socials[me][k];
+  saveState();
+  toast("Unlinked");
+  openSheet(sheetSocials());
+}
+function sheetSignout(){
+  return `<h3>👋 Sign out & reset</h3>
+  <p class="meta" style="margin:0 0 12px;line-height:1.5">This clears your account and everything you created on <b>this device</b> and returns to the signup screen. Can't be undone.</p>
+  <button class="btn p" style="background:var(--danger)" ${da('resetAccount')}>Sign out & wipe this device</button>
+  <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button>`;
 }
 function renderUser(id){
   const u=users[id];if(!u){setView(`<button class="backbtn" ${da('back')}>‹ Back</button><div class="empty">${id}</div>`);return;}
@@ -2416,6 +2559,7 @@ function sheetMenu(){
   <div class="mdiv"></div>
   ${menuOpt('👤','View profile','menuProfile')}
   ${menuOpt('📄','Your listings & activity','menuGoProfile')}
+  ${menuOpt('🔗','Link your socials','linkSocials')}
   ${menuOpt('⚙️','Settings','menuSettings')}
   ${menuOpt('🎨','Customization','menuCustomize')}
   ${menuOpt('🔔','Notifications','menuItem','Notifications')}
@@ -2657,6 +2801,41 @@ function sheetCreate(kind){
   <button class="btn p" ${da('submitCreate','biz')}>Create business</button>
   <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button></div>`;
 }
+// ===== TAG A BUSINESS INTO AN EVENT ECOSYSTEM =====
+let tagEventId=null, tagSect="🍽️ Food";
+const ECO_SECTS=["🎤 Performers","🍽️ Food","🎉 Side Entertainment","🛡️ Staff & Services","🏨 Travel & Stay","📍 Nearby"];
+function sheetTagBiz(eid){
+  tagEventId=eid;
+  // businesses available to tag = ones you created (or any seeded biz, so demos work too)
+  const myBiz=createdBiz.slice();
+  const others=Object.keys(biz).filter(id=>!createdBiz.includes(id)).slice(0,12);
+  const opt=id=>{const b=biz[id];return `<div class="mopt" ${da('pickTagBiz',id)}>
+    <span style="font-size:20px">${b.ic}</span>
+    <span style="margin-left:8px;flex:1"><b>${b.n}</b><br><small style="color:var(--dim)">${b.cat}</small></span>
+    <span class="mg">+</span></div>`;};
+  return `<h3>🔗 Tag a business</h3>
+  <p class="meta" style="margin:0 0 10px">Pick which part of your event it supports, then choose the business.</p>
+  <div class="fsec">Section</div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">
+    ${ECO_SECTS.map(s=>`<button class="chip ${tagSect===s?'on':''}" ${da('setTagSect',s)}>${s}</button>`).join("")}
+  </div>
+  <div class="fsec">Your businesses</div>
+  ${myBiz.length?myBiz.map(opt).join(""):'<div class="empty" style="padding:10px">You haven\'t created a business yet. Make one, or tag an existing spot below.</div>'}
+  <div class="fsec">Other spots</div>
+  ${others.map(opt).join("")}
+  <button class="btn g" style="margin-top:10px" ${da('closeSheet')}>Done</button>`;
+}
+function setTagSect(s){tagSect=s;openSheet(sheetTagBiz(tagEventId));}
+function pickTagBiz(bizId){
+  const e=events[tagEventId];if(!e)return;
+  if(!e.eco)e.eco={};
+  if(!e.eco[tagSect])e.eco[tagSect]=[];
+  if(e.eco[tagSect].some(row=>row[0]===bizId)){toast("Already tagged there");return;}
+  e.eco[tagSect].push([bizId,biz[bizId]?biz[bizId].cta||"Supporting":"Supporting",1]);
+  if(createdEvents.includes(tagEventId))saveState();
+  toast("✓ "+(biz[bizId]?biz[bizId].n:bizId)+" tagged to "+tagSect);
+  openSheet(sheetTagBiz(tagEventId));
+}
 function sheetManage(id){
   return `<h3>You're going to ${events[id].n}</h3>
   <div class="opt" ${da('toast','Audience updated')}><span class="i">✏️</span><div>Change audience</div></div>
@@ -2687,9 +2866,10 @@ function submitCreate(kind){
     DIST[id]=(Math.random()*3+0.4).toFixed(1)*1;
     createdEvents.push(id);
     attending[id]=true;
+    saveState();
     closeSheet();pendingDocs=[];
-    toast("🎉 Event created!");
-    stack=[{type:"event",id}];tab="events";render();scrollTop();
+    toast("🎉 Event created! Now tag the businesses supporting it.");
+    stack=[{type:"event",id}];tab="profile";render();scrollTop();
   }else{
     const id="newbiz"+newCount;
     const crit=fval("f_crit").split("\n").map(x=>x.trim()).filter(Boolean);
@@ -2700,15 +2880,82 @@ function submitCreate(kind){
       deposit:fval("f_dep")||"—",min:"—",criteria:crit.length?crit:["Message for availability"]};
     createdBiz.push(id);
     if(!bizAccount)bizAccount=true;
+    saveState();
     closeSheet();pendingDocs=[];
     toast("🏢 Business created!");
     stack=[{type:"biz",id}];tab="profile";render();scrollTop();
   }
 }
 
+/* ============ ONBOARDING (fresh account creation) ============ */
+let onboardStep=0; // 0 = welcome, 1 = form
+const AV_COLORS=["#ffb020","#7c5cff","#00c2a8","#ff6a3d","#4e9cff","#ff5470","#2ec7a0","#c86dd7"];
+let onboardColor=AV_COLORS[0];
+function renderOnboard(){
+  if(onboardStep===0){
+    setView(`<div style="padding:40px 22px;text-align:center;min-height:70vh;display:flex;flex-direction:column;justify-content:center">
+      <div style="font-size:52px;margin-bottom:6px">🔗</div>
+      <div class="h1" style="font-size:30px;margin-bottom:4px">Let's<b style="color:var(--brand)">Link</b></div>
+      <p class="sub" style="font-size:15px;max-width:300px;margin:0 auto 26px">Discover events, food, and places — filtered through the people you actually trust.</p>
+      <button class="btn p" style="max-width:260px;margin:0 auto;width:100%" ${da('onboardNext')}>Create your account</button>
+      <p class="meta" style="color:var(--dim);margin-top:14px;font-size:12px">Your data stays on this device.</p>
+    </div>`);
+    return;
+  }
+  setView(`<div class="h1">Create account</div>
+  <div class="sub">Start fresh — this is your identity on Let's Link.</div>
+  <div class="card"><div class="pad">
+    <div style="text-align:center;margin-bottom:14px">
+      <span class="avatar" id="obAv" style="width:72px;height:72px;font-size:30px;background:${onboardColor}">?</span>
+      <div class="socialrow" style="justify-content:center;margin-top:10px">
+        ${AV_COLORS.map(c=>`<span ${da('onboardColor',c)} style="width:24px;height:24px;border-radius:50%;background:${c};display:inline-block;cursor:pointer;border:2px solid ${c===onboardColor?'#fff':'transparent'}"></span>`).join("")}
+      </div>
+    </div>
+    <div class="fsec">Your name</div>
+    <input class="finput" id="ob_name" placeholder="Full name" oninput="ACTIONS.onboardAvPreview()">
+    <div class="fsec">Handle</div>
+    <input class="finput" id="ob_handle" placeholder="@yourhandle">
+    <div class="fsec">Your vibe / bio</div>
+    <input class="finput" id="ob_vibe" placeholder="e.g. Food explorer, always hunting the next spot">
+    <div class="fsec">Who can see your profile</div>
+    <div style="display:flex;gap:8px">
+      <button class="chip ${onboardPriv==='public'?'on':''}" ${da('onboardPriv','public')}>🌐 Public</button>
+      <button class="chip ${onboardPriv==='friends'?'on':''}" ${da('onboardPriv','friends')}>👥 Friends only</button>
+    </div>
+    <div class="sheetactions">
+      <button class="btn p" ${da('onboardSubmit')}>Create account & enter</button>
+    </div>
+  </div></div>`);
+}
+let onboardPriv="public";
+function onboardAvPreview(){const n=fval("ob_name");const a=document.getElementById("obAv");if(a)a.textContent=(n&&n[0]?n[0].toUpperCase():"?");}
+function onboardSubmit(){
+  const name=fval("ob_name")||"New User";
+  let handle=fval("ob_handle")||("@"+name.toLowerCase().replace(/[^a-z0-9]+/g,"").slice(0,14)||"user");
+  if(handle[0]!=="@")handle="@"+handle;
+  const vibe=fval("ob_vibe")||"New to Let's Link";
+  const id="user_"+Date.now().toString(36);
+  users[id]={name,h:handle,vibe,c:onboardColor,foll:0,created:1};
+  socials[id]={};
+  privacy[id]=onboardPriv;
+  follows[id]=[];
+  me=id;bizAccount=false;
+  saveState();
+  tab="explore";stack=[];
+  const mn=$("#meName");if(mn)mn.textContent=name.split(" ")[0];
+  const a=$("#meAv");if(a){a.textContent=name[0].toUpperCase();a.style.background=onboardColor;}
+  render();scrollTop();
+  toast("🎉 Welcome to Let's Link, "+name.split(" ")[0]+"!");
+}
+
 /* ============ BOOT ============ */
-setMe("dee_eats"); // Keith Clements is the fixed user
-render();
+if(loadState()&&me&&users[me]){
+  const u=users[me];const mn=$("#meName");if(mn)mn.textContent=(u.name||"You").split(" ")[0];
+  const a=$("#meAv");if(a){a.textContent=(u.name||"?")[0].toUpperCase();a.style.background=u.c||"#7c5cff";}
+  render();
+}else{
+  me=null;render(); // no saved account → onboarding
+}
 </script>
 </body>
 </html>
