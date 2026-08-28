@@ -425,7 +425,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v51</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v52</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -1330,6 +1330,7 @@ function realEventsBlock(){
   if(!listTMDone&&!listTM.length){fetchListTM();
     return `<div class="sect">✅ Real events near you <span style="color:var(--dim);font-weight:400;font-size:12px">· loading…</span></div>`;}
   let ev=listTM.filter(e=>{
+    if(isHidden("tm",e.id))return false;
     if(catFilter!=="all"&&catFilter!=="events"&&e.catKey!==catFilter)return false;
     return true;
   });
