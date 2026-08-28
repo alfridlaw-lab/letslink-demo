@@ -418,7 +418,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v56</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v57</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -961,6 +961,8 @@ function saveState(){
       eventData: createdEvents.reduce((o,id)=>{o[id]=events[id];return o;},{}),
       bookingData: createdBiz.reduce((o,id)=>{if(booking[id])o[id]=booking[id];return o;},{}),
       distData: [].concat(createdBiz,createdEvents).reduce((o,id)=>{if(DIST[id]!=null)o[id]=DIST[id];return o;},{}),
+      geoData: [].concat(createdBiz,createdEvents).reduce((o,id)=>{if(GEO[id]!=null)o[id]=GEO[id];return o;},{}),
+      addrData: [].concat(createdBiz,createdEvents).reduce((o,id)=>{if(ADDR[id]!=null)o[id]=ADDR[id];return o;},{}),
       attending,
       newCount
     };
@@ -982,6 +984,8 @@ function loadState(){
     Object.assign(events,d.eventData||{});
     Object.assign(booking,d.bookingData||{});
     Object.assign(DIST,d.distData||{});
+    Object.assign(GEO,d.geoData||{});
+    Object.assign(ADDR,d.addrData||{});
     if(d.attending)Object.assign(attending,d.attending);
     if(typeof d.newCount==="number")newCount=d.newCount;
     me=d.me;
@@ -1254,6 +1258,11 @@ ACTIONS={
   tagBizSheet:(eid)=>openSheet(sheetTagBiz(eid)),
   setTagSect:(s)=>setTagSect(s),
   pickTagBiz:(bizId)=>pickTagBiz(bizId),
+  openLocPicker:()=>{openSheet(sheetLocPicker(locPickKind));initLocMap();},
+  locNameInput:(v)=>{pendingLoc=pendingLoc||{};pendingLoc.label=v;},
+  linkBizLoc:(id)=>{const g=GEO[id]||[];pendingLoc={label:ADDR[id]||(biz[id]?biz[id].n:id),lat:g[0],lng:g[1],linkedId:id};toast("🔗 Linked "+(biz[id]?biz[id].n:id)+"'s location");openSheet(sheetLocPicker(locPickKind));initLocMap();},
+  saveLocPick:()=>{const nm=fval("loc_name");if(nm)pendingLoc=Object.assign(pendingLoc||{},{label:nm});if(!pendingLoc||(!pendingLoc.label&&pendingLoc.lat==null)){toast("Name a place or drop a pin first");return;}openSheet(sheetCreate(locPickKind));const s=document.getElementById("locsummary");},
+  backToCreate:()=>{openSheet(sheetCreate(locPickKind));},
   openSocial:(k,handle)=>{const u=socialUrl(k,handle);try{window.open(u,"_blank");}catch(e){}toast("Opening "+(SOCIAL_META[k]?SOCIAL_META[k][0]:k));},
   menuItem:(label)=>{closeSheet();toast(label+" (demo)");},
   mapOpen:(type,id)=>{open(type,id);},
@@ -1303,8 +1312,8 @@ ACTIONS={
   unAtt:(id)=>unAtt(id),
   closeSheet:()=>closeSheet(),
   onSearchClear:()=>onSearch(""),
-  createEvent:()=>openSheet(sheetCreate("event")),
-  createBiz:()=>openSheet(sheetCreate("biz")),
+  createEvent:()=>{pendingLoc=null;locPickKind="event";openSheet(sheetCreate("event"));},
+  createBiz:()=>{pendingLoc=null;locPickKind="biz";openSheet(sheetCreate("biz"));},
   mockUpload:()=>mockUpload(),
   toggleEndorsed:()=>{showEndorsed=!showEndorsed;render();},
   toggleBizAccount:()=>{bizAccount=!bizAccount;render();toast(bizAccount?'🏢 Business account ON':'Switched back to personal');},
@@ -2762,13 +2771,74 @@ function sheetBooking(){
   <button class="btn p" style="margin-top:12px" ${da('saveBooking')}>Save booking info</button>
   <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button>`;
 }
+// ===== LOCATION PICKER (named place OR drop a map pin) =====
+// draft location for the in-progress create form: {label, lat, lng, linkedId?}
+let pendingLoc=null;
+let locPickMap=null, locPickMarker=null, locPickKind="event";
+function locSummary(){
+  if(!pendingLoc)return `<span style="color:var(--dim)">No location set</span>`;
+  const pin=(pendingLoc.lat!=null)?` · 📍 pin`:'';
+  const linked=pendingLoc.linkedId?` · 🔗 linked to ${biz[pendingLoc.linkedId]?biz[pendingLoc.linkedId].n:'business'}`:'';
+  return `<b style="color:var(--brand)">${pendingLoc.label||'Dropped pin'}</b>${pin}${linked}`;
+}
+function locField(){
+  return `<div class="fsec">📍 Location</div>
+  <div class="addrrow" style="cursor:pointer" ${da('openLocPicker')}>
+    <span class="addrpin">📍</span>
+    <span class="addrtxt" id="locsummary">${locSummary()}</span>
+    <span class="addrgo">${pendingLoc?'Edit ›':'Set ›'}</span>
+  </div>`;
+}
+function sheetLocPicker(kind){
+  locPickKind=kind||locPickKind;
+  // list existing businesses with a known location to link
+  const located=Object.keys(biz).filter(id=>GEO[id]).slice(0,20);
+  return `<h3>📍 Set location</h3>
+  <p class="meta" style="margin:0 0 8px;line-height:1.5">Name a place / address, drop a pin on the map, or link an existing business's location.</p>
+  <input class="finput" id="loc_name" placeholder="Place name or address (e.g. Q2 Stadium, or 88 Rainey St)" value="${pendingLoc&&pendingLoc.label?pendingLoc.label.replace(/"/g,'&quot;'):''}" oninput="ACTIONS.locNameInput(this.value)">
+  <div class="card" style="position:relative;margin:8px 0"><div id="locmap" style="height:220px;width:100%;border-radius:12px;overflow:hidden"></div>
+    <div style="position:absolute;top:8px;left:8px;z-index:500;background:rgba(0,0,0,.6);color:#fff;padding:4px 9px;border-radius:8px;font-size:11px">Tap the map to drop a pin</div>
+  </div>
+  <div id="loc_coords" class="meta" style="color:var(--dim);margin:0 0 8px">${pendingLoc&&pendingLoc.lat!=null?`📍 ${pendingLoc.lat.toFixed(5)}, ${pendingLoc.lng.toFixed(5)}`:'No pin dropped yet'}</div>
+  <div class="fsec">🔗 Or link an existing business's location</div>
+  <div style="max-height:150px;overflow:auto">
+  ${located.map(id=>{const b=biz[id];return `<div class="mopt" ${da('linkBizLoc',id)}>
+    <span style="font-size:18px">${b.ic}</span>
+    <span style="margin-left:8px;flex:1;min-width:0"><b>${b.n}</b><br><small style="color:var(--dim)">${ADDR[id]||b.hood}</small></span>
+    <span class="mg">🔗</span></div>`;}).join("")}
+  </div>
+  <div class="sheetactions">
+  <button class="btn p" ${da('saveLocPick')}>Use this location</button>
+  <button class="btn g" style="margin-top:8px" ${da('backToCreate')}>Cancel</button></div>`;
+}
+function initLocMap(){
+  if(typeof L==="undefined")return;
+  const node=document.getElementById("locmap");if(!node)return;
+  if(locPickMap){try{locPickMap.remove();}catch(e){}locPickMap=null;}
+  setTimeout(()=>{
+    const el=document.getElementById("locmap");if(!el)return;
+    const center=(pendingLoc&&pendingLoc.lat!=null)?[pendingLoc.lat,pendingLoc.lng]:GEO._me;
+    const map=L.map(el,{zoomControl:true,attributionControl:false}).setView(center,14);
+    locPickMap=map;
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19}).addTo(map);
+    if(pendingLoc&&pendingLoc.lat!=null){locPickMarker=L.marker(center).addTo(map);}
+    map.on("click",e=>{
+      const{lat,lng}=e.latlng;
+      if(locPickMarker){locPickMarker.setLatLng([lat,lng]);}else{locPickMarker=L.marker([lat,lng]).addTo(map);}
+      pendingLoc=pendingLoc||{};pendingLoc.lat=lat;pendingLoc.lng=lng;
+      const c=document.getElementById("loc_coords");if(c)c.textContent=`📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    });
+    setTimeout(()=>{try{map.invalidateSize();}catch(e){}},120);
+  },80);
+}
 function sheetCreate(kind){
   const isEv=kind==="event";
   if(isEv)return `<h3>🎉 Create an event</h3>
   <p class="meta" style="margin:0 0 10px">Post it, then tag every vendor, artist & service supporting it — each becomes bookable.</p>
   <input class="finput" id="f_name" placeholder="Event name (e.g. Rooftop Day Party)">
   <input class="finput" id="f_date" placeholder="Date & time (e.g. Sat, Nov 8 · 4PM)">
-  <input class="finput" id="f_loc" placeholder="Neighborhood / location in Austin">
+  <input class="finput" id="f_loc" placeholder="Neighborhood / area label (optional)">
+  ${locField()}
   <textarea class="finput" id="f_desc" rows="2" placeholder="Short description"></textarea>
   <div class="finfo">🔗 After posting you'll tag: performers · food · staff/security · travel · nearby</div>
   <div class="sheetactions">
@@ -2781,6 +2851,7 @@ function sheetCreate(kind){
   <input class="finput" id="f_name" placeholder="Business name">
   <input class="finput" id="f_cat" placeholder="Category (food, security, photo…)">
   <input class="finput" id="f_loc" placeholder="Neighborhood in Austin">
+  ${locField()}
   <textarea class="finput" id="f_desc" rows="2" placeholder="Short description"></textarea>
   <div class="fsec">💳 Booking fee</div>
   <input class="finput" id="f_fee" placeholder="Base fee (e.g. $65)">
@@ -2860,12 +2931,22 @@ function submitCreate(kind){
   const loc=fval("f_loc")||"Austin";
   const desc=fval("f_desc")||"Newly created — add details.";
   newCount++;
+  // apply the picked location (named place / dropped pin / linked business)
+  function applyLoc(id){
+    if(!pendingLoc)return;
+    if(pendingLoc.lat!=null)GEO[id]=[pendingLoc.lat,pendingLoc.lng];
+    else if(pendingLoc.linkedId&&GEO[pendingLoc.linkedId])GEO[id]=GEO[pendingLoc.linkedId].slice();
+    if(pendingLoc.label)ADDR[id]=pendingLoc.label;
+  }
   if(kind==="event"){
     const id="newev"+newCount;
-    events[id]={n:name,host:me,date:fval("f_date")||"Date TBD",loc:loc,d:desc,att:[me],eco:{},created:1};
-    DIST[id]=(Math.random()*3+0.4).toFixed(1)*1;
+    const locLabel=(pendingLoc&&pendingLoc.label)||loc;
+    events[id]={n:name,host:me,date:fval("f_date")||"Date TBD",loc:locLabel,d:desc,att:[me],eco:{},created:1};
+    applyLoc(id);
+    if(GEO[id]==null)DIST[id]=(Math.random()*3+0.4).toFixed(1)*1; else DIST[id]=+distMiles(GEO[id][0],GEO[id][1]).toFixed(1);
     createdEvents.push(id);
     attending[id]=true;
+    pendingLoc=null;
     saveState();
     closeSheet();pendingDocs=[];
     toast("🎉 Event created! Now tag the businesses supporting it.");
@@ -2873,13 +2954,15 @@ function submitCreate(kind){
   }else{
     const id="newbiz"+newCount;
     const crit=fval("f_crit").split("\n").map(x=>x.trim()).filter(Boolean);
-    biz[id]={n:name,cat:fval("f_cat")||"Service",hood:loc,d:desc,r:0,cta:"Book now",ic:"🏢",
+    biz[id]={n:name,cat:fval("f_cat")||"Service",hood:(pendingLoc&&pendingLoc.label)||loc,d:desc,r:0,cta:"Book now",ic:"🏢",
       rev:[],created:1,owner:me,disclaimer:fval("f_disc"),docs:pendingDocs.slice()};
-    DIST[id]=(Math.random()*3+0.4).toFixed(1)*1;
+    applyLoc(id);
+    if(GEO[id]==null)DIST[id]=(Math.random()*3+0.4).toFixed(1)*1; else DIST[id]=+distMiles(GEO[id][0],GEO[id][1]).toFixed(1);
     booking[id]={fee:fval("f_fee")||"Contact",unit:fval("f_unit")||"to book",
       deposit:fval("f_dep")||"—",min:"—",criteria:crit.length?crit:["Message for availability"]};
     createdBiz.push(id);
     if(!bizAccount)bizAccount=true;
+    pendingLoc=null;
     saveState();
     closeSheet();pendingDocs=[];
     toast("🏢 Business created!");
