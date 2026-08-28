@@ -180,6 +180,14 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .tileimg .dist{position:absolute !important;bottom:7px;left:7px;background:rgba(0,0,0,.62);
   border-radius:14px;padding:3px 8px;font-size:10px;font-weight:700;backdrop-filter:blur(4px);
   white-space:nowrap;line-height:1.3;z-index:3}
+.tileimg .dismiss{position:absolute !important;top:6px;right:6px;width:24px;height:24px;border-radius:50%;
+  background:rgba(0,0,0,.55);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;
+  justify-content:center;z-index:5;line-height:1;cursor:pointer;backdrop-filter:blur(2px);
+  border:1px solid rgba(255,255,255,.15)}
+.tileimg .dismiss:active{background:var(--danger);transform:scale(.9)}
+.tile.big .tileimg .dismiss{width:28px;height:28px;font-size:14px}
+.tile.swiping{transition:none}
+.tile.swipeout{transition:transform .25s ease,opacity .25s ease;transform:translateX(-120%) rotate(-8deg);opacity:0}
 .tileimg .demotag{position:absolute !important;bottom:7px;right:7px;background:rgba(124,92,255,.92);
   color:#fff;border-radius:6px;padding:2px 7px;font-size:9px;font-weight:800;letter-spacing:.6px;
   text-transform:uppercase;z-index:4;line-height:1.4}
@@ -417,7 +425,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v48</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v51</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -512,11 +520,11 @@ const biz={
   cofield:{n:"Cofield Table",cat:"Brunch / farm-to-table",hood:"Clarksville",d:"Weekend brunch institution",r:4.5,cta:"Book a table",ic:"🍳",
     rev:[["sunny_flats","Highchairs, crayons, AND a proper flat white. Holy trinity.",5],["dee_eats","Market-hash changes weekly. Solid if you beat noon.",4]]},
   mama:{n:"Mama Okafor's",cat:"West African",hood:"East Austin",d:"Jollof & suya with soul",r:4.9,cta:"Order ahead",ic:"🍛",verified:1,verDocs:["Food service license","Health inspection A-grade"],
-    rev:[["dee_eats","My family recipes. Biased, not wrong. Best jollof in Ossaway.",5],["marcus_vale","Bring cash, an appetite, and a nap plan.",5]]},
+    rev:[["dee_eats","My family recipes. Biased, not wrong. Best jollof in Ossaway.",5],["marcus_vale","Bring cash, an appetite, and a nap plan.",5],["priya_night","3am plate after The Foundry hits different. Suya's still smoking.",5],["sunny_flats","Took the whole family. Kids demolished the jollof, nobody cried. Miracle.",5],["ruthie_roams","First stop I send every out-of-towner. Nobody's ever disappointed.",5],["grace_lens","Shot their kitchen for a piece — the aunties run it like a symphony.",5],["harlow_lena","Catered my launch. Guests still texting me about the plantain.",5],["coach_bo","Post-game plates for the whole squad. Feeds you like family.",5],["tati_makes","Been eating here since before the line got crazy. Worth the wait now.",4]]},
   roast:{n:"The Roasthouse",cat:"Café / roaster",hood:"East Austin",d:"Warehouse roaster + espresso bar",r:4.6,cta:"Order ahead",ic:"☕",
     rev:[["dee_eats","Single-origin flight + cardamom bun = my whole personality.",5],["grace_lens","Great light, patient baristas, strong wifi. My office.",4]]},
   foundry:{n:"The Foundry",cat:"Live-music venue / bar",hood:"Red River District",d:"Austin's flagship live-music room",r:4.7,cta:"Get tickets",ic:"🎸",verified:1,verDocs:["Venue occupancy permit","Liquor license","Fire-safety cert"],
-    rev:[["priya_night","The room where the scene happens. Kojo Fridays are unreal.",5],["marcus_vale","Load-in's a pain but the crowd is worth every stair.",5]]},
+    rev:[["priya_night","The room where the scene happens. Kojo Fridays are unreal.",5],["marcus_vale","Load-in's a pain but the crowd is worth every stair.",5],["dee_eats","Went for the music, stayed for the taco cart out front. Sound's crisp.",5],["harlow_lena","Best sightlines on Red River. Balcony bar never gets slammed.",4],["kojo_beats","My home room. If the monitors are dialed, I'm dialed. They always are.",5],["grace_lens","Shot three shows here this month. Lighting rig is a photographer's dream.",5],["ruthie_roams","Caught a random Tuesday set and it beat most Saturday nights elsewhere.",5],["sunny_flats","Early all-ages show with my oldest. Staff were great about it.",4]]},
   heights:{n:"Skyline Rooftop",cat:"Cocktail bar (rooftop)",hood:"Downtown",d:"Sunset cocktails above Congress Ave",r:4.4,cta:"Reserve",ic:"🍸",
     rev:[["harlow_lena","My Thursday office. The smoked-rosemary marg is criminal.",5],["priya_night","Views > pricing, but the views really are that good.",4]]},
   kayak:{n:"Lady Bird Kayak Co.",cat:"Outdoor rental",hood:"Lady Bird Lake",d:"Guided paddles under the skyline",r:4.8,cta:"Book a paddle",ic:"🛶",
@@ -530,7 +538,7 @@ const biz={
   snap:{n:"SnapPod Photo Booths",cat:"Photo booth service",hood:"South Congress",d:"Open-air booths, instant prints, GIFs",r:4.5,cta:"Book a booth",ic:"📸",
     rev:[["harlow_lena","Booked for the boutique launch. Line all night, on-brand prints.",5],["grace_lens","I shoot candids, they handle fun photos. Great tandem.",4]]},
   inn:{n:"The Congress Hotel",cat:"Boutique hotel",hood:"South Congress",d:"48 rooms, restored SoCo landmark",r:4.7,cta:"Book a room",ic:"🏨",verified:1,verDocs:["Business registration","Lodging permit","Health & safety inspection"],
-    rev:[["ruthie_roams","Corner room over the water is worth planning a trip around.",5],["marcus_vale","Where I stash visiting artists. Walkable to everything.",5]]},
+    rev:[["ruthie_roams","Corner room over the water is worth planning a trip around.",5],["marcus_vale","Where I stash visiting artists. Walkable to everything.",5],["priya_night","Rolled in at 4am off a set, front desk didn't blink. Real ones.",5],["harlow_lena","SoCo at your doorstep. The rooftop at golden hour is the whole trip.",5],["grace_lens","Restored details everywhere — I keep finding new corners to shoot.",4],["dee_eats","Their little cafe does a serious flat white. Underrated breakfast.",4],["sunny_flats","Family suite was roomy, pool saved us. Walkable = no rental car.",5],["sam_hostwell","When my rentals are booked, this is where I send overflow guests. Never a complaint.",5]]},
   hostwell:{n:"Hostwell Rentals",cat:"Airbnb host",hood:"East Austin & SoCo",d:"Sam's superhost portfolio",r:4.9,cta:"Book a stay",ic:"🔑",
     rev:[["ruthie_roams","Sam leaves a hand-drawn map. Superhost for real.",5],["grace_lens","Pier loft light is unreal at sunrise. Booked twice.",5]]},
   suya:{n:"Suya Sista Cart",cat:"Food vendor (festival)",hood:"mobile — East Austin",d:"Skewers, spice, block-long lines",r:4.8,cta:"Pre-order",ic:"🍢",
@@ -924,6 +932,29 @@ let me="dee_eats";
 let eventMode="todo"; // todo | hire
 let showEndorsed=false;
 let bizAccount=false; // user toggled into business-account mode
+// ===== SWIPE-AWAY / HIDDEN TILES =====
+// hideMode: "session" = swiped tiles come back next launch; "permanent" = stay gone until unhidden.
+let hideMode=(function(){try{return localStorage.getItem("ll_hideMode")||"session";}catch(e){return "session";}})();
+// permanent hides persist across sessions; session hides live only in memory.
+let hiddenPermanent=(function(){try{return JSON.parse(localStorage.getItem("ll_hidden")||"{}")||{};}catch(e){return {};}})();
+let hiddenSession={}; // {"biz|mama":1}
+function hideKey(type,id){return type+"|"+id;}
+function isHidden(type,id){const k=hideKey(type,id);return !!(hiddenSession[k]||hiddenPermanent[k]);}
+function persistHidden(){try{localStorage.setItem("ll_hidden",JSON.stringify(hiddenPermanent));}catch(e){}}
+function setHideMode(m){hideMode=m;try{localStorage.setItem("ll_hideMode",m);}catch(e){}}
+function hideTile(type,id){
+  const k=hideKey(type,id);
+  if(hideMode==="permanent"){hiddenPermanent[k]=1;persistHidden();}
+  else{hiddenSession[k]=1;}
+  toast("Hidden. Undo in Settings › Hidden tiles");
+  render();
+}
+function unhideTile(k){delete hiddenSession[k];delete hiddenPermanent[k];persistHidden();render();openSheet(sheetHidden());}
+function clearAllHidden(){hiddenSession={};hiddenPermanent={};persistHidden();render();openSheet(sheetHidden());}
+function hiddenList(){
+  const keys={};Object.keys(hiddenSession).forEach(k=>keys[k]="session");Object.keys(hiddenPermanent).forEach(k=>keys[k]="permanent");
+  return Object.keys(keys).map(k=>{const[type,id]=k.split("|");return {k,type,id,scope:keys[k]};});
+}
 let createdBiz=[]; // ids of user-created businesses
 let createdEvents=[]; // ids of user-created events
 let pendingDocs=[]; // uploaded legal docs for the in-progress business form
@@ -1031,6 +1062,59 @@ document.addEventListener("click",function(ev){
   try{ ACTIONS[act]&&ACTIONS[act].apply(null,args); }
   catch(e){ const v=document.getElementById("view"); if(v)v.innerHTML='<div style="padding:20px;color:#ff5470;font-family:monospace;font-size:13px">Action error: '+act+' — '+e.message+'</div>'; }
 });
+// ===== SWIPE GESTURE: drag a tile left/right to dismiss it (Tinder-style) =====
+(function(){
+  let sx=0,sy=0,dragging=false,tileEl=null,swKey=null,decided=false,horiz=false;
+  const THRESH=90; // px to commit a dismiss
+  function down(e){
+    const t=(e.touches?e.touches[0]:e);
+    const el=e.target.closest?e.target.closest("[data-swipe]"):null;
+    if(!el)return;
+    // don't start a swipe from the dismiss button itself
+    if(e.target.closest("[data-act='hideTile']"))return;
+    tileEl=el;swKey=el.getAttribute("data-swipe");
+    sx=t.clientX;sy=t.clientY;dragging=true;decided=false;horiz=false;
+    tileEl.classList.add("swiping");
+  }
+  function move(e){
+    if(!dragging||!tileEl)return;
+    const t=(e.touches?e.touches[0]:e);
+    const dx=t.clientX-sx,dy=t.clientY-sy;
+    if(!decided){
+      if(Math.abs(dx)<6&&Math.abs(dy)<6)return;
+      horiz=Math.abs(dx)>Math.abs(dy);decided=true;
+      if(!horiz){reset();return;} // vertical = let the page scroll
+    }
+    if(e.cancelable)e.preventDefault();
+    const op=Math.max(0,1-Math.abs(dx)/260);
+    tileEl.style.transform=`translateX(${dx}px) rotate(${dx*0.03}deg)`;
+    tileEl.style.opacity=op;
+  }
+  function up(e){
+    if(!dragging||!tileEl){dragging=false;return;}
+    const t=(e.changedTouches?e.changedTouches[0]:e);
+    const dx=t.clientX-sx;
+    const el=tileEl,key=swKey;
+    tileEl.classList.remove("swiping");
+    if(horiz&&Math.abs(dx)>THRESH){
+      el.classList.add("swipeout");
+      const[type,id]=(key||"").split("|");
+      setTimeout(()=>{hideTile(type,id);},240);
+    }else{
+      el.style.transition="transform .18s ease,opacity .18s ease";
+      el.style.transform="";el.style.opacity="";
+      setTimeout(()=>{if(el)el.style.transition="";},200);
+    }
+    dragging=false;tileEl=null;swKey=null;
+  }
+  function reset(){if(tileEl){tileEl.classList.remove("swiping");tileEl.style.transform="";tileEl.style.opacity="";}dragging=false;tileEl=null;swKey=null;}
+  document.addEventListener("touchstart",down,{passive:true});
+  document.addEventListener("touchmove",move,{passive:false});
+  document.addEventListener("touchend",up);
+  document.addEventListener("mousedown",down);
+  document.addEventListener("mousemove",move);
+  document.addEventListener("mouseup",up);
+})();
 // action registry
 let ACTIONS={};
 // helper to build a data-attr trigger: da('open','biz','coral') -> data-act="open" data-args="biz|coral"
@@ -1057,6 +1141,11 @@ ACTIONS={
   go:(t)=>go(t),
   open:(type,id)=>open(type,id),
   back:()=>back(),
+  hideTile:(type,id)=>hideTile(type,id),
+  unhideTile:(k)=>unhideTile(k),
+  clearAllHidden:()=>clearAllHidden(),
+  showHidden:()=>openSheet(sheetHidden()),
+  setHideMode:(m)=>{setHideMode(m);openSheet(sheetHidden());},
   setSort:(m)=>setSort(m),
   setFilter:(f)=>setFilter(f),
   setEventMode:(m)=>setEventMode(m),
@@ -1165,9 +1254,10 @@ function imgStyle(url,grad,h,pos){
 function eventTile(id,big){const e=events[id];const fa=friendsAttending(id);
   const grad=e.hero?POSTER.fest:POSTER.event;
   const cap=fa.length?`${fa.map(u=>users[u].name.split(" ")[0]).join(", ")} ${fa.length>1?'are':'is'} going`:e.date;
-  return `<div class="tile ${big?'big':''}" ${da('open','event',id)}>
+  return `<div class="tile ${big?'big':''}" data-swipe="event|${id}" ${da('open','event',id)}>
     <div class="tileimg" style="${imgStyle(photoUrl(id,big?800:400,big?400:280),grad)}">
       <span class="scrim"></span>
+      <span class="dismiss" ${da('hideTile','event',id)}>✕</span>
       <span class="badge">${e.live?'🔴 Live event':'🎟️ Event'}</span>
       <span class="dist">📍 ${miles(id)}</span>
       ${e.live?'<span class="livetag"><i></i>LIVE</span>':''}
@@ -1181,12 +1271,13 @@ function eventTile(id,big){const e=events[id];const fa=friendsAttending(id);
 
 // business tile
 function bizTile(id){const b=biz[id];
-  return `<div class="tile" ${da('open','biz',id)}>
+  return `<div class="tile" data-swipe="biz|${id}" ${da('open','biz',id)}>
     <div class="tileimg" style="${imgStyle(photoUrl(id,400,280),posterFor(b.cat))}">
       <span class="scrim"></span>
+      <span class="dismiss" ${da('hideTile','biz',id)}>✕</span>
       <span class="badge">${b.ic} ${b.cat.split(' ')[0]}</span>
       <span class="dist">📍 ${miles(id)}</span>
-      <span class="rate">★ ${b.r}</span>
+      <span class="rate">★ ${b.r}${b.rev&&b.rev.length?` · ${b.rev.length}`:''}</span>
       <span class="demotag">Demo</span>
     </div>
     <div class="cap">
@@ -1251,8 +1342,8 @@ function realEventsBlock(){
 // LIST VIEW — the soul of Let's Link: your people, your interests, sorted by distance.
 // Every tile is either REAL (pulled from OSM/Ticketmaster) or DEMO (seeded). No fake "live" genre.
 function renderExploreList(){
-  const allBiz=Object.keys(biz).filter(id=>matchQ(biz[id].n,biz[id].cat+" "+biz[id].hood)&&catMatchBiz(id));
-  const allEv=Object.keys(events).filter(id=>matchQ(events[id].n,events[id].loc)&&catMatchEvent(id));
+  const allBiz=Object.keys(biz).filter(id=>matchQ(biz[id].n,biz[id].cat+" "+biz[id].hood)&&catMatchBiz(id)&&!isHidden("biz",id));
+  const allEv=Object.keys(events).filter(id=>matchQ(events[id].n,events[id].loc)&&catMatchEvent(id)&&!isHidden("event",id));
   let body;
   if(searchQ){
     const bz=sortIds(allBiz), ev=sortIds(allEv);
@@ -1265,16 +1356,14 @@ function renderExploreList(){
       <div class="grid">${ev.map(e=>eventTile(e)).join("")}${bz.map(b=>bizTile(b)).join("")}</div>
       ${(!bz.length&&!ev.length)?'<div class="empty">Nothing in this category yet.</div>':''}`;
   }else{
-    const bizSorted=sortIds(["mama","coral","ansel","roast"]);
-    const evSorted=sortIds(["market","paddle","live_hoops","live_kojo","live_tacos","live_bball","live_jazz","live_bbq"]);
+    // Trimmed showcase: a couple local businesses + travel (the review system doing real work),
+    // then real live events on top. Rest of discovery happens on the Map + category filters.
+    const bizSorted=sortIds(["mama","foundry","inn"].filter(id=>!isHidden("biz",id)));
     body=`
-    ${eventTile("marrowfest",1)}
     ${realEventsBlock()}
-    <div class="sect">🎟️ Events for you</div>
-    <div class="grid">${evSorted.map(e=>eventTile(e)).join("")}</div>
-    <div class="sect">🍽️ Places for you</div>
+    <div class="sect">🍽️ Places your people rate</div>
     <div class="grid">${bizSorted.map(b=>bizTile(b)).join("")}</div>
-    <p class="osmnote">Demo listings above are placeholders. Real ticketed events load at the top; flip to 🗺️ Map to explore any area.</p>`;
+    <p class="osmnote">A few spots your circle actually reviews — tap in for the ratings. Flip to 🗺️ Map or use categories to explore everything else.</p>`;
   }
   setView(`<div class="h1">Explore</div>
   <div class="sub">Everything around you — filtered through your people.</div>
@@ -1547,7 +1636,7 @@ function renderBiz(id){
   <div class="card"><div class="pad"><p class="meta" style="color:var(--sub);line-height:1.5;margin:0">${b.disclaimer}</p></div></div>`:''}
   ${(b.docs&&b.docs.length)?`<div class="sect">📎 Legal documentation</div>
   <div class="card"><div class="pad">${b.docs.map(d=>`<div class="docrow">📄 ${d} <span style="color:var(--brand);margin-left:auto;font-size:11px">verified</span></div>`).join("")}</div></div>`:''}
-  <div class="sect">Reviews</div>
+  <div class="sect">Reviews <span style="color:var(--dim);font-weight:400;font-size:12px">· ${b.rev.length} total${(()=>{const fc=b.rev.filter(([u])=>f.includes(u)||u===me).length;return fc?` · ${fc} from your circle`:'';})()}</span></div>
   <div>
     <span class="chip ${reviewFilter==='everyone'?'on':''}" ${da('setFilter','everyone')}>Everyone</span>
     <span class="chip ${reviewFilter==='follow'?'on':''}" ${da('setFilter','follow')}>People I follow</span>
@@ -1883,12 +1972,13 @@ function updateInView(){
   let b; try{b=_leaflet.getBounds();}catch(e){return;}
   // ===== REAL vs DEMO. True's framing: "real" = pulled from APIs (Ticketmaster/OSM); "demo" = our seeds. =====
   // Seeded events + businesses are ALL demo (placeholders until real data + real users fill in).
-  const demoEvIds=Object.keys(events).filter(k=>geo(k)&&matchQ(events[k].n,events[k].loc)&&catMatchEvent(k)&&b.contains(geo(k)));
-  const bizIds=Object.keys(biz).filter(k=>geo(k)&&matchQ(biz[k].n,biz[k].cat+" "+biz[k].hood)&&catMatchBiz(k)&&b.contains(geo(k)));
+  const demoEvIds=Object.keys(events).filter(k=>geo(k)&&matchQ(events[k].n,events[k].loc)&&catMatchEvent(k)&&b.contains(geo(k))&&!isHidden("event",k));
+  const bizIds=Object.keys(biz).filter(k=>geo(k)&&matchQ(biz[k].n,biz[k].cat+" "+biz[k].hood)&&catMatchBiz(k)&&b.contains(geo(k))&&!isHidden("biz",k));
   // sorted by distance (or active map sort) by default
   const demoSorted=sortListBy(demoEvIds), bzSorted=sortListBy(bizIds);
   // REAL (OSM-pulled) — real businesses/places in view
   const osmIn=osmPlaces.filter(p=>{
+    if(isHidden("osm",p.id))return false;
     if(!b.contains([p.lat,p.lng]))return false;
     if(catFilter!=="all"&&p.catKey!==catFilter)return false;
     if(searchQ&&!(p.n+" "+p.cat).toLowerCase().includes(searchQ.toLowerCase()))return false;
@@ -1896,6 +1986,7 @@ function updateInView(){
   });
   // REAL TICKETED EVENTS (Ticketmaster) — with photos
   const tmIn=tmEvents.filter(e=>{
+    if(isHidden("tm",e.id))return false;
     if(!b.contains([e.lat,e.lng]))return false;
     if(catFilter!=="all"&&e.catKey!==catFilter&&catFilter!=="events")return false;
     if(searchQ&&!(e.n+" "+e.venue+" "+e.cat).toLowerCase().includes(searchQ.toLowerCase()))return false;
@@ -2020,9 +2111,9 @@ function tmFriends(id){
 function tmTile(e){
   tmIndex[e.id]=e; // keep a lookup for the detail view
   const fa=tmFriends(e.id);const going=attending[e.id];
-  return `<div class="tile tmtile" ${da('openTM',e.id)}>
+  return `<div class="tile tmtile" data-swipe="tm|${e.id}" ${da('openTM',e.id)}>
     <div class="tileimg" style="${e.img?`background-image:url('${e.img}');background-size:cover;background-position:center`:'background:linear-gradient(135deg,#ff6a3d,#7c5cff)'}">
-      <span class="scrim"></span><span class="badge">🎟️ ${e.cat}</span>
+      <span class="scrim"></span><span class="dismiss" ${da('hideTile','tm',e.id)}>✕</span><span class="badge">🎟️ ${e.cat}</span>
       ${e.price?`<span class="rate" style="color:#fff">${e.price}</span>`:''}
       ${going?'<span class="tmtag" style="background:var(--brand);color:#05141a">✓ Going</span>':(fa.length?`<span class="stack">${fa.slice(0,3).map(u=>av(u,22)).join("")}</span>`:'<span class="tmtag">Ticketmaster</span>')}</div>
     <div class="cap"><div class="capttl" style="font-size:13px">${e.n}</div>
@@ -2068,6 +2159,26 @@ function tmAttend(id){
 
 /* ============ LIVE OSM / OVERPASS IMPORT (real businesses in view) ============ */
 let osmPlaces=[]; // [{id,n,cat,catKey,lat,lng,ic}]
+// Chain filter: Let's Link is about local/indie discovery — Yelp can keep the McDonald's.
+// We drop anything OSM tags with a brand/operator, plus a name-match safety net.
+const CHAIN_RE=new RegExp("\\b("+[
+  // fast food / food chains
+  "mcdonald","burger king","wendy","taco bell","kfc","popeyes","chick-?fil-?a","subway","chipotle","panera","five guys","in-?n-?out","whataburger","sonic","arby","jack in the box","carl'?s jr","hardee","dairy queen","domino","pizza hut","papa john","little caesar","jimmy john","jersey mike","firehouse subs","raising cane","culver","zaxby","bojangle","del taco","qdoba","moe'?s southwest","panda express","shake shack","wingstop","ihop","denny","waffle house","applebee","chili'?s","olive garden","red lobster","outback","buffalo wild wings","cheesecake factory","texas roadhouse","cracker barrel",
+  // coffee / cafe chains
+  "starbucks","dunkin","tim hortons","peet'?s","caribou coffee","dutch bros","scooter'?s coffee","the coffee bean",
+  // retail / big box / grocery / pharmacy
+  "walmart","target","costco","sam'?s club","cvs","walgreens","rite aid","kroger","safeway","albertsons","whole foods","trader joe","heb","h-?e-?b","publix","aldi","dollar general","dollar tree","family dollar","7-?eleven","circle k","quiktrip","wawa","sheetz","best buy","home depot","lowe'?s","ikea","petco","petsmart","gamestop","michaels","hobby lobby","barnes ?& ?noble","ulta","sephora","gap","old navy","h&m","zara","forever 21","marshalls","tj ?maxx","ross","nordstrom","macy","kohl","nike","adidas","foot locker","apple store","at&t","verizon","t-?mobile",
+  // gas
+  "shell","chevron","exxon","mobil","bp","valero","conoco","phillips 66","marathon","speedway","buc-?ee"
+].join("|")+")\\b","i");
+function isChain(el){
+  const t=el.tags||{};
+  // OSM's own brand/operator/wikidata tags are the strongest chain signal.
+  if(t.brand||t["brand:wikidata"]||t["brand:wikipedia"])return true;
+  if(CHAIN_RE.test(t.name||""))return true;
+  if(t.operator&&CHAIN_RE.test(t.operator))return true;
+  return false;
+}
 let osmLayer=null, osmFetching=false, osmTimer=null;
 const OSM_ICON={food:"🍽️",cafe:"☕",bar:"🍸",shop:"🛍️",arts:"🎨",hotel:"🏨",outdoor:"🌿",place:"📍"};
 function osmCat(tags){
@@ -2093,6 +2204,7 @@ function fetchOSM(){
       const seen={};osmPlaces=[];
       (d.elements||[]).forEach(el=>{
         if(!el.tags||!el.tags.name||!el.lat)return;
+        if(isChain(el))return; // skip national chains — keep it local
         const[key,label,fk]=osmCat(el.tags);
         const id="osm_"+el.id;if(seen[el.tags.name])return;seen[el.tags.name]=1;
         osmPlaces.push({id,n:el.tags.name,cat:label,catKey:fk,ic:OSM_ICON[key]||"📍",lat:el.lat,lng:el.lon});
@@ -2123,10 +2235,11 @@ function osmStock(p){
   return `https://images.unsplash.com/photo-${ph}?w=300&h=180&fit=crop`;
 }
 function osmTile(p){
-  return `<div class="tile osmtile">
+  return `<div class="tile osmtile" data-swipe="osm|${p.id}">
     <div class="tileimg">
       <span class="osmimg" style="background-image:url('${osmStock(p)}')"></span>
       <span class="osmgray"></span>
+      <span class="dismiss" ${da('hideTile','osm',p.id)}>✕</span>
       <span class="badge">${p.ic} ${p.cat.split(' ')[0]}</span>
       <span class="claimtag">📷 Add photo</span></div>
     <div class="cap"><div class="capttl" style="font-size:13px">${p.n}</div>
@@ -2282,8 +2395,47 @@ function sheetSettings(){
   ${menuOpt('📍','Location & distance units','menuItem','Location settings')}
   ${menuOpt('💳','Payment methods','menuItem','Payment methods')}
   ${menuOpt('🏢','Business account','menuItem','Business account settings')}
+  ${menuOpt('👁️','Hidden tiles & swipe settings','showHidden')}
   ${menuOpt('🚫','Blocked accounts','showBlocked')}
   <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Close</button>`;
+}
+function sheetHidden(){
+  const list=hiddenList();
+  const modeBtn=(val,label,sub)=>`<div class="mopt" ${da('setHideMode',val)} style="align-items:flex-start">
+    <span class="mi">${hideMode===val?'🔘':'⭕'}</span>
+    <span style="flex:1"><b>${label}</b><br><small style="color:var(--dim)">${sub}</small></span></div>`;
+  return `<h3>👁️ Hidden tiles</h3>
+  <p class="meta" style="margin:0 0 12px;line-height:1.5">Swipe a tile left or right (or tap the ✕) to hide it from your feed. Choose how long a swipe-away sticks:</p>
+  ${modeBtn('session','Just this session','Hidden tiles come back next time you open the app.')}
+  ${modeBtn('permanent','Permanently','Stays gone until you unhide it here.')}
+  <div class="mdiv"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="font-weight:700;font-size:14px">Hidden right now · ${list.length}</div>
+    ${list.length?`<span style="color:var(--danger);font-size:12px;cursor:pointer" ${da('clearAllHidden')}>Unhide all</span>`:''}
+  </div>
+  ${list.length?list.map(h=>{
+    const nm=hiddenName(h.type,h.id);
+    return `<div class="prow"><div class="prleft">
+      <span class="i" style="font-size:20px">${hiddenIcon(h.type,h.id)}</span>
+      <div style="margin-left:6px"><div class="nm">${nm}</div>
+      <div class="ds">${h.scope==='permanent'?'Permanently hidden':'Hidden this session'}</div></div></div>
+      <button class="followbtn on" ${da('unhideTile',h.k)}>Unhide</button></div>`;
+  }).join(""):'<div class="empty">Nothing hidden. Swipe a tile away to try it.</div>'}
+  <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Close</button>`;
+}
+function hiddenName(type,id){
+  if(type==="biz")return biz[id]?biz[id].n:id;
+  if(type==="event")return events[id]?events[id].n:id;
+  if(type==="tm"){const e=tmIndex[id]||(tmEvents.find(x=>x.id===id));return e?e.n:"Ticketed event";}
+  if(type==="osm"){const p=osmPlaces.find(x=>x.id===id);return p?p.n:"Map place";}
+  return id;
+}
+function hiddenIcon(type,id){
+  if(type==="biz")return biz[id]?biz[id].ic:"🏪";
+  if(type==="event")return "🎟️";
+  if(type==="tm")return "🎟️";
+  if(type==="osm"){const p=osmPlaces.find(x=>x.id===id);return p?p.ic:"📍";}
+  return "⬜";
 }
 function sheetBlocked(){
   const ids=Object.keys(blocked);
