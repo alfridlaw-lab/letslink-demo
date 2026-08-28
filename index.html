@@ -181,13 +181,6 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
   border-radius:14px;padding:3px 8px;font-size:10px;font-weight:700;backdrop-filter:blur(4px);
   white-space:nowrap;line-height:1.3;z-index:3}
 .tile.swiping{transition:none}
-/* quick fade+shrink on the departing tile; FLIP then glides the survivors closed */
-.tile.swipeout{pointer-events:none;
-  animation:tileFade .26s cubic-bezier(.4,0,.2,1) forwards;
-  will-change:opacity,transform}
-@keyframes tileFade{
-  0%{opacity:1;transform:scale(1)}
-  100%{opacity:0;transform:scale(.9)}}
 .tileimg .demotag{position:absolute !important;bottom:7px;right:7px;background:rgba(124,92,255,.92);
   color:#fff;border-radius:6px;padding:2px 7px;font-size:9px;font-weight:800;letter-spacing:.6px;
   text-transform:uppercase;z-index:4;line-height:1.4}
@@ -425,7 +418,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v54</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v55</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">Keith</span>
       <span class="avatar" id="meAv" style="background:#ffb020">K</span>
@@ -947,7 +940,7 @@ function hideTile(type,id){
   if(hideMode==="permanent"){hiddenPermanent[k]=1;persistHidden();}
   else{hiddenSession[k]=1;}
   toast("Hidden. Undo in Settings › Hidden tiles");
-  renderWithFlip();
+  render();
 }
 function unhideTile(k){delete hiddenSession[k];delete hiddenPermanent[k];persistHidden();render();openSheet(sheetHidden());}
 function clearAllHidden(){hiddenSession={};hiddenPermanent={};persistHidden();render();openSheet(sheetHidden());}
@@ -1095,11 +1088,28 @@ document.addEventListener("click",function(ev){
     const el=tileEl,key=swKey;
     tileEl.classList.remove("swiping");
     if(horiz&&Math.abs(dx)>THRESH){
-      // hand off to the CSS fade-and-collapse; clear the drag transform so the keyframe owns it
-      el.style.transform="";el.style.opacity="";
-      el.classList.add("swipeout");
       const[type,id]=(key||"").split("|");
-      setTimeout(()=>{hideTile(type,id);},240);
+      const dir=dx<0?-1:1;
+      // Pull the tile OUT of layout (absolute) so its slot collapses immediately,
+      // fling it off + fade, and FLIP the survivors so they glide into the gap in one motion.
+      const r=el.getBoundingClientRect();
+      const parent=el.offsetParent||el.parentElement;
+      const pr=parent.getBoundingClientRect();
+      el.style.position="absolute";
+      el.style.width=r.width+"px";
+      el.style.top=(r.top-pr.top+parent.scrollTop)+"px";
+      el.style.left=(r.left-pr.left+parent.scrollLeft)+"px";
+      el.style.margin="0";el.style.zIndex="5";el.style.pointerEvents="none";
+      el.style.transition="transform .3s ease-out,opacity .3s ease-out";
+      // survivors reflow now (tile is out of flow) — FLIP them
+      flipSurvivors(key,()=>{
+        requestAnimationFrame(()=>{
+          el.style.transform=`translateX(${dir*140}%) rotate(${dir*8}deg)`;
+          el.style.opacity="0";
+        });
+      });
+      // once the survivors have settled + tile flew off, commit the hide (removes the ghost)
+      setTimeout(()=>{hideTile(type,id);},340);
     }else{
       el.style.transition="transform .18s ease,opacity .18s ease";
       el.style.transform="";el.style.opacity="";
@@ -1217,34 +1227,35 @@ ACTIONS={
 };
 
 function render(){ _render(); }
-// FLIP: animate surviving tiles from their old positions to new ones after a re-render,
-// so the grid glides closed instead of teleporting when a tile is removed.
-function renderWithFlip(){
+// FLIP: glide the surviving tiles from their old on-screen positions to their new ones
+// (after the removed tile was pulled out of flow). excludeKey = the tile being dismissed.
+function flipSurvivors(excludeKey,onBeforePlay){
   const view=document.getElementById("view");
-  if(!view||typeof view.getBoundingClientRect!=="function"){render();return;}
-  // FIRST: record positions of every keyed tile currently on screen
+  if(!view){if(onBeforePlay)onBeforePlay();return;}
+  const nodes=[].slice.call(view.querySelectorAll("[data-swipe]"));
   const first={};
-  view.querySelectorAll("[data-swipe]").forEach(el=>{
-    first[el.getAttribute("data-swipe")]=el.getBoundingClientRect();
-  });
-  render(); // LAST: DOM rebuilt with the tile gone
-  const tiles=view.querySelectorAll("[data-swipe]");
-  tiles.forEach(el=>{
-    const key=el.getAttribute("data-swipe");
-    const f=first[key];if(!f)return;
+  nodes.forEach(el=>{const k=el.getAttribute("data-swipe");if(k!==excludeKey)first[k]=el.getBoundingClientRect();});
+  // trigger the reflow measurement now that the removed tile is out of flow
+  const moved=[];
+  nodes.forEach(el=>{
+    const k=el.getAttribute("data-swipe");if(k===excludeKey)return;
+    const f=first[k];if(!f)return;
     const l=el.getBoundingClientRect();
     const dx=f.left-l.left, dy=f.top-l.top;
     if(!dx&&!dy)return;
-    // INVERT: jump the tile back to where it was, then PLAY to its new spot
     el.style.transition="none";
     el.style.transform=`translate(${dx}px,${dy}px)`;
-    el.getBoundingClientRect(); // force reflow so the next change animates
-    requestAnimationFrame(()=>{
-      el.style.transition="transform .32s cubic-bezier(.22,1,.36,1)";
+    moved.push(el);
+  });
+  if(onBeforePlay)onBeforePlay();
+  view.getBoundingClientRect(); // force a single reflow
+  requestAnimationFrame(()=>{
+    moved.forEach(el=>{
+      el.style.transition="transform .34s cubic-bezier(.22,1,.36,1)";
       el.style.transform="";
       const clear=()=>{el.style.transition="";el.style.transform="";el.removeEventListener("transitionend",clear);};
       el.addEventListener("transitionend",clear);
-      setTimeout(clear,380);
+      setTimeout(clear,420);
     });
   });
 }
