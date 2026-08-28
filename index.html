@@ -418,10 +418,10 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v58</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v59</span></div>
     <div class="me" data-act="openMenu">
-      <span id="meName">Keith</span>
-      <span class="avatar" id="meAv" style="background:#ffb020">K</span>
+      <span id="meName">You</span>
+      <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
       <span style="color:var(--dim);font-size:11px;margin-left:2px">▾</span>
     </div>
   </div>
@@ -999,6 +999,9 @@ function resetAccount(){
   createdEvents.forEach(id=>{delete events[id];delete DIST[id];});
   if(me&&users[me]&&users[me].created){delete users[me];delete socials[me];delete privacy[me];}
   createdBiz=[];createdEvents=[];me=null;bizAccount=false;newCount=0;attending={};
+  onboardStep=0;
+  const mn=$("#meName");if(mn)mn.textContent="You";
+  const a=$("#meAv");if(a){a.textContent="?";a.style.background="#7c5cff";}
   closeSheet();render();
 }
 // ===== SWIPE-AWAY / HIDDEN TILES =====
@@ -1103,8 +1106,8 @@ const $=(s)=>document.querySelector(s);
 // always re-query these live so they can never be stale/null
 function setView(html){const el=document.getElementById("view");if(el)el.innerHTML=html;}
 function setNav(html){const el=document.getElementById("nav");if(el)el.innerHTML=html;}
-function av(uid,size){const u=users[uid]||{name:uid,c:"#4e9cff"};
-  const i=(u.name||uid)[0].toUpperCase();
+function av(uid,size){const u=users[uid]||{name:(uid||"?"),c:"#4e9cff"};
+  const i=String(u.name||uid||"?")[0].toUpperCase();
   const ph=uphoto(uid);
   const dim=size?`width:${size}px;height:${size}px;font-size:${size*.4}px;`:'';
   if(ph)return `<span class="avatar" style="${dim}background-image:url('${ph}');background-size:cover;background-position:center 8%;color:transparent">${i}</span>`;
@@ -1236,7 +1239,7 @@ ACTIONS={
   setFilter:(f)=>setFilter(f),
   setEventMode:(m)=>setEventMode(m),
   setMe:(u)=>setMe(u),
-  openMenu:()=>openSheet(sheetMenu()),
+  openMenu:()=>{if(!me||!users[me]){me=null;render();return;}openSheet(sheetMenu());},
   menuProfile:()=>{closeSheet();stack=[{type:"user",id:me}];tab="profile";render();scrollTop();},
   menuGoProfile:()=>{closeSheet();go("profile");},
   menuSettings:()=>openSheet(sheetSettings()),
@@ -1358,7 +1361,7 @@ function flipSurvivors(excludeKey,onBeforePlay){
   });
 }
 function _render(){
-  if(!me){renderOnboard();return;} // no account yet → signup flow (nav hidden)
+  if(!me||!users[me]){me=null;renderOnboard();return;} // no/invalid account → signup flow (nav hidden)
   nav();
   if(stack.length){const top=stack[stack.length-1];
     if(top.type==="biz")return renderBiz(top.id);
@@ -1772,7 +1775,7 @@ function renderBiz(id){
       ${bookInfo(id).min&&bookInfo(id).min!=='—'?`<div class="feemin">⏱️ ${bookInfo(id).min}</div>`:''}
     </div>
     <button class="btn p" ${da('toast','✓ '+b.cta+' — '+bookInfo(id).fee+' '+bookInfo(id).unit+' (demo)')}>${b.cta} · ${bookInfo(id).fee}</button>
-    <button class="btn g" style="margin-top:8px" ${da('toast','Tagged '+b.n+' to your '+users[me].name.split(' ')[0]+' profile')}>＋ Tag / recommend</button>
+    <button class="btn g" style="margin-top:8px" ${da('toast','Tagged '+b.n+' to your '+((users[me]&&users[me].name)||'').split(' ')[0]+' profile')}>＋ Tag / recommend</button>
   </div></div>
   <div class="sect">📋 Rules & criteria for hire</div>
   <div class="card"><div class="pad">
@@ -2503,7 +2506,7 @@ function renderProfile(){
     <p class="meta" style="margin-top:6px;color:var(--sub)">${u.vibe}</p>
     <div class="ffrow">
       <div class="ffstat" ${da('showFollowing')}><b>${followingCount}</b><span>Following</span></div>
-      <div class="ffstat" ${da('showFollowers')}><b>${users[me].foll?users[me].foll+'k':followerCount}</b><span>Followers</span></div>
+      <div class="ffstat" ${da('showFollowers')}><b>${(users[me]&&users[me].foll)?users[me].foll+'k':followerCount}</b><span>Followers</span></div>
       <div class="ffstat" ${da('openInbox')}><b>💬</b><span>Messages</span></div>
     </div>
   </div></div>
@@ -3070,12 +3073,18 @@ function onboardSubmit(){
 
 /* ============ BOOT ============ */
 function bootRender(){
-  if(loadState()&&me&&users[me]){
+  const loaded=loadState();
+  if(loaded&&me&&users[me]){
     const u=users[me];const mn=$("#meName");if(mn)mn.textContent=(u.name||"You").split(" ")[0];
-    const a=$("#meAv");if(a){a.textContent=(u.name||"?")[0].toUpperCase();a.style.background=u.c||"#7c5cff";}
+    const a=$("#meAv");if(a){a.textContent=String(u.name||"?")[0].toUpperCase();a.style.background=u.c||"#7c5cff";}
     render();
   }else{
-    me=null;render(); // no saved account → onboarding
+    // no account, OR corrupt/partial saved state (e.g. me set but account missing) → self-heal to onboarding
+    if(loaded){try{localStorage.removeItem(LS_KEY);}catch(e){}}
+    me=null;
+    const mn=$("#meName");if(mn)mn.textContent="You";
+    const a=$("#meAv");if(a){a.textContent="?";a.style.background="#7c5cff";}
+    render(); // onboarding
   }
 }
 // Center on the user's REAL location at launch (fallback = last-known / Austin seed center).
