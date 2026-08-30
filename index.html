@@ -451,7 +451,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v73</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v74</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -1203,7 +1203,9 @@ function saveState(){
       geoData: [].concat(createdBiz,createdEvents).reduce((o,id)=>{if(GEO[id]!=null)o[id]=GEO[id];return o;},{}),
       addrData: [].concat(createdBiz,createdEvents).reduce((o,id)=>{if(ADDR[id]!=null)o[id]=ADDR[id];return o;},{}),
       attending,
-      newCount
+      newCount,
+      // persist the current user's follow graph so connections survive reloads
+      follows: me?(follows[me]||[]):[]
     };
     localStorage.setItem(LS_KEY,JSON.stringify(data));
   }catch(e){}
@@ -1228,6 +1230,8 @@ function loadState(){
     if(d.attending)Object.assign(attending,d.attending);
     if(typeof d.newCount==="number")newCount=d.newCount;
     me=d.me;
+    // restore follow graph for this user so connections survive reloads
+    if(Array.isArray(d.follows))follows[d.me]=d.follows.slice();
     return true;
   }catch(e){return false;}
 }
@@ -1543,6 +1547,7 @@ ACTIONS={
   peopleClear:()=>{peopleQ="";render();},
   showFollowers:()=>{stack.push({type:"list",id:"followers"});render();scrollTop();},
   showFollowing:()=>{stack.push({type:"list",id:"following"});render();scrollTop();},
+  toggleFollow:(uid)=>toggleFollow(uid),
   openInbox:()=>{tab="messages";stack=[];render();scrollTop();},
   openThread:(uid)=>{stack.push({type:"thread",id:uid});render();scrollTop();},
   sendMsg:(uid)=>sendMsg(uid),
@@ -2301,7 +2306,7 @@ function renderUser(id){
     <p class="meta">${u.h}${u.foll?' · '+u.foll+'k followers':''} · <span style="color:${visible?'var(--brand)':'var(--gold)'}">${isMe?'You':(privacy[id]==="public"?'Public':(visible?'Connected':'Private'))}</span></p>
     <p class="meta" style="margin-top:6px;color:var(--sub)">${u.vibe}</p>
     ${!isMe?`<div style="display:flex;gap:8px;margin-top:12px">
-      <button class="btn ${iFollow?'g':'p'}" style="flex:1" ${da('toast',(iFollow?'Unfollowed':'Following')+' '+u.name)}>${iFollow?'✓ Following':'＋ Follow'}</button>
+      <button class="btn ${iFollow?'g':'p'}" style="flex:1" ${da('toggleFollow',id)}>${iFollow?'✓ Following':'＋ Follow'}</button>
       <button class="btn g" style="flex:1" ${da('openThread',id)}>💬 Message</button>
       <button class="btn g" style="flex:0 0 46px" ${da('userMenu',id)}>⋯</button>
     </div>
@@ -2314,7 +2319,7 @@ function renderUser(id){
       <div class="lk">🔒</div>
       <div class="lt">${u.name.split(" ")[0]}'s activity is private</div>
       <div class="ls">Follow them (or get added as a close friend) to see where they've been, their reviews, and photos they've posted.</div>
-      <button class="btn p" style="margin-top:12px;max-width:220px;margin-left:auto;margin-right:auto" ${da('toast','Follow request sent to '+u.name)}>＋ Follow to unlock</button>
+      <button class="btn p" style="margin-top:12px;max-width:220px;margin-left:auto;margin-right:auto" ${da('toggleFollow',id)}>＋ Follow to unlock</button>
     </div>`;
     setView(html);return;
   }
@@ -2385,13 +2390,32 @@ function followCard(u){
   </div>`;
 }
 // compact person row (for search results + lists)
+// ===== REAL FOLLOW GRAPH =====
+// Adds/removes uid from the current user's follows, updates the followed user's
+// visible follower tally, persists, re-renders, and confirms. This is what actually
+// populates the Following feed + follower/following counts everywhere.
+function toggleFollow(uid){
+  if(!me||uid===me)return;
+  if(!follows[me])follows[me]=[];
+  const i=follows[me].indexOf(uid);
+  const nowFollowing=(i===-1);
+  if(nowFollowing){
+    follows[me].push(uid);
+    if(users[uid]&&typeof users[uid].foll==='number')users[uid].foll=Math.max(0,users[uid].foll)+0; // keep 'k' display stable
+  }else{
+    follows[me].splice(i,1);
+  }
+  saveState();
+  render();scrollTop();
+  toast((nowFollowing?'Following ':'Unfollowed ')+((users[uid]&&users[uid].name)||''));
+}
 function personRow(u){
   const iFollow=(follows[me]||[]).includes(u);
   return `<div class="prow">
     <div class="prleft" ${da('open','user',u)}>${av(u,40)}
       <div style="margin-left:2px;min-width:0"><div class="nm">${users[u].name} ${users[u].star?'⭐':''}</div>
       <div class="ds">${users[u].h}${users[u].foll?' · '+users[u].foll+'k':''}</div></div></div>
-    ${u!==me?`<button class="followbtn ${iFollow?'on':''}" ${da('toast',(iFollow?'Unfollowed ':'Following ')+users[u].name)}>${iFollow?'Following':'＋ Follow'}</button>`:''}
+    ${u!==me?`<button class="followbtn ${iFollow?'on':''}" ${da('toggleFollow',u)}>${iFollow?'Following':'＋ Follow'}</button>`:''}
   </div>`;
 }
 function renderFollowing(){
@@ -2424,7 +2448,7 @@ function renderFollowing(){
       <div class="ds">${users[u].vibe}${users[u].foll?' · '+users[u].foll+'k followers':''}</div></div></div>
     <div class="why">💡 ${whyFollow[u]||"Worth a follow in Austin."}</div>
     ${(activity[u]&&activity[u][0])?`<div class="whyact">Recently: ${activity[u][0].t.replace(/^[^ ]+ /,'')} — ${activity[u][0].x.replace(/^"|"$/g,'')}</div>`:''}
-    <button class="btn p" style="margin-top:10px;padding:10px" ${da('toast','Following '+users[u].name)}>＋ Follow</button>
+    <button class="btn p" style="margin-top:10px;padding:10px" ${da('toggleFollow',u)}>＋ Follow</button>
   </div>`).join("")}`);
 }
 function peopleSearchbar(){return `<div class="searchwrap"><span class="si">🔍</span>
@@ -3637,7 +3661,7 @@ function bootRender(){
         // Clear any old caches so a fresh SW rebuilds them cleanly.
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {
-            keys.forEach(function (k) { if (k !== 'letslink-v73') caches.delete(k); });
+            keys.forEach(function (k) { if (k !== 'letslink-v74') caches.delete(k); });
           }).catch(function(){});
         }
         // Register the current SW; if one updates, take over quietly.
