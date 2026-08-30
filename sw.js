@@ -1,6 +1,6 @@
 // Let's Link — Service Worker
 // Bump CACHE version on each deploy to force clients to refresh cached assets.
-const CACHE = 'letslink-v62';
+const CACHE = 'letslink-v63';
 const CORE = [
   './',
   './index.html',

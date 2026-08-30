@@ -444,7 +444,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v62</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v63</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -3495,12 +3495,32 @@ function bootRender(){
 })();
 </script>
 <script>
-// PWA service worker registration
-if ('serviceWorker' in navigator) {
+// PWA service worker registration — hardened + self-healing.
+// A stale SW controlling the page can serve a mismatched cache and blank the app.
+// So: on load, if a controller is already active from an OLD version, nuke all caches
+// + unregister, then register fresh. Never let SW work throw into the page.
+(function(){
+  if (!('serviceWorker' in navigator)) return;
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('sw.js').catch(function () {});
+    try {
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        var hadOld = regs && regs.length;
+        // Clear any old caches so a fresh SW rebuilds them cleanly.
+        if (window.caches && caches.keys) {
+          caches.keys().then(function (keys) {
+            keys.forEach(function (k) { if (k !== 'letslink-v63') caches.delete(k); });
+          }).catch(function(){});
+        }
+        // Register the current SW; if one updates, take over quietly.
+        navigator.serviceWorker.register('sw.js').then(function (reg) {
+          reg.addEventListener && reg.addEventListener('updatefound', function(){});
+        }).catch(function(){});
+      }).catch(function(){
+        navigator.serviceWorker.register('sw.js').catch(function(){});
+      });
+    } catch (e) { /* never let SW setup break the app */ }
   });
-}
+}());
 </script>
 </body>
 </html>
