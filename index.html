@@ -451,7 +451,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v71</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v72</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -466,38 +466,37 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 
 <script>
 /* ============ GLOBAL ERROR CATCHER (shows errors on-screen instead of blank) ============ */
+// Only surface GENUINE script crashes. Non-fatal async resource errors (a failed image,
+// map tile, or ad-blocked fetch) must NEVER paint a crash screen or wipe the view.
 function __showErr(title, detail){
   var v=document.getElementById("view");
-  var html='<div style="padding:20px;color:#ff5470;font-size:12px;font-family:monospace;line-height:1.5;word-break:break-word">'+
-    '<b>⚠️ '+title+'</b><br><br>'+String(detail).replace(/</g,"&lt;").slice(0,900)+
-    '<br><br><span style="color:#888">v71 diag</span></div>';
-  if(v)v.innerHTML=html;
-  try{ var t=document.getElementById("toast"); if(t){t.textContent=String(detail).slice(0,120); t.className="show";} }catch(_){}
+  if(!v) return;
+  v.innerHTML='<div style="padding:20px;color:#ff5470;font-size:12px;font-family:monospace;line-height:1.5;word-break:break-word">'+
+    '<b>⚠️ '+title+'</b><br><br>'+String(detail).replace(/</g,"&lt;").slice(0,900)+'</div>';
 }
 window.onerror=function(msg,src,line,col,err){
-  var d=String(msg)+'  |  '+(src||'?')+':'+line+':'+col+(err&&err.stack?'\n'+err.stack:'');
-  __showErr('Render error caught:', d);
+  // Cross-origin/resource errors surface as "Script error" with NO source + line 0.
+  // These are non-fatal (image/tile/script from another origin) — ignore them, do NOT crash the UI.
+  var m=String(msg||'');
+  var noSource=(!src) || (line===0 && col===0);
+  if(m.indexOf('Script error')===0 && noSource){ return true; } // swallow the masked non-fatal error
+  __showErr('Render error caught:', m+'  |  '+(src||'?')+':'+line+':'+col+(err&&err.stack?'\n'+err.stack:''));
   return false;
 };
-// Capture-phase error listener: catches RESOURCE load errors (img/script/link) that
-// window.onerror masks to ?:0:0. This is the one that finally names the culprit.
+// Resource load failures (img/script/link) bubble here in the capture phase.
+// Log them, but NEVER paint a crash screen — a missing image must not blank the app.
 window.addEventListener('error', function(ev){
   try{
     var tgt=ev&&ev.target;
     if(tgt && tgt!==window && (tgt.src||tgt.href)){
-      __showErr('RESOURCE FAILED TO LOAD (the real ?:0:0 cause):',
-        (tgt.tagName||'?')+' → '+(tgt.src||tgt.href)+'  [last action: '+(window.__lastAct||'none')+']');
-      return;
-    }
-    if(ev && ev.error && ev.error.stack){
-      __showErr('Caught error (real stack):', String(ev.error.stack)+'  [last action: '+(window.__lastAct||'none')+']');
+      if(console&&console.warn) console.warn('Resource failed (non-fatal):', tgt.tagName, tgt.src||tgt.href);
+      return; // non-fatal
     }
   }catch(_){}
 }, true);
+// Genuine unhandled promise rejections — log, don't crash the UI.
 window.addEventListener('unhandledrejection',function(ev){
-  var r=ev&&ev.reason;
-  var d=(r&&(r.stack||r.message))?String(r.stack||r.message):String(r);
-  __showErr('Promise rejection (this is usually the real cause):', d+'  [last action: '+(window.__lastAct||'none')+']');
+  try{ if(console&&console.warn) console.warn('Promise rejection (non-fatal):', ev&&ev.reason); }catch(_){}
 });
 
 /* ============ BOOKING DATA (fee + hire criteria per business) ============ */
@@ -3437,7 +3436,7 @@ let onboardColor=AV_COLORS[0];
 function renderOnboard(){
   if(onboardStep===0){
     setView(`<div style="padding:40px 22px;text-align:center;min-height:70vh;display:flex;flex-direction:column;justify-content:center">
-      <img src="icons/icon-192.png" alt="Let's Link" style="width:96px;height:96px;margin:0 auto 14px;border-radius:22px;box-shadow:0 8px 30px rgba(0,194,168,.25)">
+      <img src="icons/icon-192.png" alt="Let's Link" onerror="this.style.display='none'" style="width:96px;height:96px;margin:0 auto 14px;border-radius:22px;box-shadow:0 8px 30px rgba(0,194,168,.25)">
       <div class="h1" style="font-size:30px;margin-bottom:4px">Let's<b style="color:var(--brand)">Link</b></div>
       <p class="sub" style="font-size:15px;max-width:300px;margin:0 auto 26px">Discover events, food, and places — filtered through the people you actually trust.</p>
       <button class="btn p" style="max-width:260px;margin:0 auto;width:100%" ${da('onboardNext')}>Create your account</button>
@@ -3552,7 +3551,7 @@ function bootRender(){
         // Clear any old caches so a fresh SW rebuilds them cleanly.
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {
-            keys.forEach(function (k) { if (k !== 'letslink-v71') caches.delete(k); });
+            keys.forEach(function (k) { if (k !== 'letslink-v72') caches.delete(k); });
           }).catch(function(){});
         }
         // Register the current SW; if one updates, take over quietly.
