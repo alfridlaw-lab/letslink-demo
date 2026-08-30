@@ -451,7 +451,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v70</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v71</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -470,7 +470,7 @@ function __showErr(title, detail){
   var v=document.getElementById("view");
   var html='<div style="padding:20px;color:#ff5470;font-size:12px;font-family:monospace;line-height:1.5;word-break:break-word">'+
     '<b>⚠️ '+title+'</b><br><br>'+String(detail).replace(/</g,"&lt;").slice(0,900)+
-    '<br><br><span style="color:#888">v70 diag</span></div>';
+    '<br><br><span style="color:#888">v71 diag</span></div>';
   if(v)v.innerHTML=html;
   try{ var t=document.getElementById("toast"); if(t){t.textContent=String(detail).slice(0,120); t.className="show";} }catch(_){}
 }
@@ -479,10 +479,25 @@ window.onerror=function(msg,src,line,col,err){
   __showErr('Render error caught:', d);
   return false;
 };
+// Capture-phase error listener: catches RESOURCE load errors (img/script/link) that
+// window.onerror masks to ?:0:0. This is the one that finally names the culprit.
+window.addEventListener('error', function(ev){
+  try{
+    var tgt=ev&&ev.target;
+    if(tgt && tgt!==window && (tgt.src||tgt.href)){
+      __showErr('RESOURCE FAILED TO LOAD (the real ?:0:0 cause):',
+        (tgt.tagName||'?')+' → '+(tgt.src||tgt.href)+'  [last action: '+(window.__lastAct||'none')+']');
+      return;
+    }
+    if(ev && ev.error && ev.error.stack){
+      __showErr('Caught error (real stack):', String(ev.error.stack)+'  [last action: '+(window.__lastAct||'none')+']');
+    }
+  }catch(_){}
+}, true);
 window.addEventListener('unhandledrejection',function(ev){
   var r=ev&&ev.reason;
   var d=(r&&(r.stack||r.message))?String(r.stack||r.message):String(r);
-  __showErr('Promise rejection (this is usually the real cause):', d);
+  __showErr('Promise rejection (this is usually the real cause):', d+'  [last action: '+(window.__lastAct||'none')+']');
 });
 
 /* ============ BOOKING DATA (fee + hire criteria per business) ============ */
@@ -1354,10 +1369,11 @@ document.addEventListener("click",function(ev){
   const el=ev.target.closest("[data-act]");
   if(!el)return;
   const act=el.getAttribute("data-act");
+  window.__lastAct=act;
   const args=(el.getAttribute("data-args")||"").split("|");
   ev.stopPropagation();
   try{ ACTIONS[act]&&ACTIONS[act].apply(null,args); }
-  catch(e){ const v=document.getElementById("view"); if(v)v.innerHTML='<div style="padding:20px;color:#ff5470;font-family:monospace;font-size:13px">Action error: '+act+' — '+e.message+'</div>'; }
+  catch(e){ __showErr('Action error ['+act+'] (real):', (e&&(e.stack||e.message))?String(e.stack||e.message):String(e)); }
 });
 // ===== SWIPE GESTURE: drag a tile left/right to dismiss it (Tinder-style) =====
 (function(){
@@ -3536,7 +3552,7 @@ function bootRender(){
         // Clear any old caches so a fresh SW rebuilds them cleanly.
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {
-            keys.forEach(function (k) { if (k !== 'letslink-v70') caches.delete(k); });
+            keys.forEach(function (k) { if (k !== 'letslink-v71') caches.delete(k); });
           }).catch(function(){});
         }
         // Register the current SW; if one updates, take over quietly.
