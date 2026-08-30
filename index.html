@@ -444,7 +444,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo" style="display:flex;align-items:center;gap:7px"><img src="icons/icon-192.png" alt="" style="width:24px;height:24px;border-radius:7px;flex:0 0 auto"><span>Let's<b>Link</b></span> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v64</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v65</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -3508,7 +3508,7 @@ function bootRender(){
         // Clear any old caches so a fresh SW rebuilds them cleanly.
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {
-            keys.forEach(function (k) { if (k !== 'letslink-v64') caches.delete(k); });
+            keys.forEach(function (k) { if (k !== 'letslink-v65') caches.delete(k); });
           }).catch(function(){});
         }
         // Register the current SW; if one updates, take over quietly.
