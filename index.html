@@ -444,7 +444,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v63</span></div>
+    <div class="logo" style="display:flex;align-items:center;gap:7px"><img src="icons/icon-192.png" alt="" style="width:24px;height:24px;border-radius:7px;flex:0 0 auto"><span>Let's<b>Link</b></span> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v64</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -1419,7 +1419,7 @@ function da(act){const args=[].slice.call(arguments,1).map(a=>String(a).replace(
 
 /* ============ NAV ============ */
 let tab="explore";
-const TABS=[["explore","svic:map","Explore"],["board","svic:doc","Board"],["messages","svic:chat","Messages"],["following","img:img/link-icon.png","Link"],["profile","svic:user","You"]];
+const TABS=[["explore","svic:map","Explore"],["board","svic:doc","Board"],["messages","svic:chat","Messages"],["following","img:icons/icon-192.png","Link"],["profile","svic:user","You"]];
 function nav(){setNav(TABS.map(([id,i,l])=>{
   const icon=i.indexOf("img:")===0
     ? `<span class="i navimg" style="background-image:url('${i.slice(4)}')"></span>`
@@ -3403,7 +3403,7 @@ let onboardColor=AV_COLORS[0];
 function renderOnboard(){
   if(onboardStep===0){
     setView(`<div style="padding:40px 22px;text-align:center;min-height:70vh;display:flex;flex-direction:column;justify-content:center">
-      <div style="font-size:52px;margin-bottom:6px">🔗</div>
+      <img src="icons/icon-192.png" alt="Let's Link" style="width:96px;height:96px;margin:0 auto 14px;border-radius:22px;box-shadow:0 8px 30px rgba(0,194,168,.25)">
       <div class="h1" style="font-size:30px;margin-bottom:4px">Let's<b style="color:var(--brand)">Link</b></div>
       <p class="sub" style="font-size:15px;max-width:300px;margin:0 auto 26px">Discover events, food, and places — filtered through the people you actually trust.</p>
       <button class="btn p" style="max-width:260px;margin:0 auto;width:100%" ${da('onboardNext')}>Create your account</button>
@@ -3508,7 +3508,7 @@ function bootRender(){
         // Clear any old caches so a fresh SW rebuilds them cleanly.
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {
-            keys.forEach(function (k) { if (k !== 'letslink-v63') caches.delete(k); });
+            keys.forEach(function (k) { if (k !== 'letslink-v64') caches.delete(k); });
           }).catch(function(){});
         }
         // Register the current SW; if one updates, take over quietly.
