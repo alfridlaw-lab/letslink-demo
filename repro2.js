@@ -2,59 +2,46 @@ const { webkit } = require('playwright');
 
 (async () => {
   const browser = await webkit.launch();
+  const ctx = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+  });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('console', m => console.log('CONSOLE:', m.type(), m.text()));
+  page.on('pageerror', e => { errors.push(e); console.log('PAGEERROR:', e.message, '\n', (e.stack||'').split('\n').slice(0,6).join('\n')); });
 
-  // Scenario A: returning user with SAVED state, loaded over HTTP (True's real condition)
-  async function run(label, url, seedState) {
-    const ctx = await browser.newContext();
-    const page = await ctx.newPage();
-    const errors = [];
-    page.on('pageerror', e => errors.push('PAGEERROR: ' + (e.stack || e.message)));
-    page.on('console', m => { if (m.type() === 'error') errors.push('CONSOLE.ERROR: ' + m.text()); });
+  const target = process.argv[2] || 'http://getletslink.com/';
+  console.log('=== LOADING', target, '===');
+  try { await page.goto(target, { waitUntil: 'networkidle', timeout: 30000 }); }
+  catch (e) { console.log('GOTO ERR:', e.message); }
+  await page.waitForTimeout(1500);
+  console.log('=== FINAL URL:', page.url());
 
-    // Seed localStorage BEFORE the app scripts run
-    if (seedState) {
-      await page.addInitScript(s => {
-        try { localStorage.setItem('ll_state_v1', s.state); } catch (e) {}
-        try { localStorage.setItem('ll_myloc', s.loc); } catch (e) {}
-      }, seedState);
-    }
+  // Click "Create your account"
+  try {
+    const create = await page.getByText('Create your account', { exact: false }).first();
+    if (create) { await create.click({ timeout: 5000 }); console.log('=== clicked Create your account'); }
+  } catch(e){ console.log('create click err:', e.message); }
+  await page.waitForTimeout(1500);
 
-    await page.goto(url, { waitUntil: 'load', timeout: 30000 }).catch(e => errors.push('GOTO: ' + e.message));
-    await page.waitForTimeout(1500);
+  // dump visible interactive text after
+  const btns = await page.$$eval('button, a, [role=button], [onclick], [data-act], input', els =>
+    els.slice(0,80).map(e => ((e.textContent||e.placeholder||e.value||'').trim()).slice(0,40)).filter(Boolean));
+  console.log('=== AFTER CREATE, INTERACTIVE:', JSON.stringify(btns.slice(0,50)));
 
-    const ver = await page.evaluate(() => (document.body.innerText.match(/v\d+/) || [''])[0]).catch(() => '?');
-    const errBox = await page.evaluate(() => {
-      const v = document.getElementById('view'); const t = v ? v.innerText : '';
-      return t.includes('Render error') ? t.slice(0, 300) : null;
-    }).catch(() => null);
-
-    // Try the Share/relaunch simulation: dispatch visibilitychange + pagehide + re-run boot
-    await page.evaluate(() => {
-      try { document.dispatchEvent(new Event('visibilitychange')); } catch (e) {}
-      try { window.dispatchEvent(new Event('pagehide')); } catch (e) {}
-      try { window.dispatchEvent(new Event('blur')); } catch (e) {}
-      try { window.dispatchEvent(new Event('focus')); } catch (e) {}
-    }).catch(() => {});
-    await page.waitForTimeout(500);
-
-    console.log(`\n===== ${label} =====`);
-    console.log('version:', ver, '| render-error box:', errBox || 'none');
-    console.log('errors:', errors.length ? '\n' + errors.join('\n---\n') : 'NONE');
-    await ctx.close();
+  // Try to find a Share / continue / finish button and click it
+  for (const label of ['Share','Continue','Next','Finish','Create','Get Started','Join','Sign up','Done']) {
+    try {
+      const el = page.getByText(label, { exact: false }).first();
+      if (await el.count() > 0) {
+        await el.click({ timeout: 3000 });
+        console.log('=== clicked', label);
+        await page.waitForTimeout(1200);
+      }
+    } catch(e) { /* ignore */ }
   }
-
-  const httpsUrl = 'https://alfridlaw-lab.github.io/letslink-demo/index.html?cb=' + Date.now();
-  const customHttp = 'http://getletslink.com/?cb=' + Date.now();
-  const customHttps = 'https://getletslink.com/?cb=' + Date.now();
-
-  // A messy old-format saved state (simulating an account made in an earlier version)
-  const oldState = JSON.stringify({ me: 'user_old', tab: 'explore' }); // 'me' set but users[me] missing => must self-heal
-  const seed = { state: oldState, loc: '[30.26,-97.74]' };
-
-  await run('A: returning user + saved state over HTTPS (gh-pages)', httpsUrl, seed);
-  await run('B: custom domain over HTTP + saved state', customHttp, seed);
-  await run('C: custom domain over HTTPS + saved state', customHttps, seed);
-  await run('D: custom domain HTTP, fresh (no state)', 'http://getletslink.com/?cb=' + (Date.now()+1), null);
-
+  await page.waitForTimeout(1500);
+  console.log('=== TOTAL PAGEERRORS:', errors.length);
   await browser.close();
 })();

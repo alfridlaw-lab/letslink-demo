@@ -451,7 +451,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v67</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v68</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -466,13 +466,24 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 
 <script>
 /* ============ GLOBAL ERROR CATCHER (shows errors on-screen instead of blank) ============ */
-window.onerror=function(msg,src,line,col,err){
+function __showErr(title, detail){
   var v=document.getElementById("view");
-  if(v)v.innerHTML='<div style="padding:20px;color:#ff5470;font-size:13px;font-family:monospace;line-height:1.5">'+
-    '<b>⚠️ Render error caught:</b><br><br>'+String(msg)+'<br><br>line '+line+':'+col+
-    (err&&err.stack?'<br><br>'+String(err.stack).replace(/</g,"&lt;").slice(0,500):'')+'</div>';
+  var html='<div style="padding:20px;color:#ff5470;font-size:12px;font-family:monospace;line-height:1.5;word-break:break-word">'+
+    '<b>⚠️ '+title+'</b><br><br>'+String(detail).replace(/</g,"&lt;").slice(0,900)+
+    '<br><br><span style="color:#888">v68 diag</span></div>';
+  if(v)v.innerHTML=html;
+  try{ var t=document.getElementById("toast"); if(t){t.textContent=String(detail).slice(0,120); t.className="show";} }catch(_){}
+}
+window.onerror=function(msg,src,line,col,err){
+  var d=String(msg)+'  |  '+(src||'?')+':'+line+':'+col+(err&&err.stack?'\n'+err.stack:'');
+  __showErr('Render error caught:', d);
   return false;
 };
+window.addEventListener('unhandledrejection',function(ev){
+  var r=ev&&ev.reason;
+  var d=(r&&(r.stack||r.message))?String(r.stack||r.message):String(r);
+  __showErr('Promise rejection (this is usually the real cause):', d);
+});
 
 /* ============ BOOKING DATA (fee + hire criteria per business) ============ */
 // booking[id] = {fee, unit, deposit, criteria:[...]}. Falls back to category defaults.
@@ -3524,7 +3535,7 @@ function bootRender(){
         // Clear any old caches so a fresh SW rebuilds them cleanly.
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {
-            keys.forEach(function (k) { if (k !== 'letslink-v67') caches.delete(k); });
+            keys.forEach(function (k) { if (k !== 'letslink-v68') caches.delete(k); });
           }).catch(function(){});
         }
         // Register the current SW; if one updates, take over quietly.

@@ -2,49 +2,31 @@ const { webkit } = require('playwright');
 
 (async () => {
   const browser = await webkit.launch();
-  const ctx = await browser.newContext();
+  const ctx = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+    geolocation: undefined,
+    permissions: [],
+  });
   const page = await ctx.newPage();
-
   const errors = [];
-  page.on('pageerror', e => errors.push('PAGEERROR: ' + (e.stack || e.message)));
-  page.on('console', m => { if (m.type() === 'error') errors.push('CONSOLE.ERROR: ' + m.text()); });
+  page.on('console', m => { console.log('CONSOLE:', m.type(), m.text()); });
+  page.on('pageerror', e => { errors.push(e); console.log('PAGEERROR:', e.message, '\n', e.stack); });
 
-  const url = 'https://alfridlaw-lab.github.io/letslink-demo/index.html?cb=' + Date.now();
-  console.log('Loading', url);
-  await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 }).catch(e => errors.push('GOTO: ' + e.message));
-  await page.waitForTimeout(1500);
+  const target = process.argv[2] || 'https://getletslink.com/';
+  console.log('=== LOADING', target, '===');
+  try {
+    await page.goto(target, { waitUntil: 'networkidle', timeout: 30000 });
+  } catch (e) { console.log('GOTO ERR:', e.message); }
 
-  // Report version + whether the error box is showing
-  const ver = await page.evaluate(() => (document.body.innerText.match(/v\d+/) || [''])[0]).catch(() => '?');
-  console.log('version on page:', ver);
+  // Try to reach create-account / share flow
+  await page.waitForTimeout(2000);
+  console.log('=== TITLE:', await page.title());
+  // Look for buttons that start create/share flow
+  const btns = await page.$$eval('button, a, [role=button], [onclick], [data-act]', els =>
+    els.slice(0,60).map(e => (e.textContent||'').trim().slice(0,40)).filter(Boolean));
+  console.log('=== BUTTONS/LINKS:', JSON.stringify(btns.slice(0,40)));
 
-  // Is the onboarding welcome showing?
-  const hasWelcome = await page.evaluate(() => document.body.innerText.includes('Create your account')).catch(() => false);
-  console.log('welcome screen showing:', hasWelcome);
-
-  // Click "Create your account" -> form
-  if (hasWelcome) {
-    await page.click('text=Create your account').catch(e => errors.push('click create: ' + e.message));
-    await page.waitForTimeout(800);
-    // fill the form
-    await page.fill('#ob_name', 'Keith True').catch(()=>{});
-    await page.fill('#ob_handle', '@true').catch(()=>{});
-    await page.waitForTimeout(300);
-    // submit "Create account & enter"
-    await page.click('text=Create account & enter').catch(e => errors.push('click submit: ' + e.message));
-    await page.waitForTimeout(1200);
-  }
-
-  // Check for the app's own render-error box
-  const errBox = await page.evaluate(() => {
-    const v = document.getElementById('view');
-    const t = v ? v.innerText : '';
-    return t.includes('Render error') ? t.slice(0, 400) : null;
-  }).catch(() => null);
-
-  console.log('\n===== RESULT =====');
-  console.log('render-error box:', errBox || 'none');
-  console.log('captured errors:', errors.length ? '\n' + errors.join('\n---\n') : 'NONE');
-
+  console.log('=== TOTAL PAGEERRORS:', errors.length);
   await browser.close();
 })();
