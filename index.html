@@ -339,6 +339,23 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .ktag{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:20px;white-space:nowrap;flex:0 0 auto}
 .ktag.offer{color:#05141a;background:var(--brand)}
 .ktag.req{color:#2a1600;background:var(--gold)}
+/* custom SVG icon set */
+.svic{display:inline-block;vertical-align:-.18em;flex:0 0 auto}
+.sect .svic{vertical-align:-.16em;margin-right:6px;color:var(--brand)}
+.badge .svic{vertical-align:-.16em;margin-right:3px}
+.eco .ic .svic{color:var(--brand)}
+/* keyword tag chips (True's tagging feature) */
+.ktags{display:flex;flex-wrap:wrap;gap:6px;margin:8px 2px 2px}
+.ktag2{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;
+  border:1px solid var(--line);background:var(--card2);color:var(--sub);cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:all .12s}
+.ktag2:active{transform:scale(.94)}
+.ktag2.on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#05121a;border-color:transparent}
+.tagfilterbar{display:flex;align-items:center;gap:8px;margin:2px 2px 12px;
+  background:var(--card);border:1px solid var(--brand);border-radius:14px;padding:9px 12px}
+.tagfilterbar b{color:var(--brand)}
+.tagfilterbar .x{margin-left:auto;background:var(--card2);border:1px solid var(--line);color:var(--ink);
+  border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer}
 .bctitle{font-weight:700;font-size:15px;margin-bottom:4px;line-height:1.25}
 .bcbody{font-size:12.5px;color:var(--sub);line-height:1.45;margin-bottom:10px;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -427,7 +444,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v61</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v62</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -603,6 +620,120 @@ const DIST={
   coral:1.3,ansel:2.4,cofield:0.9,mama:3.1,roast:1.8,foundry:2.0,heights:2.7,
   kayak:1.4,gallery:2.3,green:1.1,security:2.0,snap:2.8,inn:1.2,hostwell:1.6,suya:3.0,thread:2.6
 };
+// ===== CUSTOM ICON SET (replaces emoji-as-icons with one consistent SVG language) =====
+// Single stroke style, currentColor, 1.9 stroke. Call svic('music', size).
+const ICONS={
+  music:'<path d="M9 18V5l10-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/>',
+  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  food:'<path d="M5 3v8M8 3v8M6.5 11v10M5 6h3"/><path d="M17 3c-2 0-3 2-3 5s1 4 3 4v9"/>',
+  drink:'<path d="M5 4h14l-6 8v6h3M11 18H8m3 0v-6"/>',
+  coffee:'<path d="M4 8h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8z"/><path d="M17 9h2a2 2 0 0 1 0 5h-2M6 2v2M9 2v2M12 2v2"/>',
+  art:'<circle cx="12" cy="12" r="9"/><circle cx="8" cy="9.5" r="1.2"/><circle cx="15.5" cy="9" r="1.2"/><circle cx="16.5" cy="13.5" r="1.2"/><path d="M12 21a3 3 0 0 1 0-6 2 2 0 0 0 0-4"/>',
+  shield:'<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3z"/>',
+  hotel:'<path d="M3 21V6l9-3 9 3v15M3 21h18M9 21v-4h6v4M7 9h.01M12 9h.01M17 9h.01M7 13h.01M17 13h.01"/>',
+  pin:'<path d="M12 21s7-5.5 7-11a7 7 0 0 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  ticket:'<path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4z"/><path d="M14 6v12" stroke-dasharray="2 2"/>',
+  live:'<circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4"/>',
+  star:'<path d="M12 3l2.7 5.5 6 .9-4.3 4.2 1 6-5.4-2.8L6.6 19.6l1-6L3.3 9.4l6-.9L12 3z"/>',
+  chat:'<path d="M4 5h16v11H9l-4 3v-3H4z"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  users:'<circle cx="9" cy="8" r="3.4"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 5.5a3.4 3.4 0 0 1 0 6.6M17 20a6.5 6.5 0 0 0-3-5.4"/>',
+  biz:'<path d="M4 21V8l8-5 8 5v13M4 21h16M9 21v-5h6v5M8 11h.01M12 11h.01M16 11h.01"/>',
+  shop:'<path d="M4 8h16l-1 12H5L4 8z"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/>',
+  camera:'<path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="3.4"/>',
+  key:'<circle cx="8" cy="8" r="4"/><path d="M11 11l9 9M17 17l2-2M15 15l2-2"/>',
+  sports:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M6 6c3 2 3 10 0 12M18 6c-3 2-3 10 0 12"/>',
+  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/>',
+  map:'<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/>',
+  search:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/>',
+  fire:'<path d="M12 3c1 3-2 4-2 7a4 4 0 0 0 8 0c0-2-1-3-1-3 2 2 3 4 3 7a8 8 0 0 1-16 0c0-4 4-6 4-9 0 0 2 .5 2 3 1-1 1-2 0-5z"/>',
+  festival:'<path d="M12 3v3M5 21l7-13 7 13M5 21h14M9.5 21v-4a2.5 2.5 0 0 1 5 0v4"/>',
+  outdoors:'<path d="M12 3l8 14H4L12 3z"/><path d="M12 9l4 8M12 9L8 17"/>',
+  paddle:'<path d="M3 20c4 1 14 1 18 0M6 18c2-6 10-6 12 0"/><path d="M12 3v9"/>',
+  verified:'<path d="M12 3l2.2 1.6 2.7-.3 1 2.5 2.3 1.4-.7 2.6.7 2.6-2.3 1.4-1 2.5-2.7-.3L12 21l-2.2-1.6-2.7.3-1-2.5L3.8 14l.7-2.6-.7-2.6 2.3-1.4 1-2.5 2.7.3L12 3z"/><path d="M8.5 12l2.3 2.3L15.5 10"/>',
+  card:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/>',
+  doc:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>',
+  lock:'<rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  link:'<path d="M9 12a4 4 0 0 1 4-4h3a4 4 0 0 1 0 8h-1M15 12a4 4 0 0 1-4 4H8a4 4 0 0 1 0-8h1"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  party:'<path d="M4 20l5-13 8 8-13 5z"/><path d="M14 4l1 2M18 6l2-1M17 10l2 1"/>',
+  handshake:'<path d="M4 12l4-4 3 2 3-2 4 4M8 8l-4 4 3 3 2-2M20 12l-4 4-3-3"/>'
+};
+function svic(name,sz){ const p=ICONS[name]; if(!p) return ''; sz=sz||18;
+  return `<svg class="svic" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`; }
+// map an ecosystem section header label → icon name (headers currently start with an emoji)
+function sectIcon(label){ const l=label.toLowerCase();
+  if(/perform|music|dj|artist|band/.test(l))return'mic';
+  if(/food|eat|noodle|taco|bbq|after|dinner|plate/.test(l))return'food';
+  if(/bar|drink|cocktail|marg/.test(l))return'drink';
+  if(/side|entertain|fun/.test(l))return'party';
+  if(/staff|service|security|medic/.test(l))return'shield';
+  if(/travel|stay|hotel|room/.test(l))return'hotel';
+  if(/nearby|near|add-on|addon/.test(l))return'pin';
+  if(/art|feature|gallery|mural/.test(l))return'art';
+  return'link'; }
+// strip a leading emoji + space from a section label, returns clean text
+function sectText(label){ return label.replace(/^[^A-Za-z0-9]+/,'').trim(); }
+// map a business category → icon name (replaces per-biz emoji ic:)
+function bizIcon(cat){ const c=(cat||'').toLowerCase();
+  if(/seafood|southern/.test(c))return'food';
+  if(/viet|noodle|african|brunch|food|café|cafe|roaster/.test(c))return /café|cafe|roaster/.test(c)?'coffee':'food';
+  if(/music|venue/.test(c))return'mic';
+  if(/cocktail|bar/.test(c))return'drink';
+  if(/outdoor|rental/.test(c))return'outdoors';
+  if(/gallery|attraction/.test(c))return'art';
+  if(/landscap|grounds/.test(c))return'outdoors';
+  if(/security|staffing/.test(c))return'shield';
+  if(/photo/.test(c))return'camera';
+  if(/hotel/.test(c))return'hotel';
+  if(/airbnb|host/.test(c))return'key';
+  if(/cloth|accessor|merch/.test(c))return'shop';
+  return'biz'; }
+
+// ===== KEYWORD TAGS (True's feature): user-style hashtags on events + businesses =====
+// Tappable in the UI → filters the feed to everything sharing that tag.
+const TAGS={
+  // events
+  marrowfest:["festival","music","allages","downtown","food"],
+  hoops:["sports","hoops","allages","free","community"],
+  market:["market","family","coffee","makers","allages"],
+  gallery_night:["art","nightlife","wine","eastside"],
+  paddle:["outdoors","sunset","beginner","lake"],
+  live_hoops:["sports","soccer","nightlife","blockparty"],
+  live_kojo:["music","hiphop","21up","latenight","livemusic"],
+  live_tacos:["food","tacos","crawl","eastside"],
+  live_bball:["sports","hoops","finals","dj"],
+  live_jazz:["music","jazz","rooftop","21up","cocktails"],
+  live_bbq:["food","bbq","family","competition"],
+  // businesses
+  coral:["seafood","patio","rainey","date"],
+  ansel:["latenight","noodles","eastside","cheap"],
+  cofield:["brunch","family","coffee","farmtotable"],
+  mama:["westafrican","jollof","eastside","soulfood"],
+  roast:["coffee","wifi","eastside","roaster"],
+  foundry:["livemusic","venue","21up","nightlife"],
+  heights:["rooftop","cocktails","downtown","date","21up"],
+  kayak:["outdoors","lake","family","sunset"],
+  gallery:["art","eastside","makers"],
+  green:["landscaping","events","service"],
+  security:["security","service","events"],
+  snap:["photobooth","events","service"],
+  inn:["hotel","soco","boutique","stay"],
+  hostwell:["stay","airbnb","eastside"],
+  suya:["food","skewers","festival","latenight"],
+  thread:["shopping","merch","soco","local"]
+};
+function tagsFor(id){ return (TAGS[id]||[]).concat((typeof createdTags!=='undefined'&&createdTags[id])||[]); }
+// active tag filter (null = none). Tapping a tag chip sets this; the feed filters to it.
+let tagFilter=null;
+function setTagFilter(t){ tagFilter=(tagFilter===t)?null:t; searchQ=""; render(); scrollTop&&scrollTop(); }
+function clearTagFilter(){ tagFilter=null; render(); }
+function hasTag(id){ return !tagFilter || tagsFor(id).indexOf(tagFilter)>-1; }
+// render a row of tappable tag chips for a tile/detail
+function tagChips(id,max){ const t=tagsFor(id); if(!t.length) return "";
+  const show=max?t.slice(0,max):t;
+  return `<div class="ktags">`+show.map(x=>`<button class="ktag2${tagFilter===x?' on':''}" ${da('setTagFilter',x)}>#${x}</button>`).join("")+`</div>`; }
 function miles(id){const d=DIST[id];return d?`${d} mi`:"nearby";}
 // demo street addresses per business/event (plausible Austin addresses for the detail view)
 const ADDR={
@@ -1288,10 +1419,12 @@ function da(act){const args=[].slice.call(arguments,1).map(a=>String(a).replace(
 
 /* ============ NAV ============ */
 let tab="explore";
-const TABS=[["explore","🧭","Explore"],["board","📋","Board"],["messages","💬","Messages"],["following","img:img/link-icon.png","Link"],["profile","👤","You"]];
+const TABS=[["explore","svic:map","Explore"],["board","svic:doc","Board"],["messages","svic:chat","Messages"],["following","img:img/link-icon.png","Link"],["profile","svic:user","You"]];
 function nav(){setNav(TABS.map(([id,i,l])=>{
   const icon=i.indexOf("img:")===0
     ? `<span class="i navimg" style="background-image:url('${i.slice(4)}')"></span>`
+    : i.indexOf("svic:")===0
+    ? `<span class="i">${svic(i.slice(5),22)}</span>`
     : `<span class="i">${i}</span>`;
   return `<button class="${tab===id?'on':''}" ${da('go',id)}>${icon}${l}</button>`;}).join(""));}
 function go(t){tab=t;stack=[];render();scrollTop();}
@@ -1485,8 +1618,8 @@ function eventTile(id,big){const e=events[id];const fa=friendsAttending(id);
   return `<div class="tile ${big?'big':''}" data-swipe="event|${id}" ${da('open','event',id)}>
     <div class="tileimg" style="${imgStyle(photoUrl(id,big?800:400,big?400:280),grad)}">
       <span class="scrim"></span>
-      <span class="badge">${e.live?'🔴 Live event':'🎟️ Event'}</span>
-      <span class="dist">📍 ${miles(id)}</span>
+      <span class="badge">${e.live?svic('live',13)+' Live event':svic('ticket',13)+' Event'}</span>
+      <span class="dist">${svic('pin',12)} ${miles(id)}</span>
       ${e.live?'<span class="livetag"><i></i>LIVE</span>':''}
       <span class="demotag">Demo</span>
     </div>
@@ -1494,6 +1627,7 @@ function eventTile(id,big){const e=events[id];const fa=friendsAttending(id);
       <div class="capttl">${e.hero?'🎪 ':''}${e.n}${e.verified?' '+vbadge():''}</div>
       <div class="capline">${cap}</div>
       <div class="caploc">📍 ${e.loc}</div>
+      ${tagChips(id,3)}
     </div></div>`;}
 
 // business tile
@@ -1501,8 +1635,8 @@ function bizTile(id){const b=biz[id];
   return `<div class="tile" data-swipe="biz|${id}" ${da('open','biz',id)}>
     <div class="tileimg" style="${imgStyle(photoUrl(id,400,280),posterFor(b.cat))}">
       <span class="scrim"></span>
-      <span class="badge">${b.ic} ${b.cat.split(' ')[0]}</span>
-      <span class="dist">📍 ${miles(id)}</span>
+      <span class="badge">${svic(bizIcon(b.cat),13)} ${b.cat.split(' ')[0]}</span>
+      <span class="dist">${svic('pin',12)} ${miles(id)}</span>
       <span class="rate">★ ${b.r}${b.rev&&b.rev.length?` · ${b.rev.length}`:''}</span>
       <span class="demotag">Demo</span>
     </div>
@@ -1510,6 +1644,7 @@ function bizTile(id){const b=biz[id];
       <div class="capttl">${b.n}${b.verified?' '+vbadge():''}</div>
       <div class="capline">${b.d}</div>
       <div class="caploc">📍 ${b.hood} · ${miles(id)} away</div>
+      ${tagChips(id,3)}
     </div></div>`;}
 
 /* ============ EXPLORE (Zillow-style: one surface, list ⇄ map, same data) ============ */
@@ -1569,10 +1704,15 @@ function realEventsBlock(){
 // LIST VIEW — the soul of Let's Link: your people, your interests, sorted by distance.
 // Every tile is either REAL (pulled from OSM/Ticketmaster) or DEMO (seeded). No fake "live" genre.
 function renderExploreList(){
-  const allBiz=Object.keys(biz).filter(id=>matchQ(biz[id].n,biz[id].cat+" "+biz[id].hood)&&catMatchBiz(id)&&!isHidden("biz",id));
-  const allEv=Object.keys(events).filter(id=>matchQ(events[id].n,events[id].loc)&&catMatchEvent(id)&&!isHidden("event",id));
+  const allBiz=Object.keys(biz).filter(id=>matchQ(biz[id].n,biz[id].cat+" "+biz[id].hood)&&catMatchBiz(id)&&!isHidden("biz",id)&&hasTag(id));
+  const allEv=Object.keys(events).filter(id=>matchQ(events[id].n,events[id].loc)&&catMatchEvent(id)&&!isHidden("event",id)&&hasTag(id));
   let body;
-  if(searchQ){
+  if(tagFilter){
+    const bz=sortIds(allBiz), ev=sortIds(allEv);
+    body=`<div class="tagfilterbar">Showing <b>#${tagFilter}</b><button class="x" ${da('clearTagFilter')}>✕ clear</button></div>
+      <div class="grid">${ev.map(e=>eventTile(e)).join("")}${bz.map(b=>bizTile(b)).join("")}</div>
+      ${(!ev.length&&!bz.length)?'<div class="empty">Nothing tagged #'+tagFilter+' yet.</div>':''}`;
+  }else if(searchQ){
     const bz=sortIds(allBiz), ev=sortIds(allEv);
     body=`<div class="sect">Results for "${searchQ}"</div>
       <div class="grid">${ev.map(e=>eventTile(e)).join("")}${bz.map(b=>bizTile(b)).join("")}</div>
@@ -1603,11 +1743,11 @@ function renderExploreList(){
 }
 function onSearch(v){searchQ=v;render();}
 function bizRow(id){const b=biz[id];return `<div class="eco" ${da('open','biz',id)}>
-  <div class="ic">${b.ic}</div><div><div class="nm">${b.n}</div>
+  <div class="ic">${svic(bizIcon(b.cat),18)}</div><div><div class="nm">${b.n}</div>
   <div class="ds">${b.cat} · <span class="stars">★${b.r}</span> · 📍 ${b.hood} · ${miles(id)}</div></div>
   <div class="go">›</div></div>`;}
 function eventRow(id){const e=events[id];return `<div class="eco" ${da('open','event',id)}>
-  <div class="ic">📅</div><div><div class="nm">${e.n}</div>
+  <div class="ic">${svic('calendar',18)}</div><div><div class="nm">${e.n}</div>
   <div class="ds">${e.date} · 📍 ${e.loc} · ${miles(id)}</div></div><div class="go">›</div></div>`;}
 
 /* ============ EVENTS LIST ============ */
@@ -1848,7 +1988,7 @@ function renderEvent(id){
     const b=biz[ref],u=users[ref];
     if(b)return `<div class="tile" ${da('open','biz',ref)}>
       <div class="tileimg" style="${imgStyle(photoUrl(ref,300,180),posterFor(b.cat),78)}">
-        <span class="scrim"></span><span class="badge">${b.ic}</span><span class="rate">★ ${b.r}</span></div>
+        <span class="scrim"></span><span class="badge">${svic(bizIcon(b.cat),13)}</span><span class="rate">★ ${b.r}</span></div>
       <div class="cap"><div class="capttl" style="font-size:13px">${b.n}</div>
       <div class="caploc">${role}</div></div></div>`;
     if(u)return `<div class="tile" ${da('open','user',ref)}>
@@ -1867,7 +2007,7 @@ function renderEvent(id){
       return eventMode==="hire"?isHire:!isHire;
     });
     if(!kept.length)continue;
-    eco+=`<div class="sect">${sect}</div><div class="grid">`;
+    eco+=`<div class="sect">${svic(sectIcon(sect),16)}${sectText(sect)}</div><div class="grid">`;
     eco+=kept.map(([ref,role])=>ecoTile(ref,role)).join("")+`</div>`;
   }
   if(!eco)eco=`<div class="empty">Nothing in this view yet.</div>`;
@@ -1894,6 +2034,7 @@ function renderEvent(id){
       ${users[e.host]?av(e.host):'<span class="ic" style="width:26px;height:26px;font-size:14px">🏢</span>'}
       <span class="meta">Hosted by <b style="color:var(--ink)">${host.name}</b></span></div>
     <p class="meta" style="line-height:1.5;color:var(--sub);margin:8px 0 12px">${e.d}</p>
+    ${tagChips(id)}
     ${fa.length?`<div class="social">${fa.map(u=>av(u)).join("")}<span class="who"><b>${fa.map(u=>users[u].name.split(" ")[0]).join(", ")}</b> ${fa.length>1?'are':'is'} going</span></div>`:''}
     <button class="btn ${going?'g':'gold'}" ${da('markAttending',id)}>${going?'✓ You are going — tap to manage':'＋ Mark attending'}</button>
   </div></div>
@@ -1935,7 +2076,7 @@ function renderBiz(id){
   let revs=b.rev;
   if(reviewFilter==="follow")revs=b.rev.filter(([u])=>f.includes(u)||u===me);
   setView(`<button class="backbtn" ${da('back')}>‹ Back</button>
-  <div class="card"><div class="banner biz"><span class="tag">${b.ic} ${b.cat}</span></div>
+  <div class="card"><div class="banner biz"><span class="tag">${svic(bizIcon(b.cat),13)} ${b.cat}</span></div>
   <div class="pad">
     <div class="title" style="font-size:20px">${b.n}${b.verified?' '+vbadge():''}</div>
     ${b.verified?`<div class="vrow" ${da('verifyInfo')}><span class="vbadge" style="position:static;display:inline-flex">✔</span> Verified business · credentials confirmed</div>`:''}
@@ -2159,7 +2300,7 @@ function renderUser(id){
     <div class="pgrid">${places.map(([bid,rating])=>{const b=biz[bid];if(!b)return'';
       return `<div class="pbeen" ${da('open','biz',bid)}>
         <div class="pi" style="${imgStyle(photoUrl(bid,300,180),posterFor(b.cat))}"><span class="scrim"></span></div>
-        <div class="pn"><div class="pnn">${b.ic} ${b.n}</div><div class="pnr">${'★'.repeat(rating)} rated ${rating}.0</div></div></div>`;
+        <div class="pn"><div class="pnn">${svic(bizIcon(b.cat),15)} ${b.n}</div><div class="pnr">${'★'.repeat(rating)} rated ${rating}.0</div></div></div>`;
     }).join("")}</div>`;
 
   // listings owned by this user (created businesses + events) — shareable
