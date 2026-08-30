@@ -451,7 +451,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v69</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v70</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -470,7 +470,7 @@ function __showErr(title, detail){
   var v=document.getElementById("view");
   var html='<div style="padding:20px;color:#ff5470;font-size:12px;font-family:monospace;line-height:1.5;word-break:break-word">'+
     '<b>⚠️ '+title+'</b><br><br>'+String(detail).replace(/</g,"&lt;").slice(0,900)+
-    '<br><br><span style="color:#888">v68 diag</span></div>';
+    '<br><br><span style="color:#888">v70 diag</span></div>';
   if(v)v.innerHTML=html;
   try{ var t=document.getElementById("toast"); if(t){t.textContent=String(detail).slice(0,120); t.className="show";} }catch(_){}
 }
@@ -3497,9 +3497,10 @@ function bootRender(){
   // restore a previously granted location so the first paint is already local
   try{const saved=JSON.parse(localStorage.getItem("ll_myloc")||"null");
     if(saved&&saved.length===2){GEO._me=saved;locLabel="your location";}}catch(e){}
-  try{ bootRender(); }catch(e){ try{ localStorage.removeItem(LS_KEY);localStorage.removeItem('ll_myloc'); }catch(_){}
-    var v=document.getElementById('view'); if(v)v.innerHTML='<div style="padding:24px;color:var(--sub);font-size:14px;line-height:1.6">Reloading a clean session…</div>';
-    setTimeout(function(){ try{ me=null; render(); }catch(_){ location.reload(); } },50); return; }
+  try{ bootRender(); }catch(e){
+    // Surface the REAL caught exception (try/catch is NOT cross-origin masked, unlike window.onerror)
+    __showErr('BOOT CRASH (real error):', (e&&(e.stack||e.message))?String(e.stack||e.message):String(e));
+    return; }
   if(!navigator.geolocation)return;
   // Geolocation needs a secure context. On http:// (or standalone quirks) it throws/blocks.
   // Guard the whole thing so a geo failure can NEVER crash boot.
@@ -3535,7 +3536,7 @@ function bootRender(){
         // Clear any old caches so a fresh SW rebuilds them cleanly.
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {
-            keys.forEach(function (k) { if (k !== 'letslink-v69') caches.delete(k); });
+            keys.forEach(function (k) { if (k !== 'letslink-v70') caches.delete(k); });
           }).catch(function(){});
         }
         // Register the current SW; if one updates, take over quietly.
