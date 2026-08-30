@@ -1,13 +1,15 @@
 // Let's Link — Service Worker
 // Bump CACHE version on each deploy to force clients to refresh cached assets.
-const CACHE = 'letslink-v68';
+const CACHE = 'letslink-v69';
 const CORE = [
   './',
   './index.html',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/apple-touch-icon.png'
+  './icons/apple-touch-icon.png',
+  './vendor/leaflet/leaflet.js',
+  './vendor/leaflet/leaflet.css'
 ];
 
 self.addEventListener('install', (event) => {
