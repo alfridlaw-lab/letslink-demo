@@ -451,7 +451,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v76</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v77</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -872,7 +872,12 @@ const OP={
   coach_bo:"img/crew/nami.png",       // Tiffany → Nami
   tati_makes:"img/crew/garp.png",     // Keno → Garp
 };
+// User-customizable profile assets (persisted per-account in saveState).
+const BANNER={};  // BANNER[id] = cover image dataURL/URL
+const BIO={};      // BIO[id] = about/bio text
 const uphoto=(id)=>OP[id]||null;
+const ubanner=(id)=>BANNER[id]||null;
+const ubio=(id)=>(BIO[id]!=null?BIO[id]:null);
 const photoUrl=(id,w,h)=>PHOTO[id]?`https://images.unsplash.com/photo-${PHOTO[id]}?w=${w||500}&h=${h||300}&fit=crop`:null;
 function posterFor(cat){cat=(cat||"").toLowerCase();
   if(cat.includes("seafood")||cat.includes("african")||cat.includes("brunch")||cat.includes("vietnam")||cat.includes("vendor"))return POSTER.food;
@@ -1205,7 +1210,11 @@ function saveState(){
       attending,
       newCount,
       // persist the current user's follow graph so connections survive reloads
-      follows: me?(follows[me]||[]):[]
+      follows: me?(follows[me]||[]):[],
+      // persist profile customization so avatar/banner/bio survive relaunch
+      avatar: me?(OP[me]||null):null,
+      banner: me?(BANNER[me]||null):null,
+      bio: me?(BIO[me]||null):null
     };
     localStorage.setItem(LS_KEY,JSON.stringify(data));
   }catch(e){}
@@ -1232,6 +1241,10 @@ function loadState(){
     me=d.me;
     // restore follow graph for this user so connections survive reloads
     if(Array.isArray(d.follows))follows[d.me]=d.follows.slice();
+    // restore profile customization (avatar/banner/bio) so it survives relaunch
+    if(d.avatar)OP[d.me]=d.avatar;
+    if(d.banner)BANNER[d.me]=d.banner;
+    if(d.bio!=null)BIO[d.me]=d.bio;
     return true;
   }catch(e){return false;}
 }
@@ -1531,7 +1544,7 @@ ACTIONS={
   saveLocPick:()=>{const nm=fval("loc_name");if(nm)pendingLoc=Object.assign(pendingLoc||{},{label:nm});if(!pendingLoc||(!pendingLoc.label&&pendingLoc.lat==null)){toast("Name a place or drop a pin first");return;}openSheet(sheetCreate(locPickKind));toast("📍 Location set: "+((pendingLoc&&pendingLoc.label)||"pinned"));},
   backToCreate:()=>{openSheet(sheetCreate(locPickKind));},
   openSocial:(k,handle)=>{const u=socialUrl(k,handle);try{window.open(u,"_blank");}catch(e){}toast("Opening "+(SOCIAL_META[k]?SOCIAL_META[k][0]:k));},
-  menuItem:(label)=>openSheet(sheetSetting(label)),
+  menuItem:(label)=>{ if(label==="Profile banner")return openSheet(sheetEditBanner()); openSheet(sheetSetting(label)); },
   toggleSetting:(key)=>{settingsPrefs[key]=!settingsPrefs[key];saveState&&saveState();openSheet(sheetSetting(key));toast(settingsPrefs[key]?'On':'Off');},
   mapOpen:(type,id)=>{open(type,id);},
   setCat:(c)=>setCat(c),
@@ -1593,6 +1606,15 @@ ACTIONS={
   toggleEndorsed:()=>{showEndorsed=!showEndorsed;render();},
   toggleBizAccount:()=>{bizAccount=!bizAccount;render();toast(bizAccount?'🏢 Business account ON':'Switched back to personal');},
   editBooking:()=>openSheet(sheetBooking()),
+  editProfile:()=>openSheet(sheetEditProfile()),
+  editBanner:()=>openSheet(sheetEditBanner()),
+  pickBannerFile:()=>{const f=$("#bannerFileInput");if(f){if(!f._wired){f.addEventListener("change",bannerFile);f._wired=true;}f.click();}},
+  editProfilePhoto:()=>editProfilePhoto(),
+  pickMyAviFile:()=>pickMyAviFile(),
+  setMyAviGen:(i)=>setMyAviGen(i),
+  removeMyAvi:()=>removeMyAvi(),
+  saveProfileEdits:()=>saveProfileEdits(),
+  removeBanner:()=>{if(me){delete BANNER[me];saveState&&saveState();closeSheet();render();scrollTop();toast("Cover photo removed");}},
   saveBooking:()=>saveBooking(),
   bookService:(id)=>bookService(id),
   recBiz:(id)=>recBiz(id),
@@ -3006,10 +3028,17 @@ function renderProfile(){
   const followingCount=(follows[me]||[]).length;
   const followerCount=followersOf(me).length;
   setView(`<div class="h1">You</div>
-  <div class="card"><div class="pad" style="text-align:center;padding:22px 16px 16px">
-    ${av(me,66)}<div class="title" style="margin-top:10px;font-size:20px">${u.name} ${u.star?'⭐':''}</div>
+  <div class="card" style="overflow:hidden">
+    <div class="profbanner" style="${ubanner(me)?`background-image:url('${ubanner(me)}');background-size:cover;background-position:center`:`background:linear-gradient(135deg,${u.c||'#00c2a8'},#7c5cff)`};height:96px;position:relative">
+      <span class="scrim" style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.35))"></span>
+      <button class="editbanner" ${da('editBanner')} style="position:absolute;right:10px;top:10px;z-index:2;background:rgba(0,0,0,.5);border:0;color:#fff;border-radius:20px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">📷 Edit cover</button>
+    </div>
+    <div class="pad" style="text-align:center;padding:0 16px 16px;margin-top:-34px;position:relative;z-index:2">
+    <div style="display:inline-block;border:3px solid var(--card,#161a22);border-radius:50%">${av(me,66)}</div><div class="title" style="margin-top:8px;font-size:20px">${u.name} ${u.star?'⭐':''}</div>
     <p class="meta">${u.h}</p>
     <p class="meta" style="margin-top:6px;color:var(--sub)">${u.vibe}</p>
+    ${ubio(me)?`<p class="probio" style="margin-top:10px;color:var(--ink);font-size:14px;line-height:1.5;white-space:pre-wrap">${esc(ubio(me))}</p>`:''}
+    <button class="btn g" style="margin-top:12px;width:auto;padding:8px 18px;font-size:13px" ${da('editProfile')}>✏️ Edit profile</button>
     <div class="ffrow">
       <div class="ffstat" ${da('showFollowing')}><b>${followingCount}</b><span>Following</span></div>
       <div class="ffstat" ${da('showFollowers')}><b>${(users[me]&&users[me].foll)?users[me].foll+'k':followerCount}</b><span>Followers</span></div>
@@ -3157,11 +3186,66 @@ function sheetCustomize(){
   <p class="meta" style="margin:0 0 10px">Make the app yours.</p>
   ${menuOpt('🌙','Theme (Dark · on)','menuItem','Theme')}
   ${menuOpt('🎨','Accent color','menuItem','Accent color')}
-  ${menuOpt('🖼️','Profile banner','menuItem','Profile banner')}
+  ${menuOpt('🖼️','Profile banner','editBanner')}
+  ${menuOpt('✏️','Edit profile (photo, bio, name)','editProfile')}
   ${menuOpt('🔤','Text size','menuItem','Text size')}
   ${menuOpt('🧭','Default tab on open','menuItem','Default tab')}
   ${menuOpt('🏷️','Interests & feed tuning','menuItem','Interests')}
   <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Close</button>`;
+}
+// ===== Profile customization editors (avatar + banner + bio + name/handle) =====
+function sheetEditProfile(){
+  const u=users[me]||{};
+  const curAvi=uphoto(me);
+  return `<h3>✏️ Edit profile</h3>
+  <p class="meta" style="margin:0 0 12px">Make this space yours. Changes save to this device.</p>
+  <div style="text-align:center;margin-bottom:14px">
+    <div style="display:inline-block;position:relative">${av(me,72)}
+      <span style="position:absolute;right:-2px;bottom:-2px;background:var(--brand);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid var(--card,#161a22)">📷</span>
+    </div>
+    <div><button class="btn g" style="margin-top:8px;width:auto;padding:7px 16px;font-size:13px" ${da('editProfilePhoto')}>Change profile photo</button></div>
+  </div>
+  <div class="fsec">Display name</div>
+  <input class="finput" id="epName" placeholder="Your name" value="${esc(u.name||'')}">
+  <div class="fsec">Username</div>
+  <input class="finput" id="epHandle" placeholder="@handle" value="${esc(u.h||'')}">
+  <div class="fsec">Tagline</div>
+  <input class="finput" id="epVibe" placeholder="A short line under your name" value="${esc(u.vibe||'')}">
+  <div class="fsec">Bio</div>
+  <textarea class="finput" id="epBio" rows="4" placeholder="Tell people who you are, what you're into, what you host…">${esc(ubio(me)||'')}</textarea>
+  <button class="btn p" style="margin-top:14px" ${da('saveProfileEdits')}>Save profile</button>
+  <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button>`;
+}
+function saveProfileEdits(){
+  if(!me)return;
+  const box=$("#sheetbox");
+  const g=(id)=>{const el=box.querySelector("#"+id);return el?el.value:undefined;};
+  const name=(g("epName")||"").trim();
+  let handle=(g("epHandle")||"").trim();
+  const vibe=(g("epVibe")||"").trim();
+  const bio=(g("epBio")||"");
+  if(!users[me])users[me]={};
+  if(name)users[me].name=name;
+  if(handle){ if(handle[0]!=="@")handle="@"+handle; users[me].h=handle; }
+  users[me].vibe=vibe||users[me].vibe;
+  BIO[me]=bio.trim();
+  saveState&&saveState();
+  // reflect name change in the bottom nav avatar/name
+  const mn=$("#meName");if(mn&&users[me].name)mn.textContent=users[me].name.split(" ")[0];
+  closeSheet();render();scrollTop();
+  toast("✓ Profile updated");
+}
+function sheetEditBanner(){
+  const cur=ubanner(me);
+  return `<h3>🖼️ Cover photo</h3>
+  <p class="meta" style="margin:0 0 12px">Set the banner across the top of your profile.</p>
+  <div style="border-radius:14px;overflow:hidden;margin-bottom:14px">
+    <div style="${cur?`background-image:url('${cur}');background-size:cover;background-position:center`:`background:linear-gradient(135deg,var(--brand,#00c2a8),#7c5cff)`};height:120px"></div>
+  </div>
+  <div class="uploader" ${da('pickBannerFile')}><div class="upi">📤</div><div class="upt">Upload a cover photo</div><div class="ups">From your camera roll</div></div>
+  ${cur?`<button class="btn g" style="margin-top:10px" ${da('removeBanner')}>Remove cover</button>`:''}
+  <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Done</button>
+  <input type="file" id="bannerFileInput" accept="image/*" style="display:none">`;
 }
 function sheetSwitch(){
   return `<h3>🔄 Switch account</h3>
@@ -3723,6 +3807,41 @@ function onboardAviFile(ev){
   rd.onerror=function(){ toast('Could not read that image'); };
   rd.readAsDataURL(f);
 }
+// ===== Existing-user avatar + banner file readers (write straight to the live user) =====
+function editProfilePhoto(){
+  if(!me)return;
+  var gen=(typeof GEN_AVIS!=='undefined'?GEN_AVIS:[]).map(function(u,i){
+    return `<div class="pshot" style="background-image:url('${u}');background-color:#141a22;background-size:cover;border-radius:50%;width:56px;height:56px;cursor:pointer" ${da('setMyAviGen',String(i))}></div>`;
+  }).join("");
+  openSheet(`<h3>📷 Profile photo</h3>
+  <p class="meta" style="margin:0 0 12px">Upload your own or pick a generated one.</p>
+  <div class="uploader" ${da('pickMyAviFile')}><div class="upi">📤</div><div class="upt">Upload a photo</div><div class="ups">From your camera roll</div></div>
+  ${gen?`<div class="fsec" style="margin-top:12px">Or pick a generated avatar</div><div style="display:flex;gap:10px;flex-wrap:wrap">${gen}</div>`:''}
+  ${uphoto(me)?`<button class="btn g" style="margin-top:12px" ${da('removeMyAvi')}>Remove photo</button>`:''}
+  <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button>
+  <input type="file" id="myAviFileInput" accept="image/*" style="display:none">`);
+  var fi=document.getElementById("myAviFileInput");
+  if(fi)fi.addEventListener("change",myAviFile);
+}
+function pickMyAviFile(){ var f=document.getElementById("myAviFileInput"); if(f)f.click(); }
+function myAviFile(ev){
+  var f=ev&&ev.target&&ev.target.files&&ev.target.files[0]; if(!f||!me)return;
+  if(!/^image\//.test(f.type)){toast('Pick an image file');return;}
+  var rd=new FileReader();
+  rd.onload=function(){ OP[me]=String(rd.result); saveState&&saveState(); closeSheet(); render(); scrollTop(); toast('Profile photo updated'); };
+  rd.onerror=function(){ toast('Could not read that image'); };
+  rd.readAsDataURL(f);
+}
+function setMyAviGen(i){ if(!me)return; var u=(typeof GEN_AVIS!=='undefined'?GEN_AVIS:[])[+i]; if(!u)return; OP[me]=u; saveState&&saveState(); closeSheet(); render(); scrollTop(); toast('Avatar updated'); }
+function removeMyAvi(){ if(!me)return; delete OP[me]; saveState&&saveState(); closeSheet(); render(); scrollTop(); toast('Photo removed'); }
+function bannerFile(ev){
+  var f=ev&&ev.target&&ev.target.files&&ev.target.files[0]; if(!f||!me)return;
+  if(!/^image\//.test(f.type)){toast('Pick an image file');return;}
+  var rd=new FileReader();
+  rd.onload=function(){ BANNER[me]=String(rd.result); saveState&&saveState(); closeSheet(); render(); scrollTop(); toast('Cover photo updated'); };
+  rd.onerror=function(){ toast('Could not read that image'); };
+  rd.readAsDataURL(f);
+}
 function onboardSubmit(){
   captureOnboardForm();
   const name=(onboardForm.name||"").trim()||"New User";
@@ -3809,7 +3928,7 @@ function bootRender(){
         // Clear any old caches so a fresh SW rebuilds them cleanly.
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {
-            keys.forEach(function (k) { if (k !== 'letslink-v76') caches.delete(k); });
+            keys.forEach(function (k) { if (k !== 'letslink-v77') caches.delete(k); });
           }).catch(function(){});
         }
         // Register the current SW; if one updates, take over quietly.
