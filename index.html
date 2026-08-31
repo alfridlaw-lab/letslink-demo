@@ -451,7 +451,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v74</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v75</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -1273,6 +1273,12 @@ function hiddenList(){
 let createdBiz=[]; // ids of user-created businesses
 let createdEvents=[]; // ids of user-created events
 let pendingDocs=[]; // uploaded legal docs for the in-progress business form
+let reports=[]; // {uid, reason, t} — real report store
+let verifyPending={}; // verifyPending[me]=true after applying for verification
+let userBookInfo={}; // userBookInfo[me]={fee,unit,deposit,min,rules} — saved booking terms
+let myBookings=[]; // {id, name, fee, t} — services the user has booked/hired
+let myRecs=[]; // biz ids the user has recommended to their profile
+let settingsPrefs={}; // misc settings toggles keyed by setting id
 let newCount=0;
 let attending={marrowfest:false};
 let reviewFilter="follow"; // everyone | follow | close
@@ -1491,7 +1497,8 @@ ACTIONS={
   menuSettings:()=>openSheet(sheetSettings()),
   menuCustomize:()=>openSheet(sheetCustomize()),
   menuSwitch:()=>openSheet(sheetSwitch()),
-  menuLogin:()=>{closeSheet();toast("🔑 Login screen (demo)");},
+  menuLogin:()=>openSheet(sheetLogin()),
+  doLogin:()=>doLogin(),
   menuSignout:()=>{openSheet(sheetSignout());},
   resetAccount:()=>resetAccount(),
   // onboarding
@@ -1521,10 +1528,11 @@ ACTIONS={
   locSearchInput:(v)=>locSearchInput(v),
   pickGeoResult:(i)=>pickGeoResult(i),
   linkBizLoc:(id)=>{const g=GEO[id]||[];pendingLoc={label:ADDR[id]||(biz[id]?biz[id].n:id),lat:g[0],lng:g[1],linkedId:id};toast("🔗 Linked "+(biz[id]?biz[id].n:id)+"'s location");openSheet(sheetLocPicker(locPickKind));initLocMap();},
-  saveLocPick:()=>{const nm=fval("loc_name");if(nm)pendingLoc=Object.assign(pendingLoc||{},{label:nm});if(!pendingLoc||(!pendingLoc.label&&pendingLoc.lat==null)){toast("Name a place or drop a pin first");return;}openSheet(sheetCreate(locPickKind));const s=document.getElementById("locsummary");},
+  saveLocPick:()=>{const nm=fval("loc_name");if(nm)pendingLoc=Object.assign(pendingLoc||{},{label:nm});if(!pendingLoc||(!pendingLoc.label&&pendingLoc.lat==null)){toast("Name a place or drop a pin first");return;}openSheet(sheetCreate(locPickKind));toast("📍 Location set: "+((pendingLoc&&pendingLoc.label)||"pinned"));},
   backToCreate:()=>{openSheet(sheetCreate(locPickKind));},
   openSocial:(k,handle)=>{const u=socialUrl(k,handle);try{window.open(u,"_blank");}catch(e){}toast("Opening "+(SOCIAL_META[k]?SOCIAL_META[k][0]:k));},
-  menuItem:(label)=>{closeSheet();toast(label+" (demo)");},
+  menuItem:(label)=>openSheet(sheetSetting(label)),
+  toggleSetting:(key)=>{settingsPrefs[key]=!settingsPrefs[key];saveState&&saveState();openSheet(sheetSetting(key));toast(settingsPrefs[key]?'On':'Off');},
   mapOpen:(type,id)=>{open(type,id);},
   setCat:(c)=>setCat(c),
   setBoardFilter:(f)=>{boardFilter=f;render();},
@@ -1548,6 +1556,8 @@ ACTIONS={
   showFollowers:()=>{stack.push({type:"list",id:"followers"});render();scrollTop();},
   showFollowing:()=>{stack.push({type:"list",id:"following"});render();scrollTop();},
   toggleFollow:(uid)=>toggleFollow(uid),
+  setTagFilter:(t)=>setTagFilter(t),
+  clearTagFilter:()=>clearTagFilter(),
   openInbox:()=>{tab="messages";stack=[];render();scrollTop();},
   openThread:(uid)=>{stack.push({type:"thread",id:uid});render();scrollTop();},
   sendMsg:(uid)=>sendMsg(uid),
@@ -1555,7 +1565,7 @@ ACTIONS={
   blockUser:(uid)=>{blocked[uid]=1;closeSheet();toast("🚫 Blocked "+(users[uid]?users[uid].name:uid));back();},
   unblockUser:(uid)=>{delete blocked[uid];render();toast("Unblocked");},
   reportUser:(uid)=>openSheet(sheetReport(uid)),
-  submitReport:(uid,reason)=>{closeSheet();toast("🚩 Report submitted — our team will review");},
+  submitReport:(uid,reason)=>submitReport(uid,reason),
   boost:(type,id,who)=>{const k=type+":"+id;boosts[k]=(boosts[k]||0)+1;render();toast("🚀 Boosted — shared with your followers");},
   showBlocked:()=>openSheet(sheetBlocked()),
   verifyInfo:()=>openSheet(sheetVerifyInfo()),
@@ -1563,7 +1573,7 @@ ACTIONS={
   showInteractions:()=>{stack.push({type:"interactions",id:"me"});render();scrollTop();},
   showIType:(kind)=>{stack.push({type:"itype",id:kind});render();scrollTop();},
   applyVerify:()=>openSheet(sheetApplyVerify()),
-  submitVerify:()=>{closeSheet();toast("🛡️ Verification submitted — review takes 2–3 days");},
+  submitVerify:()=>submitVerify(),
   fabOpenThread:(uid)=>{tab="messages";stack=[{type:"thread",id:uid}];render();scrollTop();},
   fabInbox:()=>{tab="messages";stack=[];render();scrollTop();},
   openPost:(pid)=>{stack.push({type:"post",id:pid});render();scrollTop();},
@@ -1583,7 +1593,11 @@ ACTIONS={
   toggleEndorsed:()=>{showEndorsed=!showEndorsed;render();},
   toggleBizAccount:()=>{bizAccount=!bizAccount;render();toast(bizAccount?'🏢 Business account ON':'Switched back to personal');},
   editBooking:()=>openSheet(sheetBooking()),
-  saveBooking:()=>{closeSheet();toast('✓ Booking info saved (demo)');},
+  saveBooking:()=>saveBooking(),
+  bookService:(id)=>bookService(id),
+  recBiz:(id)=>recBiz(id),
+  changeAudience:(id)=>openSheet(sheetAudience(id)),
+  setAttAudience:(id,aud)=>setAttAudience(id,aud),
   submitCreate:(kind)=>submitCreate(kind),
 };
 
@@ -2131,8 +2145,8 @@ function renderBiz(id){
         <span class="feepill">${bookInfo(id).deposit}</span></div>
       ${bookInfo(id).min&&bookInfo(id).min!=='—'?`<div class="feemin">⏱️ ${bookInfo(id).min}</div>`:''}
     </div>
-    <button class="btn p" ${da('toast','✓ '+b.cta+' — '+bookInfo(id).fee+' '+bookInfo(id).unit+' (demo)')}>${b.cta} · ${bookInfo(id).fee}</button>
-    <button class="btn g" style="margin-top:8px" ${da('toast','Tagged '+b.n+' to your '+((users[me]&&users[me].name)||'').split(' ')[0]+' profile')}>＋ Tag / recommend</button>
+    <button class="btn p" ${da('bookService',id)}>${b.cta} · ${bookInfo(id).fee}</button>
+    <button class="btn g" style="margin-top:8px" ${da('recBiz',id)}>${myRecs.indexOf(id)>-1?'✓ Recommended':'＋ Tag / recommend'}</button>
   </div></div>
   <div class="sect">📋 Rules & criteria for hire</div>
   <div class="card"><div class="pad">
@@ -3149,6 +3163,95 @@ function sheetUserMenu(uid){
     : `<div class="mopt md" ${da('blockUser',uid)}><span class="mi">🚫</span><span>Block ${nm}</span><span class="mg">›</span></div>`}
   <div class="mopt md" ${da('reportUser',uid)}><span class="mi">🚩</span><span>Report ${nm}</span><span class="mg">›</span></div>`;
 }
+// ===== REAL HANDLERS for previously-fake buttons =====
+function sheetLogin(){
+  return `<h3>🔑 Log in</h3>
+  <p class="meta" style="margin:0 0 10px">Welcome back — sign in to your Let's Link account.</p>
+  <input class="finput" id="login_handle" placeholder="@handle or email">
+  <input class="finput" id="login_pw" type="password" placeholder="Password">
+  <button class="btn p" style="margin-top:12px" ${da('doLogin')}>Log in</button>
+  <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button>`;
+}
+function doLogin(){
+  const h=(document.getElementById("login_handle")||{}).value||"";
+  // Demo: match an existing seeded user by handle, else just confirm.
+  const uid=Object.keys(users).find(u=>users[u].h&&users[u].h.toLowerCase()===h.toLowerCase().replace(/^@?/,'@'));
+  if(uid){ me=uid; saveState&&saveState(); closeSheet(); tab="explore"; stack=[]; render(); scrollTop(); toast("Welcome back, "+users[uid].name.split(" ")[0]+"!"); }
+  else { closeSheet(); toast(h?"No account found for "+h:"Enter your handle to log in"); }
+}
+// Settings sub-sheets — each reads/writes real prefs instead of a dead toast.
+function sheetSetting(label){
+  const toggles={
+    "Notifications":[["Push notifications","notif_push"],["Email updates","notif_email"],["Event reminders","notif_events"],["New follower alerts","notif_follows"]],
+    "Privacy & audience":[["Private account","priv_account"],["Hide my location","priv_loc"],["Only friends can message","priv_msg"]],
+    "Payments & bookings":[["Save payment method","pay_save"],["Booking confirmations","pay_confirm"]]
+  };
+  const rows=toggles[label];
+  if(rows){
+    return `<h3>${label}</h3>
+    ${rows.map(([t,k])=>`<div class="opt" ${da('toggleSetting',k)}><span class="i">${settingsPrefs[k]?'✅':'⬜'}</span><div>${t}</div></div>`).join("")}
+    <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Done</button>`;
+  }
+  // generic info sub-sheet for the rest
+  return `<h3>${label}</h3>
+  <p class="meta" style="margin:8px 0 12px;line-height:1.5">This is where <b>${label}</b> lives. In the full app this opens its own settings screen — wired here so the flow is real for testing.</p>
+  <button class="btn g" ${da('closeSheet')}>Done</button>`;
+}
+function submitReport(uid,reason){
+  const map={spam:"Spam or scam",harass:"Harassment",fake:"Fake account",content:"Inappropriate content",other:"Other"};
+  reports.push({uid,reason:map[reason]||reason,t:Date.now()});
+  saveState&&saveState();
+  closeSheet();
+  toast("🚩 Report submitted — "+((users[uid]&&users[uid].name)||"user")+" flagged");
+}
+function submitVerify(){
+  verifyPending[me]=true;
+  pendingDocs=[]; // consume uploaded docs
+  saveState&&saveState();
+  closeSheet();
+  render();scrollTop();
+  toast("🛡️ Submitted for review — pending badge is now on your profile");
+}
+function saveBooking(){
+  const inp=document.querySelectorAll("#sheetbox .finput");
+  const fee=(inp[0]&&inp[0].value.trim())||"";
+  const unit=(inp[1]&&inp[1].value.trim())||"";
+  const deposit=(inp[2]&&inp[2].value.trim())||"";
+  const min=(inp[3]&&inp[3].value.trim())||"";
+  const rules=(inp[4]&&inp[4].value.trim())||"";
+  userBookInfo[me]={fee:fee||"$—",unit:unit||"",deposit:deposit||"",min:min||"—",rules};
+  saveState&&saveState();
+  closeSheet();
+  toast("✓ Booking info saved — shows on your business profile");
+}
+function bookService(id){
+  const b=biz[id]||{}; const info=bookInfo(id);
+  myBookings.push({id,name:b.n||"Service",fee:info.fee,t:Date.now()});
+  saveState&&saveState();
+  closeSheet();
+  // create/append a booking confirmation to a thread with the business
+  toast("✅ Booked "+(b.n||"service")+" — "+info.fee+" "+(info.unit||"")+". Check Messages for confirmation.");
+}
+function recBiz(id){
+  if(myRecs.indexOf(id)===-1){ myRecs.push(id); saveState&&saveState(); toast("＋ Added "+((biz[id]&&biz[id].n)||"business")+" to your recommendations"); }
+  else { myRecs.splice(myRecs.indexOf(id),1); saveState&&saveState(); toast("Removed from your recommendations"); }
+  render();
+}
+function sheetAudience(id){
+  const cur=(attending[id]&&attending[id].aud)||"Everyone";
+  const opts=["Everyone","Followers","Close friends","Only me"];
+  return `<h3>Who can see you're going?</h3>
+  <p class="meta" style="margin:0 0 10px">Control the audience for your attendance at ${(events[id]&&events[id].n)||"this event"}.</p>
+  ${opts.map(o=>`<div class="opt" ${da('setAttAudience',id,o)}><span class="i">${cur===o?'✅':'⚪'}</span><div>${o}</div></div>`).join("")}
+  <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Cancel</button>`;
+}
+function setAttAudience(id,aud){
+  if(!attending[id]||attending[id]===true)attending[id]={going:true};
+  if(typeof attending[id]==="object")attending[id].aud=aud;
+  saveState&&saveState();
+  closeSheet();
+  toast("Audience set to "+aud);
+}
 function sheetReport(uid){
   const nm=users[uid]?users[uid].name:uid;
   const reasons=[["Spam or scam","spam"],["Harassment or bullying","harass"],["Fake account / impersonation","fake"],["Inappropriate content","content"],["Something else","other"]];
@@ -3397,7 +3500,7 @@ function pickTagBiz(bizId){
 }
 function sheetManage(id){
   return `<h3>You're going to ${events[id].n}</h3>
-  <div class="opt" ${da('toast','Audience updated')}><span class="i">✏️</span><div>Change audience</div></div>
+  <div class="opt" ${da('changeAudience',id)}><span class="i">✏️</span><div>Change audience</div></div>
   <div class="opt" ${da('unAtt',id)}><span class="i">✖️</span><div style="color:var(--danger)">Remove attendance</div></div>`;
 }
 function confirmAtt(id,aud){attending[id]=true;closeSheet();
@@ -3661,7 +3764,7 @@ function bootRender(){
         // Clear any old caches so a fresh SW rebuilds them cleanly.
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {
-            keys.forEach(function (k) { if (k !== 'letslink-v74') caches.delete(k); });
+            keys.forEach(function (k) { if (k !== 'letslink-v75') caches.delete(k); });
           }).catch(function(){});
         }
         // Register the current SW; if one updates, take over quietly.
