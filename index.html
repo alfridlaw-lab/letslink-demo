@@ -451,7 +451,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v77</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v78</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -541,18 +541,18 @@ const COLORS=["#ffb020","#7c5cff","#00c2a8","#ff6a3d","#4e9cff","#ff5470","#2ec7
 let ci=0; const col=()=>COLORS[ci++%COLORS.length];
 
 const users={
-  dee_eats:{name:"Keith Clements",h:"@keith_c",vibe:"Austin's unofficial food critic",star:1,foll:48,c:"#ffb020"},
-  priya_night:{name:"KC Clements",h:"@kc_clements",vibe:"Nightlife & music head",star:1,foll:52,c:"#2ec7a0"},
-  ruthie_roams:{name:"Haileigh Alexander",h:"@haileigh_a",vibe:"Traveler / stay-and-explore",c:"#c86dd7"},
-  sunny_flats:{name:"Charles Allen",h:"@charles_allen",vibe:"Family hero, free-weekend master",c:"#ffb020"},
-  marcus_vale:{name:"Markeith Bonner",h:"@markeith_b",vibe:"What's-happening tastemaker",star:1,foll:61,c:"#e0b34a"},
-  kojo_beats:{name:"Evin Bartlett",h:"@evin_b",vibe:"DJ/producer, East Austin",c:"#5ac8fa"},
-  harlow_lena:{name:"Kyle Ellis",h:"@kyle_ellis",vibe:"Style & rooftop culture",c:"#4e9cff"},
-  grace_lens:{name:"Jean Clements",h:"@jean_c",vibe:"Photographer, everyone's plug",c:"#7c5cff"},
-  sam_hostwell:{name:"Nola Clements",h:"@nola_c",vibe:"Superhost, tourism side",c:"#ff8a5c"},
-  coach_bo:{name:"Tiffany Moody",h:"@tiffany_moody",vibe:"Runs open-run hoops, East Austin",c:"#ff6a3d"},
-  tati_makes:{name:"Keno Clements",h:"@keno_c",vibe:"Maker & small-biz owner",c:"#5a7a9a"},
-  rob_secures:{name:"Rob Delacroix",h:"@rob_secures",vibe:"Event security & staffing",c:"#8fd14f"},
+  dee_eats:{name:"Riley Carter",h:"@riley_eats",vibe:"Austin's unofficial food critic",star:1,foll:48,c:"#ffb020"},
+  priya_night:{name:"Jordan Vance",h:"@jordan_nights",vibe:"Nightlife & music head",star:1,foll:52,c:"#2ec7a0"},
+  ruthie_roams:{name:"Sasha Bloom",h:"@sasha_roams",vibe:"Traveler / stay-and-explore",c:"#c86dd7"},
+  sunny_flats:{name:"Alex Rivera",h:"@alex_weekends",vibe:"Family hero, free-weekend master",c:"#ffb020"},
+  marcus_vale:{name:"Devon Price",h:"@devon_vale",vibe:"What's-happening tastemaker",star:1,foll:61,c:"#e0b34a"},
+  kojo_beats:{name:"Nico Sable",h:"@nico_beats",vibe:"DJ/producer, East Austin",c:"#5ac8fa"},
+  harlow_lena:{name:"Quinn Harlow",h:"@quinn_style",vibe:"Style & rooftop culture",c:"#4e9cff"},
+  grace_lens:{name:"Morgan Lee",h:"@morgan_lens",vibe:"Photographer, everyone's plug",c:"#7c5cff"},
+  sam_hostwell:{name:"Avery Stone",h:"@avery_hosts",vibe:"Superhost, tourism side",c:"#ff8a5c"},
+  coach_bo:{name:"Taylor Reed",h:"@coach_taylor",vibe:"Runs open-run hoops, East Austin",c:"#ff6a3d"},
+  tati_makes:{name:"Reese Kim",h:"@reese_makes",vibe:"Maker & small-biz owner",c:"#5a7a9a"},
+  rob_secures:{name:"Cameron Frost",h:"@cameron_secures",vibe:"Event security & staffing",c:"#8fd14f"},
 };
 // who each hero-persona follows (for review filtering)
 const follows={
@@ -585,13 +585,13 @@ const biz={
   green:{n:"Greenmark Landscaping",cat:"Landscaping & event grounds",hood:"South Austin",d:"Yards, patios, festival-grounds crews",r:4.6,cta:"Get a quote",ic:"🌿",
     rev:[["sam_hostwell","Two rental yards guest-ready in a day. They do festival grounds too.",5],["marcus_vale","Reliable for build-out. Grass looks intentional.",4]]},
   security:{n:"Delacroix Event Security",cat:"Security & staffing",hood:"Downtown",d:"Doors, wristbands, crowd flow",r:4.8,cta:"Hire for your event",ic:"🛡️",verified:1,verDocs:["State security license","Liability insurance cert","Bonded & background-checked"],
-    rev:[["priya_night","Calm, professional, never heavy-handed. Why big nights stay safe.",5],["marcus_vale","Rob's crew ran our gate like a Swiss watch.",5]]},
+    rev:[["priya_night","Calm, professional, never heavy-handed. Why big nights stay safe.",5],["marcus_vale","Their crew ran our gate like a Swiss watch.",5]]},
   snap:{n:"SnapPod Photo Booths",cat:"Photo booth service",hood:"South Congress",d:"Open-air booths, instant prints, GIFs",r:4.5,cta:"Book a booth",ic:"📸",
     rev:[["harlow_lena","Booked for the boutique launch. Line all night, on-brand prints.",5],["grace_lens","I shoot candids, they handle fun photos. Great tandem.",4]]},
   inn:{n:"The Congress Hotel",cat:"Boutique hotel",hood:"South Congress",d:"48 rooms, restored SoCo landmark",r:4.7,cta:"Book a room",ic:"🏨",verified:1,verDocs:["Business registration","Lodging permit","Health & safety inspection"],
     rev:[["ruthie_roams","Corner room over the water is worth planning a trip around.",5],["marcus_vale","Where I stash visiting artists. Walkable to everything.",5],["priya_night","Rolled in at 4am off a set, front desk didn't blink. Real ones.",5],["harlow_lena","SoCo at your doorstep. The rooftop at golden hour is the whole trip.",5],["grace_lens","Restored details everywhere — I keep finding new corners to shoot.",4],["dee_eats","Their little cafe does a serious flat white. Underrated breakfast.",4],["sunny_flats","Family suite was roomy, pool saved us. Walkable = no rental car.",5],["sam_hostwell","When my rentals are booked, this is where I send overflow guests. Never a complaint.",5]]},
-  hostwell:{n:"Hostwell Rentals",cat:"Airbnb host",hood:"East Austin & SoCo",d:"Sam's superhost portfolio",r:4.9,cta:"Book a stay",ic:"🔑",
-    rev:[["ruthie_roams","Sam leaves a hand-drawn map. Superhost for real.",5],["grace_lens","Pier loft light is unreal at sunrise. Booked twice.",5]]},
+  hostwell:{n:"Hostwell Rentals",cat:"Airbnb host",hood:"East Austin & SoCo",d:"A superhost's rental portfolio",r:4.9,cta:"Book a stay",ic:"🔑",
+    rev:[["ruthie_roams","They leave a hand-drawn map. Superhost for real.",5],["grace_lens","Pier loft light is unreal at sunrise. Booked twice.",5]]},
   suya:{n:"Suya Sista Cart",cat:"Food vendor (festival)",hood:"mobile — East Austin",d:"Skewers, spice, block-long lines",r:4.8,cta:"Pre-order",ic:"🍢",
     rev:[["marcus_vale","Every festival I've loved had this cart. Coincidence? No.",5],["priya_night","2am suya after The Foundry is spiritually necessary.",5]]},
   thread:{n:"ATX Thread Co.",cat:"Clothing & accessories",hood:"South Congress",d:"Austin merch people actually wear",r:4.6,cta:"Shop the drop",ic:"👕",
@@ -859,18 +859,21 @@ const PHOTO={
   thread:"1441984904996-e0b6ba687e04", // clothing store
 };
 // demo personas mapped to One Piece characters — images self-hosted in repo (no hotlink/referer issues)
+// Generic demo avatars (DiceBear generated) so real friends never see their own name/face duplicated.
+const _davi=(seed)=>"https://api.dicebear.com/8.x/thumbs/svg?radius=50&seed="+encodeURIComponent(seed);
 const OP={
-  dee_eats:"img/crew/luffy.png",      // Keith → Luffy
-  priya_night:"img/crew/zoro.png",    // KC → Zoro
-  ruthie_roams:"img/crew/hancock.png",// Haileigh → Boa Hancock
-  sunny_flats:"img/crew/sanji.png",   // Charles → Sanji
-  marcus_vale:"img/crew/usopp.png",   // Markeith → Usopp
-  kojo_beats:"img/crew/brook.png",    // Evin → Brook
-  harlow_lena:"img/crew/franky.png",  // Kyle → Franky
-  grace_lens:"img/crew/robin.png",    // Jean → Robin
-  sam_hostwell:"img/crew/chopper.png",// Nola → Chopper
-  coach_bo:"img/crew/nami.png",       // Tiffany → Nami
-  tati_makes:"img/crew/garp.png",     // Keno → Garp
+  dee_eats:_davi("demo-riley"),
+  priya_night:_davi("demo-jordan"),
+  ruthie_roams:_davi("demo-sasha"),
+  sunny_flats:_davi("demo-alex"),
+  marcus_vale:_davi("demo-devon"),
+  kojo_beats:_davi("demo-nico"),
+  harlow_lena:_davi("demo-quinn"),
+  grace_lens:_davi("demo-morgan"),
+  sam_hostwell:_davi("demo-avery"),
+  coach_bo:_davi("demo-taylor"),
+  tati_makes:_davi("demo-reese"),
+  rob_secures:_davi("demo-cameron"),
 };
 // User-customizable profile assets (persisted per-account in saveState).
 const BANNER={};  // BANNER[id] = cover image dataURL/URL
@@ -968,7 +971,7 @@ const socials={
   kojo_beats:{ig:"kojo.beats",tiktok:"kojobeats",sc:"kojobeats"},
   harlow_lena:{ig:"lena.harlow",tiktok:"lenaharlow",x:"lenaharlow"},
   grace_lens:{ig:"grace.lens",x:"gracelens",yt:"GraceLens"},
-  sam_hostwell:{ig:"hostwell.stays",fb:"sam.hostwell"},
+  sam_hostwell:{ig:"hostwell.stays",fb:"hostwell.stays"},
   coach_bo:{ig:"coachbo.hoops",x:"coachbo"},
   tati_makes:{ig:"tati.makes",tiktok:"tatimakes",fb:"tatiana.cruz"},
   rob_secures:{ig:"delacroix.security",fb:"delacroix.events",x:"delacroixsec"},
@@ -1142,7 +1145,7 @@ function followersOf(uid){return Object.keys(follows).filter(u=>(follows[u]||[])
 // threads keyed by the OTHER user id; each = array of {from, text, t}
 let threads={
   marcus_vale:[
-    {from:"marcus_vale",text:"Yo Keith, you pulling up to SXSW day 2?",t:"2:14 PM"},
+    {from:"marcus_vale",text:"Yo, you pulling up to SXSW day 2?",t:"2:14 PM"},
     {from:"me",text:"For sure. You got the pier stage lineup?",t:"2:16 PM"},
     {from:"marcus_vale",text:"Sending it now — Kojo headlines sunset 🔥",t:"2:16 PM"}],
   priya_night:[
@@ -1170,8 +1173,8 @@ let myInteractions=[
   {kind:"boost",icon:"🚀",text:"You boosted Coral & Cornbread",sub:"Shared with your followers",ref:["biz","coral"],t:"5h"},
   {kind:"attend",icon:"🎟️",text:"You’re attending SXSW",sub:"Downtown Austin · Mar 13–22",ref:["event","marrowfest"],t:"1d"},
   {kind:"comment",icon:"💬",text:"You commented on Mueller Farmers Market",sub:"“Can’t wait, bringing the kids.”",ref:["event","market"],t:"1d"},
-  {kind:"like",icon:"❤️",text:"You liked Priya’s review of The Foundry",sub:"“The room where the scene happens.”",ref:["biz","foundry"],t:"2d"},
-  {kind:"follow",icon:"➕",text:"You followed Markeith Bonner",sub:"",ref:["user","marcus_vale"],t:"3d"},
+  {kind:"like",icon:"❤️",text:"You liked Jordan’s review of The Foundry",sub:"“The room where the scene happens.”",ref:["biz","foundry"],t:"2d"},
+  {kind:"follow",icon:"➕",text:"You followed Devon Price",sub:"",ref:["user","marcus_vale"],t:"3d"},
 ];
 function threadPreview(uid){const t=threads[uid];if(!t||!t.length)return"";const last=t[t.length-1];
   return (last.from==="me"?"You: ":"")+last.text;}
@@ -2313,7 +2316,7 @@ const INVITE_SUGGEST={
   x:["@devon_h","@sara_writes","@marcus_atx"],
   tiktok:["@quickcuts","@austinfoodie","@djravey"],
   snap:["@bigmike","@lolap","@thekidcam"],
-  fb:["Andre Willis","Priya Nair","Sam Cole","Rae Dunn"],
+  fb:["Andre Willis","Robin Nash","Casey Cole","Rae Dunn"],
   yt:["ATXeats","NightlifeNow","CreatorKade"],
   twitch:["vibecheck_tv","atx_gamer","soundwave"],
   sc:["kojobeats","lofi.lena","basslinebo"],
@@ -3435,7 +3438,7 @@ function sheetNewPost(){
   <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Cancel</button>`;
 }
 function submitPost(kind){
-  // demo: create a stub post attributed to Keith and show it
+  // demo: create a stub post attributed to the demo user and show it
   const id="up"+(board.length+1);
   board.unshift({id,kind,by:me,cat:catFilter!=="all"?catFilter:"services",
     title:kind==="offer"?"Your service — available now":"Your request — looking for help",
@@ -3928,7 +3931,7 @@ function bootRender(){
         // Clear any old caches so a fresh SW rebuilds them cleanly.
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {
-            keys.forEach(function (k) { if (k !== 'letslink-v77') caches.delete(k); });
+            keys.forEach(function (k) { if (k !== 'letslink-v78') caches.delete(k); });
           }).catch(function(){});
         }
         // Register the current SW; if one updates, take over quietly.
