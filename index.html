@@ -266,6 +266,18 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 .finput{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:11px;
   padding:12px;font-size:14px;color:var(--ink);margin-bottom:9px;font-family:inherit;outline:none}
 .finput::placeholder{color:var(--dim)}
+.dtrow{display:flex;gap:9px;margin-bottom:9px}
+.dtpick{flex:1;display:flex;align-items:center;gap:9px;background:var(--card2);
+  border:1px solid var(--line);border-radius:11px;padding:11px 12px;cursor:pointer;min-width:0}
+.dtpick:focus-within{border-color:var(--brand)}
+.dtpick .dtic{font-size:17px;flex:0 0 auto}
+.dtinput{flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--ink);
+  font-size:14px;font-family:inherit;-webkit-appearance:none;appearance:none}
+.dtinput::-webkit-date-and-time-value{text-align:left}
+.dtinput::-webkit-calendar-picker-indicator{filter:invert(.7);cursor:pointer;opacity:.85}
+.dtcheck{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);
+  margin:0 2px 9px;cursor:pointer}
+.dtcheck input{width:16px;height:16px;accent-color:var(--brand)}
 .finfo{font-size:12px;color:var(--dim);background:var(--card2);border:1px dashed var(--line);
   border-radius:11px;padding:10px 12px;line-height:1.4}
 .createrow{display:flex;gap:10px;margin:2px 0}
@@ -451,7 +463,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v78</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v79</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -3559,7 +3571,15 @@ function sheetCreate(kind){
   if(isEv)return `<h3>🎉 Create an event</h3>
   <p class="meta" style="margin:0 0 10px">Post it, then tag every vendor, artist & service supporting it — each becomes bookable.</p>
   <input class="finput" id="f_name" placeholder="Event name (e.g. Rooftop Day Party)">
-  <input class="finput" id="f_date" placeholder="Date & time (e.g. Sat, Nov 8 · 4PM)">
+  <div class="fsec">🗓️ Date & time</div>
+  <div class="dtrow">
+    <label class="dtpick" for="f_dateonly"><span class="dtic">📅</span><input class="dtinput" type="date" id="f_dateonly"></label>
+    <label class="dtpick" for="f_timestart"><span class="dtic">🕒</span><input class="dtinput" type="time" id="f_timestart"></label>
+  </div>
+  <label class="dtcheck"><input type="checkbox" id="f_hasend" onchange="var r=document.getElementById('f_endrow');if(r)r.style.display=this.checked?'flex':'none';"> Add an end time</label>
+  <div class="dtrow" id="f_endrow" style="display:none">
+    <label class="dtpick" for="f_timeend"><span class="dtic">🏁</span><input class="dtinput" type="time" id="f_timeend"></label>
+  </div>
   <input class="finput" id="f_loc" placeholder="Neighborhood / area label (optional)">
   ${locField()}
   <textarea class="finput" id="f_desc" rows="2" placeholder="Short description"></textarea>
@@ -3649,6 +3669,34 @@ function mockUpload(){
   if(list)list.innerHTML=pendingDocs.map(d=>`<div class="upfile">📄 ${d} <span style="color:var(--brand)">✓ uploaded</span></div>`).join("");
   toast("📎 "+doc+" attached (demo)");
 }
+// Build the event's display date string from the native date/time pickers.
+// Format mirrors the seeded style, e.g. "Sat, Nov 8 · 4:00 PM" or "Sat, Nov 8 · 4:00 PM–9:00 PM".
+function fmtTime12(t){ // t = "HH:MM"
+  if(!t)return"";
+  var p=t.split(":"),h=+p[0],m=p[1]||"00";
+  var ap=h>=12?"PM":"AM"; var h12=h%12; if(h12===0)h12=12;
+  return h12+":"+m+" "+ap;
+}
+function buildEventDate(){
+  var d=fval("f_dateonly"); // "YYYY-MM-DD"
+  var ts=fval("f_timestart");
+  var hasEnd=(function(){var el=document.getElementById("f_hasend");return el&&el.checked;})();
+  var te=hasEnd?fval("f_timeend"):"";
+  var datePart="";
+  if(d){
+    var parts=d.split("-");
+    var dt=new Date(+parts[0],+parts[1]-1,+parts[2]);
+    if(!isNaN(dt)){
+      var days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      var mons=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      datePart=days[dt.getDay()]+", "+mons[dt.getMonth()]+" "+dt.getDate();
+    }
+  }
+  var timePart="";
+  if(ts){ timePart=fmtTime12(ts); if(te)timePart+="–"+fmtTime12(te); }
+  if(datePart&&timePart)return datePart+" · "+timePart;
+  return datePart||timePart||"";
+}
 function submitCreate(kind){
   const name=fval("f_name")||(kind==="event"?"Untitled Event":"Untitled Business");
   const loc=fval("f_loc")||"Austin";
@@ -3664,7 +3712,7 @@ function submitCreate(kind){
   if(kind==="event"){
     const id="newev"+newCount;
     const locLabel=(pendingLoc&&pendingLoc.label)||loc;
-    events[id]={n:name,host:me,date:fval("f_date")||"Date TBD",loc:locLabel,d:desc,att:[me],eco:{},created:1};
+    events[id]={n:name,host:me,date:buildEventDate()||"Date TBD",loc:locLabel,d:desc,att:[me],eco:{},created:1};
     applyLoc(id);
     if(GEO[id]==null)DIST[id]=(Math.random()*3+0.4).toFixed(1)*1; else DIST[id]=+distMiles(GEO[id][0],GEO[id][1]).toFixed(1);
     createdEvents.push(id);
@@ -3931,7 +3979,7 @@ function bootRender(){
         // Clear any old caches so a fresh SW rebuilds them cleanly.
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {
-            keys.forEach(function (k) { if (k !== 'letslink-v78') caches.delete(k); });
+            keys.forEach(function (k) { if (k !== 'letslink-v79') caches.delete(k); });
           }).catch(function(){});
         }
         // Register the current SW; if one updates, take over quietly.
