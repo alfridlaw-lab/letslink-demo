@@ -451,7 +451,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v75</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v76</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -1810,17 +1810,20 @@ function eventRow(id){const e=events[id];return `<div class="eco" ${da('open','e
 /* ============ EVENTS LIST ============ */
 /* ============ BOARD (business services marketplace) ============ */
 function postByName(p){
+  if(p.real&&p.bizname)return p.bizname; // real OSM business name
   if(users[p.by])return users[p.by].name;
   if(biz[p.by])return biz[p.by].n;
-  return p.by;
+  return p.by||"Local business";
 }
 function postAvatar(p){
+  if(p.real)return `<div class="pbadge">${p.ic||"📍"}</div>`;
   if(p.bizref&&biz[p.bizref])return `<div class="pbadge">${biz[p.bizref].ic}</div>`;
   if(users[p.by])return av(p.by,38);
   return `<div class="pbadge">🏢</div>`;
 }
 // resolve a board post's coordinates from its linked business or author, so we can show real distance
 function postGeo(p){
+  if(p.real&&p.lat!=null&&p.lng!=null)return [p.lat,p.lng]; // real OSM business = its actual coords
   if(p.bizref&&GEO[p.bizref])return GEO[p.bizref];
   if(GEO[p.by])return GEO[p.by];
   // fall back to a deterministic nearby point so every post has a stable distance
@@ -1970,8 +1973,47 @@ function promptCity(){
       toast("📍 "+locLabel);render();
     }).catch(()=>toast("Search failed — try again"));
 }
+// ===== REAL local businesses for the Board (pulled around GEO._me, like Explore) =====
+let boardBiz=[]; let boardBizFetching=false; let boardBizKey="";
+function fetchBoardBiz(){
+  const c=GEO._me; if(!c)return;
+  const key=c[0].toFixed(3)+","+c[1].toFixed(3);
+  if(boardBizFetching||boardBizKey===key)return; // already have this location's data
+  boardBizFetching=true; boardBizKey=key;
+  const d=0.06; // ~4mi box around the user
+  const s=(c[0]-d).toFixed(4),w=(c[1]-d).toFixed(4),n=(c[0]+d).toFixed(4),e=(c[1]+d).toFixed(4);
+  const q=`[out:json][timeout:12];(node["amenity"~"restaurant|cafe|bar|pub|fast_food"](${s},${w},${n},${e});node["shop"](${s},${w},${n},${e});node["tourism"~"hotel|gallery|attraction"](${s},${w},${n},${e}););out body 40;`;
+  fetch("https://overpass-api.de/api/interpreter",{method:"POST",body:q})
+    .then(r=>r.json()).then(dd=>{
+      const seen={}; boardBiz=[];
+      (dd.elements||[]).forEach(el=>{
+        if(!el.tags||!el.tags.name||!el.lat)return;
+        if(isChain(el))return;
+        if(seen[el.tags.name])return; seen[el.tags.name]=1;
+        const[key2,label,fk]=osmCat(el.tags);
+        boardBiz.push({
+          id:"osmb_"+el.id, real:true, kind:"offer", cat:fk||"food",
+          title:el.tags.name+" — open for business",
+          body:(label||"Local spot")+" near "+locLabel+". Real place pulled from the map — tap to view + reach out.",
+          loc:el.tags["addr:street"]||locLabel, when:"Now", by:null, bizname:el.tags.name,
+          ic:OSM_ICON[key2]||"📍", lat:el.lat, lng:el.lon
+        });
+      });
+      boardBizFetching=false;
+      if(tab==="board"&&boardView!=="map")renderBoard();
+    }).catch(()=>{boardBizFetching=false;});
+}
 function renderBoard(){
   if(boardView==="map")return renderBoardMap();
+  // kick off / refresh real local businesses for the user's current location
+  fetchBoardBiz();
+  // Real businesses near the user come FIRST; demo posts are clearly labeled + secondary.
+  const realPosts=boardBiz.filter(p=>{
+    if(boardFilter!=="all"&&p.kind!==boardFilter)return false;
+    if(catFilter!=="all"&&p.cat!==catFilter)return false;
+    if(searchQ&&!(p.title+" "+p.body+" "+p.loc).toLowerCase().includes(searchQ.toLowerCase()))return false;
+    return true;
+  }).sort((a,b)=>parseFloat(postMiles(a))-parseFloat(postMiles(b)));
   let posts=board.filter(p=>{
     if(boardFilter!=="all"&&p.kind!==boardFilter)return false;
     if(catFilter!=="all"&&p.cat!==catFilter)return false;
@@ -2000,11 +2042,14 @@ function renderBoard(){
     <div class="createbtn" ${da('newPost')}><div class="ci">➕</div><div class="ct">Post to the board</div>
     <div class="cs">Offer a service or post what you need</div></div>
   </div>
+  ${realPosts.length?`<div class="sect">✅ Real businesses near ${locLabel} <span style="color:var(--dim);font-weight:400;font-size:11px">· live from the map</span></div>
+    ${realPosts.map(postCard).join("")}`:(boardBizFetching?`<div class="sect">✅ Real businesses near you <span style="color:var(--dim);font-weight:400;font-size:12px">· loading…</span></div>`:'')}
+  <div class="sect" style="margin-top:14px">🧪 Demo posts <span style="color:var(--dim);font-weight:400;font-size:11px">· sample content for testing</span></div>
   ${posts.length?posts.map(postCard).join(""):'<div class="empty">Nothing here yet. Try another filter or post something.</div>'}
   <div style="height:10px"></div>`);
 }
 function renderPost(pid){
-  const p=board.find(x=>x.id===pid);
+  const p=board.find(x=>x.id===pid)||boardBiz.find(x=>x.id===pid);
   if(!p){setView(`<button class="backbtn" ${da('back')}>‹ Back</button><div class="empty">Post not found.</div>`);return;}
   const catMeta=CATS.find(c=>c[0]===p.cat)||["","🌐",""];
   const linkedBiz=p.bizref&&biz[p.bizref];
@@ -3261,7 +3306,7 @@ function sheetReport(uid){
   <button class="btn g" style="margin-top:12px" ${da('closeSheet')}>Cancel</button>`;
 }
 function sheetContact(pid){
-  const p=board.find(x=>x.id===pid);if(!p)return'';
+  const p=board.find(x=>x.id===pid)||boardBiz.find(x=>x.id===pid);if(!p)return'';
   const isReq=p.kind==="request";
   return `<h3>${isReq?'🙋 Offer your service':'📩 Reach out'}</h3>
   <p class="meta" style="margin:0 0 10px">${isReq?'Send '+postByName(p)+' your offer for “'+p.title+'”.':'Contact '+postByName(p)+' about “'+p.title+'”.'}</p>
@@ -3274,8 +3319,8 @@ function sheetContact(pid){
 }
 /* ============ FLOATING MESSENGER ============ */
 function reachOut(pid){
-  const p=board.find(x=>x.id===pid);if(!p){closeSheet();return;}
-  const who=p.by; // author of the post (a user id)
+  const p=board.find(x=>x.id===pid)||boardBiz.find(x=>x.id===pid);if(!p){closeSheet();return;}
+  const who=p.by||("biz_"+(p.id||"local")); // real biz posts have no user author — use a stable pseudo-id
   const isReq=p.kind==="request";
   // pull typed message if present, else a sensible default
   const boxes=document.querySelectorAll("#sheetbox .finput");
@@ -3764,7 +3809,7 @@ function bootRender(){
         // Clear any old caches so a fresh SW rebuilds them cleanly.
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {
-            keys.forEach(function (k) { if (k !== 'letslink-v75') caches.delete(k); });
+            keys.forEach(function (k) { if (k !== 'letslink-v76') caches.delete(k); });
           }).catch(function(){});
         }
         // Register the current SW; if one updates, take over quietly.
