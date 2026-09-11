@@ -470,7 +470,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v81</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v82</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -1802,6 +1802,73 @@ function realEventsBlock(){
   return `<div class="sect">✅ Real events near you <span style="color:var(--dim);font-weight:400;font-size:11px">· live from Ticketmaster</span></div>
     <div class="grid">${ev.map(e=>tmTile(e)).join("")}</div>`;
 }
+// ===== REAL establishments in the LIST view (map-independent) =====
+// Pull real OSM businesses/places around the user's home so category chips (Food/Nightlife/etc.) show ACTUAL spots, not demo.
+let listOSM=[]; let listOSMFetching=false; let listOSMDone=false; let listOSMKey="";
+function fetchListOSM(){
+  if(listOSMFetching)return; listOSMFetching=true;
+  const c=GEO._me;
+  // ~4mi bounding box around home
+  const dLat=0.058, dLng=0.058/Math.max(0.2,Math.cos(c[0]*Math.PI/180));
+  const s=(c[0]-dLat).toFixed(4),w=(c[1]-dLng).toFixed(4),n=(c[0]+dLat).toFixed(4),e=(c[1]+dLng).toFixed(4);
+  const q=`[out:json][timeout:20];(node["amenity"~"restaurant|cafe|bar|pub|fast_food|nightclub|ice_cream|food_court"](${s},${w},${n},${e});node["shop"](${s},${w},${n},${e});node["tourism"~"hotel|hostel|guest_house|motel|gallery|museum|attraction|theatre"](${s},${w},${n},${e});node["leisure"~"park|garden|sports_centre|fitness_centre|pitch|stadium"](${s},${w},${n},${e}););out body 120;`;
+  fetch("https://overpass-api.de/api/interpreter",{method:"POST",body:q})
+    .then(r=>r.json()).then(d=>{
+      const seen={};listOSM=[];
+      (d.elements||[]).forEach(el=>{
+        if(!el.tags||!el.tags.name||!el.lat)return;
+        if(typeof isChain==="function"&&isChain(el))return;
+        const[key,label,fk]=osmCat(el.tags);
+        const id="osm_"+el.id;if(seen[el.tags.name])return;seen[el.tags.name]=1;
+        listOSM.push({id,n:el.tags.name,cat:label,catKey:fk,ic:OSM_ICON[key]||"📍",lat:el.lat,lng:el.lon});
+      });
+      listOSMFetching=false;listOSMDone=true;listOSMKey=GEO._me.join(",");
+      if(tab==="explore"&&exploreView==="list"&&!stack.length)renderExploreList();
+    }).catch(()=>{listOSMFetching=false;listOSMDone=true;
+      if(tab==="explore"&&exploreView==="list"&&!stack.length)renderExploreList();});
+}
+// map osmCat's leisure result into sports where relevant (osmCat returns 'outdoors' for leisure)
+function listOSMCatKey(p){
+  return p.catKey;
+}
+// Real establishments block for the list — respects category filter, sorts by real distance.
+function realPlacesBlock(){
+  // refetch if home location changed
+  if(listOSMDone&&listOSMKey&&listOSMKey!==GEO._me.join(",")){listOSMDone=false;listOSM=[];}
+  if(!listOSMDone&&!listOSM.length){fetchListOSM();
+    return `<div class="sect">✅ Real places near you <span style="color:var(--dim);font-weight:400;font-size:12px">· loading…</span></div>`;}
+  let pl=listOSM.filter(p=>{
+    if(isHidden("osm",p.id))return false;
+    if(searchQ&&!(p.n+" "+p.cat).toLowerCase().includes(searchQ.toLowerCase()))return false;
+    if(catFilter!=="all"&&catFilter!=="events"&&p.catKey!==catFilter)return false;
+    return true;
+  });
+  pl.sort((a,b)=>distMiles(a.lat,a.lng)-distMiles(b.lat,b.lng));
+  pl=pl.slice(0,12);
+  if(!pl.length){
+    if(catFilter!=="all"&&catFilter!=="events")
+      return `<div class="sect">✅ Real places near you</div><div class="empty" style="padding:14px">No real ${(CATS.find(c=>c[0]===catFilter)||[])[2]||''} spots found nearby yet — try widening your location or flip to 🗺️ Map.</div>`;
+    return "";
+  }
+  return `<div class="sect">✅ Real places near you <span style="color:var(--dim);font-weight:400;font-size:11px">· live from OpenStreetMap</span></div>
+    <div class="grid">${pl.map(p=>listOSMTile(p)).join("")}</div>`;
+}
+// tile for a real OSM place in the LIST (real distance via distMiles)
+function listOSMTile(p){
+  const key=Object.keys(OSM_ICON).find(k=>OSM_ICON[k]===p.ic)||"place";
+  const ph=(CATSTOCK[key]||CATSTOCK.place);
+  const mi=distMiles(p.lat,p.lng);
+  return `<div class="tile osmtile" data-swipe="osm|${p.id}">
+    <div class="tileimg">
+      <span class="osmimg" style="background-image:url('https://images.unsplash.com/photo-${ph}?w=400&h=280&fit=crop')"></span>
+      <span class="osmgray"></span>
+      <span class="badge">${p.ic} ${p.cat.split(' ')[0]}</span>
+      <span class="dist">📍 ${mi} mi</span>
+      <span class="claimtag">📷 Add photo</span></div>
+    <div class="cap"><div class="capttl" style="font-size:13px">${p.n}</div>
+    <div class="capline">Real · from OpenStreetMap</div>
+    <div class="caploc" style="color:var(--dim)">Unclaimed · tap to claim &amp; add reviews</div></div></div>`;
+}
 // LIST VIEW — the soul of Let's Link: your people, your interests, sorted by distance.
 // Every tile is either REAL (pulled from OSM/Ticketmaster) or DEMO (seeded). No fake "live" genre.
 function renderExploreList(){
@@ -1820,15 +1887,22 @@ function renderExploreList(){
       ${(!ev.length&&!bz.length)?'<div class="empty">Nothing matched. Try a place, food, or event name. Flip to Map to pull real places &amp; events in any area.</div>':''}`;
   }else if(catFilter!=="all"){
     const bz=sortIds(allBiz), ev=sortIds(allEv);
+    const demoBlock=(bz.length||ev.length)
+      ? `<div class="sectgroup demo">🧪 Demo — seeded examples</div>
+         <div class="grid">${ev.map(e=>eventTile(e)).join("")}${bz.map(b=>bizTile(b)).join("")}</div>`
+      : '';
+    // REAL first (live events + live establishments for this category), demo underneath
     body=`<div class="sect">${(CATS.find(c=>c[0]===catFilter)||[])[2]||''} near you</div>
-      <div class="grid">${ev.map(e=>eventTile(e)).join("")}${bz.map(b=>bizTile(b)).join("")}</div>
-      ${(!bz.length&&!ev.length)?'<div class="empty">Nothing in this category yet.</div>':''}`;
+      ${realEventsBlock()}
+      ${realPlacesBlock()}
+      ${demoBlock}`;
   }else{
     // Trimmed showcase: a couple local businesses + travel (the review system doing real work),
     // then real live events on top. Rest of discovery happens on the Map + category filters.
     const bizSorted=sortIds(["mama","foundry","inn"].filter(id=>!isHidden("biz",id)));
     body=`
     ${realEventsBlock()}
+    ${realPlacesBlock()}
     <div class="sect">🍽️ Places your people rate</div>
     <div class="grid">${bizSorted.map(b=>bizTile(b)).join("")}</div>
     <p class="osmnote">A few spots your circle actually reviews — tap in for the ratings. Flip to 🗺️ Map or use categories to explore everything else.</p>`;
@@ -2938,6 +3012,7 @@ function osmCat(tags){
   if(s)return["shop",s.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()),"shopping"];
   if(/hotel|hostel|guest_house|motel/.test(t))return["hotel","Stay","stay"];
   if(/gallery|museum|artwork|attraction|theatre/.test(t)||/arts_centre/.test(a))return["arts","Arts & culture","local"];
+  if(/sports_centre|fitness_centre|stadium|pitch|track/.test(l))return["outdoor","Sports & fitness","sports"];
   if(l||/park|garden/.test(l))return["outdoor","Outdoors","outdoors"];
   return["place","Local spot","local"];
 }
