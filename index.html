@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Let's Link — Austin, TX</title>
+<title>Let's Link</title>
 <script>
 // Force HTTPS — geolocation + PWA features require a secure context.
 // (Cloudflare 'Always Use HTTPS' should also be enabled; this is a client-side backstop.)
@@ -486,7 +486,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v83</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v84</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -834,9 +834,13 @@ function addrRow(label,lat,lng){
     <span class="addrpin">📍</span><span class="addrtxt">${label}</span><span class="addrgo">Open in Maps ›</span></a>`;
 }
 // real Austin coordinates per business/event (approx, by neighborhood) for the live map
+// Nationwide alpha: real data follows each user's GPS. If location is unknown we DON'T
+// pretend everyone is in Austin — we start at a neutral US view and nudge them to set location.
+const US_CENTER=[39.5,-98.35];
+let locKnown=false; // set true once GPS or a manual location is applied
 const GEO={
-  // downtown ~30.2672,-97.7431 ; you-are-here center
-  _me:[30.2672,-97.7431],
+  // Neutral fallback center until the user's real location is known (see launchLocate).
+  _me:[39.5,-98.35],
   coral:[30.2588,-97.7386],ansel:[30.2665,-97.7215],cofield:[30.2865,-97.7625],
   mama:[30.2695,-97.7150],roast:[30.2705,-97.7220],foundry:[30.2690,-97.7365],
   heights:[30.2685,-97.7440],kayak:[30.2455,-97.7480],gallery:[30.2660,-97.7185],
@@ -2075,9 +2079,17 @@ function initBoardMap(){
   },60);
 }
 // ===== SHARED LOCATION CONTROL (works on Explore list + Board, independent of the Leaflet map) =====
-let locLabel="Austin, TX"; // human-readable label for the currently set location
+let locLabel="your area"; // human-readable label for the currently set location (nationwide alpha)
 // a compact "set your location" bar used across tabs
 function locBar(){
+  if(!locKnown){
+    return `<div class="locbar" style="border-color:var(--brand)">
+      <span class="locpin">📍</span>
+      <span class="loctxt">Set your location to see what's near you</span>
+      <button class="locset" ${da('useMyLocation')}>Use my location</button>
+      <button class="locset ghost" ${da('promptCity')}>Enter city</button>
+    </div>`;
+  }
   return `<div class="locbar">
     <span class="locpin">📍</span>
     <span class="loctxt">Near <b>${locLabel}</b></span>
@@ -2090,23 +2102,25 @@ function useMyLocation(){
   if(!navigator.geolocation){toast("Location not supported on this device");return;}
   toast("📍 Finding you…");
   navigator.geolocation.getCurrentPosition(
-    pos=>{GEO._me=[pos.coords.latitude,pos.coords.longitude];locLabel="your location";
-      listTMDone=false;listTM=[]; // refetch real events around the new point
+    pos=>{GEO._me=[pos.coords.latitude,pos.coords.longitude];locLabel="your location";locKnown=true;
+      listTMDone=false;listTM=[];listOSMDone=false;listOSM=[]; // refetch real data around the new point
+      if(_leaflet){try{_leaflet.setView(GEO._me,13);if(_youMarker)_youMarker.setLatLng(GEO._me);fetchOSM();fetchTM();}catch(e){}}
       toast("📍 Set to your location");render();},
     err=>{toast("Couldn’t get location — allow it in settings");},
     {enableHighAccuracy:true,timeout:8000});
 }
 // change location by typing a city/place (free OSM geocoding)
 function promptCity(){
-  const q=window.prompt("Set your location — city or place:",locLabel);
+  const q=window.prompt("Set your location — city or place:",locKnown?locLabel:"");
   if(!q||!q.trim())return;
   toast("🔍 Searching “"+q.trim()+"”…");
   fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q="+encodeURIComponent(q.trim()))
     .then(r=>r.json()).then(d=>{
       if(!d||!d.length){toast("No match for “"+q.trim()+"”");return;}
-      GEO._me=[+d[0].lat,+d[0].lon];
+      GEO._me=[+d[0].lat,+d[0].lon];locKnown=true;
       locLabel=(d[0].display_name||q).split(",").slice(0,2).join(",");
-      listTMDone=false;listTM=[]; // refetch real events around the new point
+      listTMDone=false;listTM=[];listOSMDone=false;listOSM=[]; // refetch real data around the new point
+      if(_leaflet){try{_leaflet.setView(GEO._me,13);if(_youMarker)_youMarker.setLatLng(GEO._me);fetchOSM();fetchTM();}catch(e){}}
       toast("📍 "+locLabel);render();
     }).catch(()=>toast("Search failed — try again"));
 }
@@ -4028,7 +4042,7 @@ async function onboardSubmit(){
     const email=(onboardForm.email||"").trim();
     if(!email||!/.+@.+\..+/.test(email)){ toast("Enter a valid email to create your account"); return; }
     // stash profile fields so we can write them once the session lands
-    try{ localStorage.setItem("ll_pending_profile",JSON.stringify({name,handle,bio:vibe,socials:{color:onboardColor},home_city:ALPHA_CITY,avatar_url:(onboardAviMode==="photo"&&onboardAvi&&onboardAvi.src)||null})); }catch(e){}
+    try{ localStorage.setItem("ll_pending_profile",JSON.stringify({name,handle,bio:vibe,socials:{color:onboardColor},home_city:(locKnown&&locLabel!=="your location"&&locLabel!=="your area")?locLabel:null,avatar_url:(onboardAviMode==="photo"&&onboardAvi&&onboardAvi.src)||null})); }catch(e){}
     const {error}=await sbSignUpMagic(email,{name,handle});
     if(error){ toast("Signup: "+error); return; }
     setView(`<div style="padding:48px 24px;text-align:center"><div class="h1">📧 Check your email</div><p class="sub">We sent a magic sign-in link to <b>${email}</b>. Tap it on this device to finish creating your account — no password needed.</p><p class="meta" style="color:var(--dim);margin-top:16px">You can close this and come back after tapping the link.</p></div>`);
@@ -4059,7 +4073,7 @@ async function onboardSubmit(){
 // Local fallback still works if the client failed to load (offline).
 let SB_SESSION=null;          // current auth session
 let SB_READY=false;           // finished initial session check
-const ALPHA_CITY="Austin";    // seed/demo backdrop city (changeable)
+const ALPHA_CITY=null;        // nationwide alpha: no locked city. Real data follows each user's GPS.
 
 // Map a DB profile row -> the app's in-memory user shape.
 function sbProfileToUser(p){
@@ -4187,9 +4201,9 @@ function bootRender(){
 // Center on the user's REAL location at launch (fallback = last-known / Austin seed center).
 // Persist their location so returning users skip the prompt.
 (function launchLocate(){
-  // restore a previously granted location so the first paint is already local
+  // restore a previously granted/manual location so the first paint is already local
   try{const saved=JSON.parse(localStorage.getItem("ll_myloc")||"null");
-    if(saved&&saved.length===2){GEO._me=saved;locLabel="your location";}}catch(e){}
+    if(saved&&saved.length===2){GEO._me=saved;locLabel="your location";locKnown=true;}}catch(e){}
   try{ bootRender(); }catch(e){
     // Surface the REAL caught exception (try/catch is NOT cross-origin masked, unlike window.onerror)
     __showErr('BOOT CRASH (real error):', (e&&(e.stack||e.message))?String(e.stack||e.message):String(e));
@@ -4203,13 +4217,13 @@ function bootRender(){
       navigator.geolocation.getCurrentPosition(
         pos=>{ try{
           const ll=[pos.coords.latitude,pos.coords.longitude];
-          GEO._me=ll;locLabel="your location";
+          GEO._me=ll;locLabel="your location";locKnown=true;
+          listTMDone=false;listTM=[];listOSMDone=false;listOSM=[]; // refetch real data around the user
           try{localStorage.setItem("ll_myloc",JSON.stringify(ll));}catch(e){}
-          listTMDone=false;listTM=[]; // refetch real events around the user
           if(_leaflet){try{_leaflet.setView(ll,13);if(_youMarker)_youMarker.setLatLng(ll);fetchOSM();fetchTM();}catch(e){}}
           try{render();}catch(e){}
         }catch(e){} },
-        err=>{/* denied/unavailable → keep saved or Austin fallback, no nag */},
+        err=>{/* denied/unavailable → neutral US view; a 'set your location' nudge shows in Explore */},
         {enableHighAccuracy:true,timeout:9000,maximumAge:300000});
     }
   }catch(e){/* never let geolocation break boot */}
