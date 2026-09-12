@@ -491,7 +491,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v86</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v87</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -3477,8 +3477,11 @@ async function doLogin(){
   if(SB){
     const email=((document.getElementById("login_email")||{}).value||"").trim();
     if(!email||!/.+@.+\..+/.test(email)){ toast("Enter a valid email"); return; }
+    const btn=document.querySelector('[data-act="doLogin"]');
+    if(btn){btn.textContent="Sending…";btn.style.opacity=".7";}
+    toast("📧 Sending your code…");
     const {error}=await sbSendCode(email);
-    if(error){ toast("Login: "+error); return; }
+    if(error){ authShowError(error); if(btn){btn.textContent="Send code";btn.style.opacity="";} return; }
     closeSheet();
     renderCodeEntry(email,"login");
     return;
@@ -4077,8 +4080,11 @@ async function onboardSubmit(){
     if(!email||!/.+@.+\..+/.test(email)){ toast("Enter a valid email to create your account"); return; }
     // stash profile fields so we can write them once the session lands
     try{ localStorage.setItem("ll_pending_profile",JSON.stringify({name,handle,bio:vibe,socials:{color:onboardColor},home_city:(locKnown&&locLabel!=="your location"&&locLabel!=="your area")?locLabel:null,avatar_url:(onboardAviMode==="photo"&&onboardAvi&&onboardAvi.src)||null})); }catch(e){}
+    const btn=document.querySelector('[data-act="onboardSubmit"]');
+    if(btn){btn.textContent="Sending…";btn.style.opacity=".7";}
+    toast("📧 Sending your code…");
     const {error}=await sbSendCode(email,{name,handle});
-    if(error){ toast("Signup: "+error); return; }
+    if(error){ authShowError(error); if(btn){btn.textContent="Create account & enter";btn.style.opacity="";} return; }
     authEmail=email; renderCodeEntry(email,"create");
     return;
   }
@@ -4195,6 +4201,20 @@ async function sbSignUpMagic(email,meta){ return sbSendCode(email,meta); }
 async function sbLoginMagic(email){ return sbSendCode(email); }
 async function sbLogout(){ if(SB){try{await SB.auth.signOut();}catch(e){}} SB_SESSION=null; me=null; }
 
+// Human-readable auth error surfacing (never let a failed send look like a dead button).
+function authShowError(err){
+  const e=String(err||"").toLowerCase();
+  let msg;
+  if(e.includes("rate limit")||e.includes("429")||e.includes("over_email")){
+    msg="⏳ Too many code requests — the email service is rate-limited. Wait ~30-60 min and try again (or we can wire a real email sender to lift this).";
+  }else if(e.includes("offline")){
+    msg="You appear offline — reconnect and try again.";
+  }else{
+    msg="Couldn't send code: "+err;
+  }
+  toast(msg);
+  return msg;
+}
 // ---- 6-DIGIT CODE ENTRY SCREEN ----
 function renderCodeEntry(email,mode){
   authEmail=email; authMode=mode||"create";
