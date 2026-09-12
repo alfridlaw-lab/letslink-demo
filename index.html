@@ -65,6 +65,11 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
   justify-content:center;font-weight:700;font-size:12px;color:#06121a;flex:0 0 auto}
 /* Content */
 #view{padding:14px 14px 150px;min-height:60vh}
+#updbar{display:flex;align-items:center;gap:10px;padding:9px 14px;background:linear-gradient(90deg,#00c2a8,#0ea5a0);color:#04201c;font-weight:700;font-size:13.5px;box-shadow:0 2px 12px rgba(0,194,168,.35);animation:updslide .3s ease}
+@keyframes updslide{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+#updbar .updtxt{flex:1}
+#updbar .updbtn{background:#04201c;color:#fff;border:none;border-radius:999px;padding:6px 16px;font-weight:700;font-size:13px;cursor:pointer}
+#updbar .updx{background:transparent;border:none;color:#04201c;font-size:15px;cursor:pointer;opacity:.7;padding:2px 4px}
 .h1{font-size:22px;font-weight:800;margin:6px 2px 4px;letter-spacing:-.4px}
 .sub{color:var(--sub);font-size:13px;margin:0 2px 14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
@@ -486,12 +491,17 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v85</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v86</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
       <span style="color:var(--dim);font-size:11px;margin-left:2px">▾</span>
     </div>
+  </div>
+  <div id="updbar" style="display:none">
+    <span class="updtxt">✨ A new version is ready</span>
+    <button class="updbtn" data-act="appRefresh">Refresh</button>
+    <button class="updx" data-act="dismissUpdate">✕</button>
   </div>
   <div id="view"></div>
   <div class="nav" id="nav"></div>
@@ -1570,6 +1580,10 @@ ACTIONS={
   menuCustomize:()=>openSheet(sheetCustomize()),
   menuSwitch:()=>openSheet(sheetSwitch()),
   menuLogin:()=>openSheet(sheetLogin()),
+  verifyCode:()=>verifyCode(),
+  resendCode:()=>resendCode(),
+  appRefresh:()=>appRefresh(),
+  dismissUpdate:()=>{updateReady=false;var b=document.getElementById("updbar");if(b)b.style.display="none";},
   doLogin:()=>doLogin(),
   menuSignout:()=>{openSheet(sheetSignout());},
   resetAccount:()=>resetAccount(),
@@ -3447,9 +3461,9 @@ function sheetUserMenu(uid){
 function sheetLogin(){
   if(SB){
     return `<h3>🔑 Log in</h3>
-    <p class="meta" style="margin:0 0 10px">Enter your email — we'll send a magic sign-in link (no password).</p>
+    <p class="meta" style="margin:0 0 10px">Enter your email — we'll send a 6-digit code (no password, no browser hop).</p>
     <input class="finput" id="login_email" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com">
-    <button class="btn p" style="margin-top:12px" ${da('doLogin')}>Send magic link</button>
+    <button class="btn p" style="margin-top:12px" ${da('doLogin')}>Send code</button>
     <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button>`;
   }
   return `<h3>🔑 Log in</h3>
@@ -3463,10 +3477,10 @@ async function doLogin(){
   if(SB){
     const email=((document.getElementById("login_email")||{}).value||"").trim();
     if(!email||!/.+@.+\..+/.test(email)){ toast("Enter a valid email"); return; }
-    const {error}=await sbLoginMagic(email);
+    const {error}=await sbSendCode(email);
     if(error){ toast("Login: "+error); return; }
     closeSheet();
-    setView(`<div style="padding:48px 24px;text-align:center"><div class="h1">📧 Check your email</div><p class="sub">Magic sign-in link sent to <b>${email}</b>. Tap it on this device to log in.</p></div>`);
+    renderCodeEntry(email,"login");
     return;
   }
   const h=(document.getElementById("login_handle")||{}).value||"";
@@ -4057,15 +4071,15 @@ async function onboardSubmit(){
   let handle=(onboardForm.handle||"").trim()||("@"+name.toLowerCase().replace(/[^a-z0-9]+/g,"").slice(0,14)||"user");
   if(handle[0]!=="@")handle="@"+handle;
   const vibe=(onboardForm.vibe||"").trim()||"New to Let's Link";
-  // ---- REAL BACKEND SIGNUP (magic-link) ----
+  // ---- REAL BACKEND SIGNUP (6-digit email code) ----
   if(SB){
     const email=(onboardForm.email||"").trim();
     if(!email||!/.+@.+\..+/.test(email)){ toast("Enter a valid email to create your account"); return; }
     // stash profile fields so we can write them once the session lands
     try{ localStorage.setItem("ll_pending_profile",JSON.stringify({name,handle,bio:vibe,socials:{color:onboardColor},home_city:(locKnown&&locLabel!=="your location"&&locLabel!=="your area")?locLabel:null,avatar_url:(onboardAviMode==="photo"&&onboardAvi&&onboardAvi.src)||null})); }catch(e){}
-    const {error}=await sbSignUpMagic(email,{name,handle});
+    const {error}=await sbSendCode(email,{name,handle});
     if(error){ toast("Signup: "+error); return; }
-    setView(`<div style="padding:48px 24px;text-align:center"><div class="h1">📧 Check your email</div><p class="sub">We sent a magic sign-in link to <b>${email}</b>. Tap it on this device to finish creating your account — no password needed.</p><p class="meta" style="color:var(--dim);margin-top:16px">You can close this and come back after tapping the link.</p></div>`);
+    authEmail=email; renderCodeEntry(email,"create");
     return;
   }
   // ---- LOCAL FALLBACK (no backend) ----
@@ -4089,6 +4103,8 @@ async function onboardSubmit(){
 // Local fallback still works if the client failed to load (offline).
 let SB_SESSION=null;          // current auth session
 let SB_READY=false;           // finished initial session check
+let authEmail="";             // email awaiting a 6-digit code
+let authMode="create";        // 'create' | 'login' — context for the code screen
 const ALPHA_CITY=null;        // nationwide alpha: no locked city. Real data follows each user's GPS.
 
 // Map a DB profile row -> the app's in-memory user shape.
@@ -4160,14 +4176,58 @@ async function sbFollow(targetId,on){
   }catch(e){}
 }
 
-// --- AUTH ACTIONS (magic-link default; email/password ready if enabled) ---
-async function sbSignUpMagic(email,meta){
+// --- AUTH ACTIONS (6-digit email code — works in Safari AND the installed home-screen app, no browser hop) ---
+// NOTE: omitting emailRedirectTo makes Supabase send a numeric OTP code instead of a magic link.
+async function sbSendCode(email,meta){
   if(!SB)return {error:"offline"};
-  const {error}=await SB.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname,data:meta||{}}});
+  const {error}=await SB.auth.signInWithOtp({email,options:{shouldCreateUser:true,data:meta||{}}});
   return {error:error&&error.message};
 }
-async function sbLoginMagic(email){ return sbSignUpMagic(email); }
+async function sbVerifyCode(email,code){
+  if(!SB)return {error:"offline"};
+  const {data,error}=await SB.auth.verifyOtp({email,token:(code||"").trim(),type:"email"});
+  if(error)return {error:error.message};
+  SB_SESSION=(data&&data.session)||null;
+  return {error:null};
+}
+// legacy names kept as aliases
+async function sbSignUpMagic(email,meta){ return sbSendCode(email,meta); }
+async function sbLoginMagic(email){ return sbSendCode(email); }
 async function sbLogout(){ if(SB){try{await SB.auth.signOut();}catch(e){}} SB_SESSION=null; me=null; }
+
+// ---- 6-DIGIT CODE ENTRY SCREEN ----
+function renderCodeEntry(email,mode){
+  authEmail=email; authMode=mode||"create";
+  setView(`<div style="padding:44px 24px;text-align:center;max-width:360px;margin:0 auto">
+    <div class="h1">🔐 Enter your code</div>
+    <p class="sub">We emailed a 6-digit code to <b>${email}</b>. Type it below — works right here, no need to leave the app.</p>
+    <input class="finput" id="auth_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="text-align:center;letter-spacing:8px;font-size:24px;margin-top:18px">
+    <button class="btn p" style="margin-top:14px" ${da('verifyCode')}>Verify & continue</button>
+    <button class="btn g" style="margin-top:8px" ${da('resendCode')}>Resend code</button>
+    <p class="meta" style="color:var(--dim);margin-top:14px;font-size:12px">Check spam/promotions if it's not in your inbox in a minute.</p>
+  </div>`);
+  setTimeout(()=>{var el=document.getElementById("auth_code");if(el)el.focus();},80);
+}
+async function verifyCode(){
+  const el=document.getElementById("auth_code");
+  const code=el?(el.value||"").replace(/\s/g,""):"";
+  if(!/^\d{6}$/.test(code)){ toast("Enter the 6-digit code"); return; }
+  toast("🔐 Verifying…");
+  const {error}=await sbVerifyCode(authEmail,code);
+  if(error){ toast("Code: "+error); return; }
+  // session set; load profile + enter
+  await sbLoadMe();
+  tab="explore";stack=[];
+  try{render();}catch(e){} try{setMeAv();}catch(e){}
+  const nm=(users[me]&&users[me].name)?users[me].name.split(" ")[0]:"";
+  toast(nm?("🎉 Welcome"+(authMode==="login"?" back":"")+", "+nm+"!"):"🎉 You're in!");
+}
+async function resendCode(){
+  if(!authEmail)return;
+  toast("📧 Sending a new code…");
+  const {error}=await sbSendCode(authEmail);
+  toast(error?("Resend: "+error):"New code sent");
+}
 
 // Wire session listener + do the initial check at boot.
 async function sbInitAuth(){
@@ -4244,28 +4304,47 @@ function bootRender(){
 })();
 </script>
 <script>
-// PWA service worker registration — hardened + self-healing.
-// A stale SW controlling the page can serve a mismatched cache and blank the app.
-// So: on load, if a controller is already active from an OLD version, nuke all caches
-// + unregister, then register fresh. Never let SW work throw into the page.
+// PWA service worker registration + IN-APP UPDATE BANNER.
+// Instead of force-nuking on every load, we detect when a new version is waiting
+// and show a top banner with a Refresh button (no force-close needed).
+var updateReady=false; var _waitingSW=null;
+function showUpdateBar(){
+  updateReady=true;
+  var b=document.getElementById('updbar');
+  if(b){ b.style.display='flex'; }
+}
+// Called by the Refresh button: activate the waiting worker + reload.
+function appRefresh(){
+  try{
+    if(_waitingSW){ _waitingSW.postMessage&&_waitingSW.postMessage('SKIP_WAITING'); }
+  }catch(e){}
+  // brief delay so the new SW can take control, then hard reload
+  setTimeout(function(){ try{ location.reload(); }catch(e){ location.href=location.pathname; } }, 150);
+}
 (function(){
   if (!('serviceWorker' in navigator)) return;
   window.addEventListener('load', function () {
     try {
-      navigator.serviceWorker.getRegistrations().then(function (regs) {
-        var hadOld = regs && regs.length;
-        // Clear any old caches so a fresh SW rebuilds them cleanly.
-        if (window.caches && caches.keys) {
-          caches.keys().then(function (keys) {
-            keys.forEach(function (k) { if (k !== 'letslink-v81') caches.delete(k); });
-          }).catch(function(){});
-        }
-        // Register the current SW; if one updates, take over quietly.
-        navigator.serviceWorker.register('sw.js').then(function (reg) {
-          reg.addEventListener && reg.addEventListener('updatefound', function(){});
-        }).catch(function(){});
-      }).catch(function(){
-        navigator.serviceWorker.register('sw.js').catch(function(){});
+      navigator.serviceWorker.register('sw.js').then(function (reg) {
+        // If there's already a waiting worker (update downloaded from a prior visit), surface it.
+        if (reg.waiting && navigator.serviceWorker.controller) { _waitingSW=reg.waiting; showUpdateBar(); }
+        // Watch for a new worker installing.
+        reg.addEventListener('updatefound', function(){
+          var nw=reg.installing; if(!nw)return;
+          nw.addEventListener('statechange', function(){
+            if(nw.state==='installed' && navigator.serviceWorker.controller){
+              _waitingSW=nw; showUpdateBar(); // new version ready + an old one is controlling
+            }
+          });
+        });
+        // Proactively check for updates on load + when app regains focus.
+        try{ reg.update(); }catch(e){}
+        window.addEventListener('focus', function(){ try{ reg.update(); }catch(e){} });
+      }).catch(function(){});
+      // When the new worker takes control, reload once to get fresh assets.
+      var _reloaded=false;
+      navigator.serviceWorker.addEventListener('controllerchange', function(){
+        if(_reloaded)return; _reloaded=true; try{ location.reload(); }catch(e){}
       });
     } catch (e) { /* never let SW setup break the app */ }
   });

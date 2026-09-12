@@ -1,6 +1,6 @@
 // Let's Link — Service Worker
 // Bump CACHE version on each deploy to force clients to refresh cached assets.
-const CACHE = 'letslink-v85';
+const CACHE = 'letslink-v86';
 const CORE = [
   './',
   './index.html',
@@ -16,7 +16,12 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE).then((cache) => cache.addAll(CORE)).catch(() => {})
   );
-  self.skipWaiting();
+  // Do NOT auto-skipWaiting: wait for the user to tap Refresh in the in-app banner.
+});
+
+// Let the page tell us to activate immediately (Refresh button).
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
