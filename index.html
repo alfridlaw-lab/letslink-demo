@@ -486,7 +486,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v84</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v85</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -1301,8 +1301,7 @@ function resetAccount(){
   createdBiz=[];createdEvents=[];me=null;bizAccount=false;newCount=0;attending={};
   onboardStep=0;onboardForm={name:"",handle:"",vibe:""};onboardAvi=null;onboardAviMode="color";onboardColor=AV_COLORS[0];onboardPriv="public";
   const mn=$("#meName");if(mn)mn.textContent="You";
-  const a=$("#meAv");if(a){a.textContent="?";a.style.background="#7c5cff";}
-  closeSheet();render();
+  closeSheet();render();setMeAv();
 }
 // ===== SWIPE-AWAY / HIDDEN TILES =====
 // hideMode: "session" = swiped tiles come back next launch; "permanent" = stay gone until unhidden.
@@ -1405,7 +1404,13 @@ function sortbar(){
   const opts=[["proximity","📍 Nearest"],["close","⭐ Close friends"],["interacted","🔥 Most interacted"]];
   return `<div class="sortbar">${opts.map(([k,l])=>
     `<span class="sortchip ${sortMode===k?'on':''}" ${da('setSort',k)}>${l}</span>`).join("")}</div>`;}
-function setSort(m){sortMode=m;render();}
+function setSort(m){
+  sortMode=m;
+  // Preserve scroll position so re-sorting doesn't yank the user back to the top of the list.
+  const y=window.scrollY||window.pageYOffset||0;
+  render();
+  try{ window.scrollTo(0,y); }catch(e){}
+}
 
 /* ============ HELPERS ============ */
 const $=(s)=>document.querySelector(s);
@@ -1419,6 +1424,16 @@ function av(uid,size){const u=users[uid]||{name:(uid||"?"),c:"#4e9cff"};
   if(ph)return `<span class="avatar" style="${dim}background-image:url('${ph}');background-size:cover;background-position:center 8%;color:transparent">${i}</span>`;
   return `<span class="avatar" style="background:${u.c||'#4e9cff'};${dim}">${i}</span>`;}
 function stars(r){return "★".repeat(Math.round(r))+`<span style="color:var(--dim)">${"★".repeat(5-Math.round(r))}</span>`;}
+// Set the bottom-nav corner avatar to a MINI version of the user's real profile avatar
+// (photo if they have one, else initial-on-color). Keeps nav in sync with profile.
+function setMeAv(){
+  const a=document.getElementById("meAv");if(!a)return;
+  if(!me||!users[me]){a.textContent="?";a.style.backgroundImage="";a.style.background="#7c5cff";a.style.color="";return;}
+  const u=users[me]; const ph=(typeof uphoto==="function"&&uphoto(me))||OP[me]||null;
+  const i=String(u.name||"?")[0].toUpperCase();
+  if(ph){ a.textContent=""; a.style.backgroundImage="url('"+ph+"')"; a.style.backgroundSize="cover"; a.style.backgroundPosition="center 8%"; a.style.color="transparent"; }
+  else { a.textContent=i; a.style.backgroundImage=""; a.style.background=u.c||"#7c5cff"; a.style.color=""; }
+}
 // verified badge (inline). isVerified(id) checks biz or events.
 function isVerified(id){return (biz[id]&&biz[id].verified)||(events[id]&&events[id].verified);}
 function vbadge(size){return `<span class="vbadge" title="Verified" ${da('verifyInfo')}>✔</span>`;}
@@ -1427,7 +1442,7 @@ function esc(s){return String(s).replace(/\\/g,"").replace(/'/g,"\u2019").replac
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1900);}
 function setMe(uid){me=uid;const u=users[uid];$("#meName").textContent=u.name.split(" ")[0];
-  const a=$("#meAv");a.textContent=u.name[0];a.style.background=u.c;render();}
+  render();setMeAv();}
 
 /* ============ EVENT DELEGATION (bulletproof for mobile Safari) ============ */
 // One global click listener. Elements carry data-act + data-args; no inline onclick needed.
@@ -2791,7 +2806,12 @@ function renderExploreMap(){
   <div id="inview"><div class="empty">Loading map…</div></div>`);
   initMap();
 }
-function setMapSort(m){mapSort=m;refreshMapControls();updateInView();}
+function setMapSort(m){
+  mapSort=m;
+  const y=window.scrollY||window.pageYOffset||0;
+  refreshMapControls();updateInView();
+  try{ window.scrollTo(0,y); }catch(e){}
+}
 // center the map on the user's real device location
 function centerMe(){
   if(!_leaflet)return;
@@ -3363,7 +3383,7 @@ function saveProfileEdits(){
   else saveState&&saveState();
   // reflect name change in the bottom nav avatar/name
   const mn=$("#meName");if(mn&&users[me].name)mn.textContent=users[me].name.split(" ")[0];
-  closeSheet();render();scrollTop();
+  closeSheet();render();setMeAv();scrollTop();
   toast("✓ Profile updated");
 }
 function sheetEditBanner(){
@@ -4060,11 +4080,7 @@ async function onboardSubmit(){
   saveState();
   tab="explore";stack=[];
   const mn=$("#meName");if(mn)mn.textContent=name.split(" ")[0];
-  const a=$("#meAv");if(a){
-    if(OP[id]){a.textContent="";a.style.backgroundImage="url('"+OP[id]+"')";a.style.backgroundSize="cover";a.style.backgroundPosition="center";a.style.color="transparent";}
-    else{a.textContent=name[0].toUpperCase();a.style.background=onboardColor;}
-  }
-  render();scrollTop();
+  render();setMeAv();scrollTop();
   toast("🎉 Welcome to Let's Link, "+name.split(" ")[0]+"!");
 }
 
@@ -4159,7 +4175,7 @@ async function sbInitAuth(){
   try{
     SB.auth.onAuthStateChange((_evt,sess)=>{
       SB_SESSION=sess||null;
-      if(SB_SESSION){ sbLoadMe().then(()=>{ tab="explore";stack=[]; try{render();}catch(e){} }); }
+      if(SB_SESSION){ sbLoadMe().then(()=>{ tab="explore";stack=[]; try{render();}catch(e){} try{setMeAv();}catch(e){} }); }
     });
     const {data}=await SB.auth.getSession();
     SB_SESSION=(data&&data.session)||null;
@@ -4175,10 +4191,10 @@ function bootRender(){
     sbInitAuth().then(()=>{
       if(SB_SESSION&&me&&users[me]){
         const u=users[me];const mn=$("#meName");if(mn)mn.textContent=(u.name||"You").split(" ")[0];
-        try{render();}catch(e){}
+        try{render();}catch(e){} try{setMeAv();}catch(e){}
       }else{
         me=null; const mn=$("#meName");if(mn)mn.textContent="You";
-        try{render();}catch(e){} // onboarding
+        try{render();}catch(e){} try{setMeAv();}catch(e){} // onboarding
       }
     });
     return;
@@ -4187,15 +4203,13 @@ function bootRender(){
   const loaded=loadState();
   if(loaded&&me&&users[me]){
     const u=users[me];const mn=$("#meName");if(mn)mn.textContent=(u.name||"You").split(" ")[0];
-    const a=$("#meAv");if(a){a.textContent=String(u.name||"?")[0].toUpperCase();a.style.background=u.c||"#7c5cff";}
-    render();
+    render();setMeAv();
   }else{
     // no account, OR corrupt/partial saved state (e.g. me set but account missing) → self-heal to onboarding
     if(loaded){try{localStorage.removeItem(LS_KEY);}catch(e){}}
     me=null;
     const mn=$("#meName");if(mn)mn.textContent="You";
-    const a=$("#meAv");if(a){a.textContent="?";a.style.background="#7c5cff";}
-    render(); // onboarding
+    render();setMeAv(); // onboarding
   }
 }
 // Center on the user's REAL location at launch (fallback = last-known / Austin seed center).
