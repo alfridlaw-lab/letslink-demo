@@ -25,6 +25,22 @@ try{ if(location.protocol==='http:' && location.hostname!=='localhost' && !/^127
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <script src="vendor/leaflet/leaflet.js"></script>
+<!-- Supabase JS client (backend: auth + DB + storage) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ============ SUPABASE CONFIG + CLIENT ============ */
+const SB_URL="https://phabtjeoommofjvabxap.supabase.co";
+const SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBoYWJ0amVvb21tb2ZqdmFieGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5NjgwNTEsImV4cCI6MjEwMzU0NDA1MX0.kH1g6immnLCdxPBmCC3vqkb3F3TzuG0qfEI2eOrEK7E";
+let SB=null;
+(function initSB(){
+  try{
+    if(window.supabase&&window.supabase.createClient){
+      SB=window.supabase.createClient(SB_URL,SB_ANON,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    }
+  }catch(e){ /* offline / lib blocked: app still runs on local fallback */ }
+})();
+window.SB=SB;
+</script>
 <style>
 :root{
   --bg:#0d0f14; --card:#171b23; --card2:#1f2430; --line:#2a3140;
@@ -470,7 +486,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v82</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v83</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -1272,6 +1288,8 @@ function loadState(){
 }
 function resetAccount(){
   try{localStorage.removeItem(LS_KEY);}catch(e){}
+  try{localStorage.removeItem("ll_pending_profile");}catch(e){}
+  if(SB&&SB_SESSION){ try{SB.auth.signOut();}catch(e){} SB_SESSION=null; }
   // wipe this device's created content + identity, back to onboarding
   createdBiz.forEach(id=>{delete biz[id];delete booking[id];delete DIST[id];});
   createdEvents.forEach(id=>{delete events[id];delete DIST[id];});
@@ -2583,7 +2601,7 @@ function toggleFollow(uid){
   }else{
     follows[me].splice(i,1);
   }
-  saveState();
+  if(SB&&SB_SESSION)sbFollow(uid,nowFollowing); else saveState();
   render();scrollTop();
   toast((nowFollowing?'Following ':'Unfollowed ')+((users[uid]&&users[uid].name)||''));
 }
@@ -3327,7 +3345,8 @@ function saveProfileEdits(){
   if(handle){ if(handle[0]!=="@")handle="@"+handle; users[me].h=handle; }
   users[me].vibe=vibe||users[me].vibe;
   BIO[me]=bio.trim();
-  saveState&&saveState();
+  if(SB&&SB_SESSION){ sbSaveProfile({name:users[me].name,handle:users[me].h,bio:BIO[me]||users[me].vibe}); }
+  else saveState&&saveState();
   // reflect name change in the bottom nav avatar/name
   const mn=$("#meName");if(mn&&users[me].name)mn.textContent=users[me].name.split(" ")[0];
   closeSheet();render();scrollTop();
@@ -3392,6 +3411,13 @@ function sheetUserMenu(uid){
 }
 // ===== REAL HANDLERS for previously-fake buttons =====
 function sheetLogin(){
+  if(SB){
+    return `<h3>🔑 Log in</h3>
+    <p class="meta" style="margin:0 0 10px">Enter your email — we'll send a magic sign-in link (no password).</p>
+    <input class="finput" id="login_email" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com">
+    <button class="btn p" style="margin-top:12px" ${da('doLogin')}>Send magic link</button>
+    <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button>`;
+  }
   return `<h3>🔑 Log in</h3>
   <p class="meta" style="margin:0 0 10px">Welcome back — sign in to your Let's Link account.</p>
   <input class="finput" id="login_handle" placeholder="@handle or email">
@@ -3399,9 +3425,18 @@ function sheetLogin(){
   <button class="btn p" style="margin-top:12px" ${da('doLogin')}>Log in</button>
   <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button>`;
 }
-function doLogin(){
+async function doLogin(){
+  if(SB){
+    const email=((document.getElementById("login_email")||{}).value||"").trim();
+    if(!email||!/.+@.+\..+/.test(email)){ toast("Enter a valid email"); return; }
+    const {error}=await sbLoginMagic(email);
+    if(error){ toast("Login: "+error); return; }
+    closeSheet();
+    setView(`<div style="padding:48px 24px;text-align:center"><div class="h1">📧 Check your email</div><p class="sub">Magic sign-in link sent to <b>${email}</b>. Tap it on this device to log in.</p></div>`);
+    return;
+  }
   const h=(document.getElementById("login_handle")||{}).value||"";
-  // Demo: match an existing seeded user by handle, else just confirm.
+  // Demo fallback: match an existing seeded user by handle, else just confirm.
   const uid=Object.keys(users).find(u=>users[u].h&&users[u].h.toLowerCase()===h.toLowerCase().replace(/^@?/,'@'));
   if(uid){ me=uid; saveState&&saveState(); closeSheet(); tab="explore"; stack=[]; render(); scrollTop(); toast("Welcome back, "+users[uid].name.split(" ")[0]+"!"); }
   else { closeSheet(); toast(h?"No account found for "+h:"Enter your handle to log in"); }
@@ -3844,6 +3879,7 @@ function captureOnboardForm(){
   var n=document.getElementById("ob_name"); if(n)onboardForm.name=n.value;
   var h=document.getElementById("ob_handle"); if(h)onboardForm.handle=h.value;
   var v=document.getElementById("ob_vibe"); if(v)onboardForm.vibe=v.value;
+  var e=document.getElementById("ob_email"); if(e)onboardForm.email=e.value;
 }
 function renderOnboard(){
   if(onboardStep===0){
@@ -3852,7 +3888,8 @@ function renderOnboard(){
       <div class="h1" style="font-size:30px;margin-bottom:4px">Let's<b style="color:var(--brand)">Link</b></div>
       <p class="sub" style="font-size:15px;max-width:300px;margin:0 auto 26px">Discover events, food, and places — filtered through the people you actually trust.</p>
       <button class="btn p" style="max-width:260px;margin:0 auto;width:100%" ${da('onboardNext')}>Create your account</button>
-      <p class="meta" style="color:var(--dim);margin-top:14px;font-size:12px">Your data stays on this device.</p>
+      <button class="btn g" style="max-width:260px;margin:8px auto 0;width:100%" ${da('menuLogin')}>I already have an account</button>
+      <p class="meta" style="color:var(--dim);margin-top:14px;font-size:12px">${SB?'Your account syncs across your devices.':'Your data stays on this device.'}</p>
     </div>`);
     return;
   }
@@ -3880,6 +3917,8 @@ function renderOnboard(){
     <input class="finput" id="ob_handle" placeholder="@yourhandle" value="${(onboardForm.handle||'').replace(/"/g,'&quot;')}" oninput="ACTIONS.onboardFormSync()">
     <div class="fsec">Your vibe / bio</div>
     <input class="finput" id="ob_vibe" placeholder="e.g. Food explorer, always hunting the next spot" value="${(onboardForm.vibe||'').replace(/"/g,'&quot;')}" oninput="ACTIONS.onboardFormSync()">
+    <div class="fsec">Email <span style="color:var(--dim);font-weight:400">· we send a magic sign-in link (no password)</span></div>
+    <input class="finput" id="ob_email" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" value="${(onboardForm.email||'').replace(/"/g,'&quot;')}" oninput="ACTIONS.onboardFormSync()">
     <div class="fsec">Who can see your profile</div>
     <div style="display:flex;gap:8px">
       <button class="chip ${onboardPriv==='public'?'on':''}" ${da('onboardPriv','public')}>🌐 Public</button>
@@ -3978,12 +4017,24 @@ function bannerFile(ev){
   rd.onerror=function(){ toast('Could not read that image'); };
   rd.readAsDataURL(f);
 }
-function onboardSubmit(){
+async function onboardSubmit(){
   captureOnboardForm();
   const name=(onboardForm.name||"").trim()||"New User";
   let handle=(onboardForm.handle||"").trim()||("@"+name.toLowerCase().replace(/[^a-z0-9]+/g,"").slice(0,14)||"user");
   if(handle[0]!=="@")handle="@"+handle;
   const vibe=(onboardForm.vibe||"").trim()||"New to Let's Link";
+  // ---- REAL BACKEND SIGNUP (magic-link) ----
+  if(SB){
+    const email=(onboardForm.email||"").trim();
+    if(!email||!/.+@.+\..+/.test(email)){ toast("Enter a valid email to create your account"); return; }
+    // stash profile fields so we can write them once the session lands
+    try{ localStorage.setItem("ll_pending_profile",JSON.stringify({name,handle,bio:vibe,socials:{color:onboardColor},home_city:ALPHA_CITY,avatar_url:(onboardAviMode==="photo"&&onboardAvi&&onboardAvi.src)||null})); }catch(e){}
+    const {error}=await sbSignUpMagic(email,{name,handle});
+    if(error){ toast("Signup: "+error); return; }
+    setView(`<div style="padding:48px 24px;text-align:center"><div class="h1">📧 Check your email</div><p class="sub">We sent a magic sign-in link to <b>${email}</b>. Tap it on this device to finish creating your account — no password needed.</p><p class="meta" style="color:var(--dim);margin-top:16px">You can close this and come back after tapping the link.</p></div>`);
+    return;
+  }
+  // ---- LOCAL FALLBACK (no backend) ----
   const id="user_"+Date.now().toString(36);
   users[id]={name,h:handle,vibe,c:onboardColor,foll:0,created:1};
   // If they chose a photo avatar, store it so it shows everywhere (uphoto reads OP[id]).
@@ -4003,8 +4054,122 @@ function onboardSubmit(){
   toast("🎉 Welcome to Let's Link, "+name.split(" ")[0]+"!");
 }
 
+/* ============ SUPABASE AUTH + DATA LAYER (real alpha backend) ============ */
+// When SB is available, identity/reviews/follows come from the DB (shared across devices).
+// Local fallback still works if the client failed to load (offline).
+let SB_SESSION=null;          // current auth session
+let SB_READY=false;           // finished initial session check
+const ALPHA_CITY="Austin";    // seed/demo backdrop city (changeable)
+
+// Map a DB profile row -> the app's in-memory user shape.
+function sbProfileToUser(p){
+  return {name:p.name||"New User", h:(p.handle&&(p.handle[0]==="@"?p.handle:"@"+p.handle))||"@user",
+    vibe:p.bio||"New to Let's Link", c:(p.socials&&p.socials.color)||"#7c5cff", foll:0, created:1, sbid:p.id};
+}
+
+// Load the signed-in user's profile + their follow graph into memory.
+async function sbLoadMe(){
+  if(!SB||!SB_SESSION)return false;
+  const uid=SB_SESSION.user.id;
+  try{
+    let {data:prof}=await SB.from("profiles").select("*").eq("id",uid).single();
+    if(!prof){ // trigger may lag; create a minimal profile
+      await SB.from("profiles").upsert({id:uid,name:(SB_SESSION.user.email||"").split("@")[0]});
+      ({data:prof}=await SB.from("profiles").select("*").eq("id",uid).single());
+    }
+    // Apply any pending profile fields captured at signup (name/handle/bio/avatar/color).
+    try{
+      const pend=JSON.parse(localStorage.getItem("ll_pending_profile")||"null");
+      if(pend){
+        const patch=Object.assign({id:uid},pend);
+        Object.keys(patch).forEach(k=>{ if(patch[k]==null)delete patch[k]; });
+        await SB.from("profiles").upsert(patch);
+        localStorage.removeItem("ll_pending_profile");
+        ({data:prof}=await SB.from("profiles").select("*").eq("id",uid).single());
+      }
+    }catch(e){}
+    if(!prof)return false;
+    me=uid; users[me]=sbProfileToUser(prof);
+    if(prof.avatar_url)OP[me]=prof.avatar_url;
+    if(prof.banner_url)BANNER[me]=prof.banner_url;
+    if(prof.bio!=null)BIO[me]=prof.bio;
+    if(prof.socials)socials[me]=prof.socials;
+    // follow graph
+    const {data:fol}=await SB.from("follows").select("followee_id").eq("follower_id",uid);
+    follows[me]=(fol||[]).map(r=>r.followee_id);
+    // pull other profiles so the graph has names/avatars
+    await sbLoadPeople();
+    return true;
+  }catch(e){ return false; }
+}
+
+// Load all alpha members into the users map (small closed group).
+async function sbLoadPeople(){
+  if(!SB)return;
+  try{
+    const {data:ppl}=await SB.from("profiles").select("*").limit(500);
+    (ppl||[]).forEach(p=>{ if(p.id!==me)users[p.id]=sbProfileToUser(p);
+      if(p.avatar_url)OP[p.id]=p.avatar_url; });
+  }catch(e){}
+}
+
+// Create/update the DB profile from onboarding form.
+async function sbSaveProfile(fields){
+  if(!SB||!SB_SESSION)return;
+  const uid=SB_SESSION.user.id;
+  try{ await SB.from("profiles").upsert(Object.assign({id:uid},fields)); }catch(e){}
+}
+
+// Follow / unfollow through the DB.
+async function sbFollow(targetId,on){
+  if(!SB||!SB_SESSION)return;
+  const uid=SB_SESSION.user.id;
+  try{
+    if(on){ await SB.from("follows").upsert({follower_id:uid,followee_id:targetId}); }
+    else  { await SB.from("follows").delete().eq("follower_id",uid).eq("followee_id",targetId); }
+  }catch(e){}
+}
+
+// --- AUTH ACTIONS (magic-link default; email/password ready if enabled) ---
+async function sbSignUpMagic(email,meta){
+  if(!SB)return {error:"offline"};
+  const {error}=await SB.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname,data:meta||{}}});
+  return {error:error&&error.message};
+}
+async function sbLoginMagic(email){ return sbSignUpMagic(email); }
+async function sbLogout(){ if(SB){try{await SB.auth.signOut();}catch(e){}} SB_SESSION=null; me=null; }
+
+// Wire session listener + do the initial check at boot.
+async function sbInitAuth(){
+  if(!SB){SB_READY=true;return;}
+  try{
+    SB.auth.onAuthStateChange((_evt,sess)=>{
+      SB_SESSION=sess||null;
+      if(SB_SESSION){ sbLoadMe().then(()=>{ tab="explore";stack=[]; try{render();}catch(e){} }); }
+    });
+    const {data}=await SB.auth.getSession();
+    SB_SESSION=(data&&data.session)||null;
+    if(SB_SESSION){ await sbLoadMe(); }
+  }catch(e){}
+  SB_READY=true;
+}
+
 /* ============ BOOT ============ */
 function bootRender(){
+  // Prefer real backend session when Supabase is live.
+  if(SB){
+    sbInitAuth().then(()=>{
+      if(SB_SESSION&&me&&users[me]){
+        const u=users[me];const mn=$("#meName");if(mn)mn.textContent=(u.name||"You").split(" ")[0];
+        try{render();}catch(e){}
+      }else{
+        me=null; const mn=$("#meName");if(mn)mn.textContent="You";
+        try{render();}catch(e){} // onboarding
+      }
+    });
+    return;
+  }
+  // ---- Local fallback (no backend) ----
   const loaded=loadState();
   if(loaded&&me&&users[me]){
     const u=users[me];const mn=$("#meName");if(mn)mn.textContent=(u.name||"You").split(" ")[0];
