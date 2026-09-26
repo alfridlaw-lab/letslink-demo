@@ -491,7 +491,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v87</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v88</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -3461,7 +3461,7 @@ function sheetUserMenu(uid){
 function sheetLogin(){
   if(SB){
     return `<h3>🔑 Log in</h3>
-    <p class="meta" style="margin:0 0 10px">Enter your email — we'll send a 6-digit code (no password, no browser hop).</p>
+    <p class="meta" style="margin:0 0 10px">Enter your email — we'll send a sign-in code (no password, no browser hop).</p>
     <input class="finput" id="login_email" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com">
     <button class="btn p" style="margin-top:12px" ${da('doLogin')}>Send code</button>
     <button class="btn g" style="margin-top:8px" ${da('closeSheet')}>Cancel</button>`;
@@ -4220,8 +4220,8 @@ function renderCodeEntry(email,mode){
   authEmail=email; authMode=mode||"create";
   setView(`<div style="padding:44px 24px;text-align:center;max-width:360px;margin:0 auto">
     <div class="h1">🔐 Enter your code</div>
-    <p class="sub">We emailed a 6-digit code to <b>${email}</b>. Type it below — works right here, no need to leave the app.</p>
-    <input class="finput" id="auth_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="text-align:center;letter-spacing:8px;font-size:24px;margin-top:18px">
+    <p class="sub">We emailed a sign-in code to <b>${email}</b>. Type it below — works right here, no need to leave the app.</p>
+    <input class="finput" id="auth_code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Enter code" style="text-align:center;letter-spacing:6px;font-size:24px;margin-top:18px">
     <button class="btn p" style="margin-top:14px" ${da('verifyCode')}>Verify & continue</button>
     <button class="btn g" style="margin-top:8px" ${da('resendCode')}>Resend code</button>
     <p class="meta" style="color:var(--dim);margin-top:14px;font-size:12px">Check spam/promotions if it's not in your inbox in a minute.</p>
@@ -4231,7 +4231,7 @@ function renderCodeEntry(email,mode){
 async function verifyCode(){
   const el=document.getElementById("auth_code");
   const code=el?(el.value||"").replace(/\s/g,""):"";
-  if(!/^\d{6}$/.test(code)){ toast("Enter the 6-digit code"); return; }
+  if(!/^\d{6,8}$/.test(code)){ toast("Enter the code from your email"); return; }
   toast("🔐 Verifying…");
   const {error}=await sbVerifyCode(authEmail,code);
   if(error){ toast("Code: "+error); return; }
