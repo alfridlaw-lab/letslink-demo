@@ -491,7 +491,7 @@ html,body{margin:0;padding:0;background:#05070a;color:var(--ink);
 <body>
 <div id="phone">
   <div class="topbar">
-    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v88</span></div>
+    <div class="logo">Let's<b>Link</b> <span style="font-size:9px;color:#00c2a8;font-weight:600;vertical-align:top">v89</span></div>
     <div class="me" data-act="openMenu">
       <span id="meName">You</span>
       <span class="avatar" id="meAv" style="background:#7c5cff">?</span>
@@ -1967,7 +1967,24 @@ function renderExploreList(){
   ${sortbar()}
   ${body}`);
 }
-function onSearch(v){searchQ=v;render();}
+function onSearch(v){
+  searchQ=v;
+  // Full re-render rebuilds #view, which would drop focus/cursor from the search box
+  // and yank scroll to the top on every keystroke. Preserve all three.
+  const y=window.scrollY||window.pageYOffset||0;
+  const active=document.activeElement;
+  const wasSearch=active&&active.classList&&active.classList.contains("search");
+  const caret=wasSearch?active.selectionStart:null;
+  render();
+  if(wasSearch){
+    const box=document.querySelector(".search");
+    if(box){
+      box.focus();
+      try{ const p=(caret==null)?box.value.length:caret; box.setSelectionRange(p,p); }catch(e){}
+    }
+  }
+  try{ window.scrollTo(0,y); }catch(e){}
+}
 function bizRow(id){const b=biz[id];return `<div class="eco" ${da('open','biz',id)}>
   <div class="ic">${svic(bizIcon(b.cat),18)}</div><div><div class="nm">${b.n}</div>
   <div class="ds">${b.cat} · <span class="stars">★${b.r}</span> · 📍 ${b.hood} · ${miles(id)}</div></div>
